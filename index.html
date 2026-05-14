@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- build: 20260513-190001 -->
+<title>GALAXY — Creator Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--bg2:#111113;--bg3:#18181c;
+  --card:#1c1c21;--card2:#222228;
+  --border:#2a2a32;--border2:#333340;
+  --text:#f0f0f2;--muted:#7a7a8c;--muted2:#55555f;
+  --accent:#e8d5b0;--accent2:#c4a97d;
+  --gold:#d4a843;--gold2:#b8902e;
+  --rose:#e86c6c;--green:#4ade80;--blue:#60a5fa;--purple:#a78bfa;
+  --r:14px;--r2:10px;--shadow:0 4px 24px rgba(0,0,0,.5);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,a{-webkit-tap-highlight-color:transparent}
+input,textarea,select{font-size:16px!important} /* prevent iOS zoom on focus */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,10,11,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);z-index:1000}
+.nav-logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:400;color:var(--accent);cursor:pointer}.nav-logo span{color:var(--gold)}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 12px;border-radius:100px;cursor:pointer;transition:all .2s;position:relative}
+.nav-tab:hover{color:var(--text);background:var(--bg3)}.nav-tab.active{color:var(--text);background:var(--card2)}
+.nav-badge{position:absolute;top:2px;right:5px;min-width:16px;height:16px;background:var(--rose);border-radius:100px;font-size:.6rem;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 3px}.nav-badge.show{display:flex}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 15px;border-radius:100px;cursor:pointer;transition:all .2s}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}.nav-btn.primary{background:var(--gold);border-color:var(--gold);color:#0a0a0b;font-weight:600}.nav-btn.primary:hover{background:var(--gold2)}
+.nav-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.9rem;border:2px solid var(--border2);cursor:pointer;transition:border-color .2s}.nav-av:hover{border-color:var(--gold)}
+.page{display:none;padding-top:58px;min-height:100vh}.page.active{display:block}
+#page-landing{background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(212,168,67,.1) 0%,transparent 60%)}
+.hero{text-align:center;padding:90px 24px 50px;max-width:700px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:400;line-height:1.15;letter-spacing:-.03em;margin-bottom:18px}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero p{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all .22s;text-decoration:none}
+.btn-gold{background:var(--gold);color:#0a0a0b}.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--muted)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:8px 16px;font-size:.8rem}
+.stats{display:flex;justify-content:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:16px 0 52px}
+.stat{flex:1;max-width:200px;text-align:center;padding:26px 16px;border-right:1px solid var(--border)}.stat:last-child{border-right:none}
+.stat-n{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:600;color:var(--gold);letter-spacing:-.03em}.stat-l{font-size:.76rem;color:var(--muted);margin-top:2px}
+.section{padding:40px 24px;max-width:1100px;margin:0 auto}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px}
+.section-title{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:400;color:var(--text);letter-spacing:-.02em}
+.section-link{font-size:.8rem;color:var(--muted);cursor:pointer;border-bottom:1px solid var(--border2);padding-bottom:1px;transition:color .2s}.section-link:hover{color:var(--accent)}
+.creators-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:14px}
+.creator-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .22s,transform .22s,box-shadow .22s}
+.creator-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.creator-card-cover{height:88px;position:relative;overflow:hidden}
+.creator-card-cover img{width:100%;height:100%;object-fit:cover;filter:brightness(.72)}
+.creator-avatar-thumb{width:54px;height:54px;border-radius:50%;border:3px solid var(--bg);position:absolute;bottom:-18px;left:14px;object-fit:cover;background:var(--card2)}
+.creator-card-body{padding:26px 14px 14px}
+.creator-name{font-weight:600;font-size:.93rem;display:flex;align-items:center;gap:5px}
+.creator-handle{font-size:.76rem;color:var(--muted);margin-bottom:5px}
+.creator-bio{font-size:.78rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+.creator-meta{display:flex;align-items:center;justify-content:space-between}
+.creator-subs{font-size:.73rem;color:var(--muted2)}.creator-price{font-size:.78rem;font-weight:700;color:var(--gold);background:rgba(212,168,67,.1);padding:3px 9px;border-radius:100px}
+.verified{width:13px;height:13px;background:var(--blue);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:7px;color:#fff;flex-shrink:0}
+#page-explore .expl-header{padding:24px 24px 0;max-width:1100px;margin:0 auto}
+.expl-title{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:400;letter-spacing:-.02em;margin-bottom:16px}
+.cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.cat{background:var(--card);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
+.cat:hover,.cat.active{background:var(--gold);border-color:var(--gold);color:#0a0a0b}
+#page-feed{max-width:600px;margin:0 auto}.feed-wrap{padding:20px}
+.post-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .2s}.post-card:hover{border-color:var(--border2)}
+.post-head{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
+.post-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--card2);flex-shrink:0}
+.post-creator-name{font-weight:600;font-size:.87rem}.post-time{font-size:.72rem;color:var(--muted)}
+.post-tier-badge{margin-left:auto;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+.tb-free{background:rgba(74,222,128,.12);color:var(--green)}.tb-paid{background:rgba(212,168,67,.12);color:var(--gold)}
+.post-body{padding:0 14px 12px}.post-title{font-weight:600;font-size:.93rem;margin-bottom:5px}.post-text{font-size:.83rem;color:var(--muted);line-height:1.6}
+.post-lock-box{padding:18px 14px;text-align:center}.post-lock-text{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.post-actions{display:flex;align-items:center;gap:2px;padding:9px 14px 11px;border-top:1px solid var(--border)}
+.post-action{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;padding:5px 9px;border-radius:8px;transition:all .2s}
+.post-action:hover{background:var(--bg3);color:var(--text)}
+#page-profile{padding-top:0!important}.profile-cover-wrap{height:260px;overflow:hidden;margin-top:58px}.profile-cover-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(.68)}
+.profile-body{max-width:840px;margin:0 auto;padding:0 22px}
+.profile-head{display:flex;align-items:flex-end;gap:14px;margin-top:-46px;margin-bottom:18px;flex-wrap:wrap;position:relative;z-index:2}
+.profile-pic{width:92px;height:92px;border-radius:50%;border:4px solid var(--bg);object-fit:cover;flex-shrink:0;background:var(--card2)}
+.profile-info{padding-bottom:4px;flex:1}
+.profile-name-row{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.profile-handle{font-size:.83rem;color:var(--muted)}.profile-bio{font-size:.86rem;color:var(--muted);line-height:1.6;margin:10px 0 14px}
+.profile-stats-row{display:flex;gap:22px;margin-bottom:20px}
+.p-stat-n{font-weight:700;font-size:.98rem}.p-stat-l{font-size:.73rem;color:var(--muted)}
+.sub-card{background:var(--card);border:1px solid var(--gold);border-radius:var(--r);padding:22px;margin-bottom:28px;max-width:420px}
+.sub-feat{font-size:.78rem;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:6px}.sub-feat::before{content:'check';font-family:monospace;color:var(--green);font-weight:700;font-size:.7rem}
+#page-messages{max-width:860px;margin:0 auto}
+.msg-layout{display:flex;height:calc(100vh - 58px)}
+.msg-sidebar{width:260px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+.msg-sidebar-title{padding:16px 14px 10px;font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.msg-thread{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.msg-thread:hover,.msg-thread.act{background:var(--bg3)}
+.msg-thread-av{width:36px;height:36px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.msg-thread-name{font-weight:600;font-size:.84rem}.msg-thread-prev{font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.msg-unread-dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.msg-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.msg-main-head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.msg-main-name{font-weight:600;font-size:.93rem}
+.msg-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.msg-bubble{max-width:70%;padding:9px 13px;border-radius:14px;font-size:.84rem;line-height:1.5}
+.msg-bubble.mine{background:var(--gold);color:#0a0a0b;align-self:flex-end;border-radius:14px 14px 4px 14px}
+.msg-bubble.theirs{background:var(--card2);color:var(--text);align-self:flex-start;border-radius:14px 14px 14px 4px}
+.msg-input-row{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
+.msg-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:8px 15px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s}.msg-input:focus{border-color:var(--gold)}
+.msg-send-btn{background:var(--gold);border:none;border-radius:100px;padding:8px 16px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s}.msg-send-btn:hover{background:var(--gold2)}
+.msg-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.88rem;flex-direction:column;gap:8px}
+#page-notifs{max-width:620px;margin:0 auto;padding:24px}
+.notif-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;margin-bottom:18px;letter-spacing:-.02em}
+.notif-item{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:9px;transition:border-color .2s}
+.notif-item:hover{border-color:var(--border2)}.notif-item.unread{border-left:3px solid var(--gold)}
+.notif-icon{font-size:1.1rem;flex-shrink:0;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:50%}
+.notif-text{font-size:.84rem;line-height:1.5}.notif-time{font-size:.72rem;color:var(--muted);margin-top:3px}
+.dash-wrap{max-width:960px;margin:0 auto;padding:24px}
+.dash-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;margin-bottom:20px;letter-spacing:-.02em}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:22px}
+.dash-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.dash-card-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.dash-card-val{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:400;letter-spacing:-.03em}
+.dash-card-sub{font-size:.72rem;color:var(--green);margin-top:2px}
+.ds-title{font-weight:600;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px}
+.kyc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
+.kyc-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:.74rem;font-weight:700;letter-spacing:.04em}
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:9px}.upload-zone:hover{border-color:var(--gold)}.upload-zone input{display:none}
+#page-admin .admin-wrap{max-width:1020px;margin:0 auto;padding:24px}
+.admin-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:400;margin-bottom:6px;letter-spacing:-.02em}
+.admin-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.admin-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;padding:8px 16px 12px;cursor:pointer;transition:all .2s;margin-bottom:-1px}
+.admin-tab:hover{color:var(--text)}.admin-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.admin-panel{display:none}.admin-panel.active{display:block}
+.admin-table{width:100%;border-collapse:collapse}
+.admin-table th{font-size:.71rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:9px 11px;text-align:left;border-bottom:1px solid var(--border)}
+.admin-table td{padding:11px 11px;border-bottom:1px solid var(--border);font-size:.84rem;vertical-align:middle}
+.admin-table tr:hover td{background:var(--bg3)}
+.action-btn{background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 11px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;color:var(--muted)}
+.action-btn:hover{border-color:var(--accent);color:var(--text)}
+.action-btn.approve{border-color:rgba(74,222,128,.4);color:var(--green)}.action-btn.approve:hover{background:rgba(74,222,128,.1)}
+.action-btn.reject{border-color:rgba(232,108,108,.4);color:var(--rose)}.action-btn.reject:hover{background:rgba(232,108,108,.1)}
+.action-btn.payout{border-color:rgba(212,168,67,.4);color:var(--gold)}.action-btn.payout:hover{background:rgba(212,168,67,.1)}
+.admin-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-bottom:22px}
+.admin-stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:28px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.7);max-height:92vh;overflow-y:auto}
+.modal.wide{max-width:520px}
+.modal h2{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:400;margin-bottom:5px;letter-spacing:-.02em}
+.modal p{font-size:.83rem;color:var(--muted);margin-bottom:20px}
+.fg{margin-bottom:12px}.fg label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:500}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold)}
+.modal-btn{width:100%;padding:12px;background:var(--gold);border:none;border-radius:100px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}.modal-btn:hover{background:var(--gold2)}
+.modal-switch{text-align:center;font-size:.78rem;color:var(--muted);margin-top:14px}.modal-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
+.err-msg{font-size:.76rem;color:var(--rose);margin-bottom:7px;min-height:15px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card2);border:1px solid var(--border2);border-radius:100px;padding:9px 18px;font-size:.83rem;font-weight:500;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow);z-index:3000;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap}.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:.88rem}.empty-icon{font-size:1.8rem;margin-bottom:7px}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.divider{height:1px;background:var(--border);margin:28px 0}
+.badge-gold{background:rgba(212,168,67,.15);color:var(--gold);border:1px solid rgba(212,168,67,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
+.badge-blue{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
+.badge-rose{background:rgba(232,108,108,.15);color:var(--rose);border:1px solid rgba(232,108,108,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
+.badge-green{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
+
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.shop-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .22s,transform .22s,box-shadow .22s;display:flex;flex-direction:column}
+.shop-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.55)}
+.shop-card-img{height:180px;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden;flex-shrink:0}
+.shop-card-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55);transition:transform .4s}
+.shop-card:hover .shop-card-img img{transform:scale(1.04)}
+.shop-card-emoji{position:relative;z-index:1;font-size:2.6rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))}
+.shop-type-badge{position:absolute;top:10px;left:10px;font-size:.64rem;font-weight:700;padding:4px 10px;border-radius:100px;letter-spacing:.05em;text-transform:uppercase;z-index:2}
+.shop-momentum{position:absolute;top:10px;right:10px;font-size:.62rem;font-weight:700;padding:4px 9px;border-radius:100px;background:rgba(232,108,108,.9);color:#fff;letter-spacing:.04em;z-index:2}
+.shop-instant{position:absolute;bottom:10px;left:10px;font-size:.62rem;font-weight:600;padding:3px 8px;border-radius:100px;background:rgba(0,0,0,.6);color:var(--green);border:1px solid rgba(74,222,128,.3);z-index:2}
+.shop-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column}
+.shop-card-title{font-weight:700;font-size:.95rem;margin-bottom:6px;line-height:1.35}
+.shop-card-creator{font-size:.75rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.shop-card-creator img{width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid var(--border2)}
+.shop-rating{display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.shop-stars{color:var(--gold);font-size:.8rem;letter-spacing:1px}
+.shop-rating-count{font-size:.72rem;color:var(--muted)}
+.shop-includes{margin-bottom:12px}
+.shop-includes-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.shop-include-item{font-size:.76rem;color:var(--muted);margin-bottom:3px;display:flex;align-items:flex-start;gap:5px;line-height:1.4}
+.shop-include-item::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
+.shop-card-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.shop-price{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:400;color:var(--gold);letter-spacing:-.02em}
+.shop-sales-count{font-size:.7rem;color:var(--muted2)}
+.shop-buy-btn{background:var(--gold);border:none;border-radius:100px;padding:9px 18px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}.shop-buy-btn:hover{background:var(--gold2);transform:scale(1.04)}
+.shop-preview-btn{background:none;border:1px solid var(--border2);border-radius:100px;padding:7px 12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s}.shop-preview-btn:hover{border-color:var(--accent);color:var(--accent)}
+.shop-cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.shop-header{padding:24px 24px 0;max-width:1100px;margin:0 auto}
+.shop-title{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:400;letter-spacing:-.02em;margin-bottom:6px}
+.shop-subtitle{font-size:.88rem;color:var(--muted);margin-bottom:16px}
+.shop-sort{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.shop-sort-label{font-size:.76rem;color:var(--muted)}
+.shop-sort select{background:var(--card);border:1px solid var(--border);border-radius:100px;padding:5px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;cursor:pointer}
+/* review modal */
+.review-list{max-height:260px;overflow-y:auto;margin-bottom:14px}
+.review-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.review-item:last-child{border-bottom:none}
+.review-author{font-weight:600;font-size:.8rem;margin-bottom:3px}
+.review-stars{color:var(--gold);font-size:.76rem;margin-bottom:4px}
+.review-text{color:var(--muted);line-height:1.5}
+
+
+/* ══════════════════════════════════════════
+   MOBILE — bottom nav + full responsive
+   ══════════════════════════════════════════ */
+
+/* Bottom nav bar (mobile only) */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:62px;
+  background:rgba(10,10,11,.96);
+  backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  z-index:1000;
+  align-items:center;justify-content:space-around;
+  padding:0 4px;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:.58rem;font-weight:500;
+  padding:8px 12px;border-radius:12px;
+  cursor:pointer;transition:all .2s;
+  flex:1;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav-btn:active{background:var(--bg3)}
+.bnav-btn.active{color:var(--gold)}
+.bnav-btn svg,.bnav-icon{font-size:1.25rem;line-height:1}
+.bnav-badge{
+  position:absolute;top:4px;right:calc(50% - 16px);
+  min-width:16px;height:16px;
+  background:var(--rose);border-radius:100px;
+  font-size:.58rem;font-weight:700;color:#fff;
+  display:none;align-items:center;justify-content:center;
+  padding:0 4px;
+}
+.bnav-badge.show{display:flex}
+.bnav-fab{
+  display:flex;align-items:center;justify-content:center;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border:3px solid var(--bg);
+  color:#0a0a0b;
+  cursor:pointer;
+  flex:0 0 auto;
+  margin:0 4px;
+  margin-top:-18px;
+  box-shadow:0 6px 16px rgba(212,168,67,.4);
+  transition:transform .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav-fab:active{transform:scale(.92)}
+.bnav-fab-icon{font-size:1.9rem;font-weight:300;line-height:1;margin-top:-2px}
+
+@media(max-width:700px){
+  /* Show bottom nav, hide top tabs + right btns */
+  .bottom-nav{display:flex}
+  nav{padding:0 14px}
+  .nav-tabs{display:none!important}
+  /* Keep logo + sign-in/avatar only */
+  .nav-btn.primary{padding:7px 12px;font-size:.78rem}
+  #navUser .nav-btn{display:none} /* hide sign-out on mobile — in profile */
+
+  /* Pages get bottom-nav clearance */
+  .page{padding-bottom:70px}
+  #page-profile{padding-bottom:70px}
+
+  /* Hero */
+  .hero{padding:52px 16px 32px}
+  .hero h1{font-size:2rem}
+  .hero p{font-size:.9rem}
+  .hero-btns{flex-direction:column;align-items:center}
+  .hero-btns .btn{width:100%;max-width:280px;justify-content:center}
+
+  /* Stats */
+  .stats{flex-wrap:wrap}
+  .stat{min-width:50%;flex:1;border-right:none;border-bottom:1px solid var(--border)}
+  .stat:nth-child(odd){border-right:1px solid var(--border)}
+  .stat:nth-last-child(-n+2){border-bottom:none}
+  .stat-n{font-size:1.5rem}
+
+  /* Sections */
+  .section{padding:24px 14px}
+  .section-head{margin-bottom:16px}
+  .section-title{font-size:1.2rem}
+
+  /* Grids → single column or 2-col */
+  .creators-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .shop-grid{grid-template-columns:1fr;gap:14px}
+  .dash-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .admin-stat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  /* Creator card — horizontal on mobile */
+  .creator-card{display:flex;flex-direction:row;height:auto}
+  .creator-card-cover{width:90px;height:90px;flex-shrink:0;border-radius:0}
+  .creator-avatar-thumb{width:44px;height:44px;bottom:-14px;left:10px}
+  .creator-card-body{padding:12px 12px 12px 14px;flex:1}
+  .creator-name{font-size:.86rem}
+  .creator-bio{-webkit-line-clamp:1;margin-bottom:6px}
+
+  /* Profile */
+  .profile-cover-wrap{height:180px}
+  .profile-pic{width:72px;height:72px}
+  .profile-head{margin-top:-36px;gap:10px}
+  .profile-name-row{font-size:1.2rem}
+  .profile-head > div:last-child{flex-direction:column;gap:6px;margin-left:auto}
+  .profile-head .btn-sm{padding:7px 13px;font-size:.76rem}
+  .profile-stats-row{gap:16px}
+  .sub-card{max-width:100%}
+
+  /* Feed */
+  #page-feed{max-width:100%}
+  .feed-wrap{padding:14px}
+  .post-card{border-radius:10px}
+
+  /* Messages — stack sidebar above chat */
+  #page-messages{max-width:100%}
+  .msg-layout{flex-direction:column;height:auto;min-height:calc(100vh - 128px)}
+  .msg-sidebar{width:100%;height:auto;max-height:220px;border-right:none;border-bottom:1px solid var(--border)}
+  .msg-main{height:calc(100vh - 360px);min-height:300px}
+  .msg-messages{padding:10px 12px}
+  .msg-bubble{max-width:85%}
+
+  /* Notifications */
+  #page-notifs{padding:16px}
+
+  /* Dashboard */
+  .dash-wrap{padding:16px}
+  .dash-card{padding:14px}
+  .dash-card-val{font-size:1.5rem}
+
+  /* Shop card — full width horizontal on mobile */
+  .shop-card{flex-direction:row;height:auto}
+  .shop-card-img{width:110px;height:auto;min-height:130px;flex-shrink:0;border-radius:0}
+  .shop-card-emoji{font-size:1.8rem}
+  .shop-card-body{padding:12px}
+  .shop-card-title{font-size:.86rem;margin-bottom:4px}
+  .shop-includes{display:none} /* hide includes on mobile card, shown in detail */
+  .shop-card-footer{padding-top:8px}
+  .shop-price{font-size:1rem}
+  .shop-buy-btn{padding:7px 12px;font-size:.74rem}
+  .shop-preview-btn{padding:6px 10px;font-size:.72rem}
+  .shop-momentum{font-size:.58rem;padding:3px 7px}
+  .shop-instant{font-size:.58rem;padding:3px 6px}
+
+  /* Admin */
+  #page-admin .admin-wrap{padding:14px}
+  .admin-tabs{overflow-x:auto;gap:0}
+  .admin-tab{white-space:nowrap;padding:8px 12px 10px;font-size:.78rem}
+  .admin-table{font-size:.76rem}
+  .admin-table th,.admin-table td{padding:8px 8px}
+  /* Stack table on very small screens */
+  .admin-table thead{display:none}
+  .admin-table tr{display:block;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;padding:10px}
+  .admin-table td{display:flex;justify-content:space-between;border:none;padding:4px 0;font-size:.8rem}
+  .admin-table td::before{content:attr(data-label);color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:8px}
+
+  /* Explore header */
+  .expl-header,.shop-header{padding:16px 14px 0}
+  .expl-title,.shop-title{font-size:1.4rem}
+  .cats,.shop-cats{gap:6px}
+  .cat{padding:5px 11px;font-size:.74rem}
+  .shop-sort{flex-wrap:wrap;gap:6px}
+
+  /* Discover */
+  #page-discover > div{padding:16px 14px 0}
+
+  /* Toast — above bottom nav */
+  .toast{bottom:74px}
+
+  /* Modals — full-width on mobile */
+  .modal{padding:22px 18px;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;max-width:100%;margin:0;border-left:none;border-right:none;border-bottom:none}
+  .overlay{align-items:flex-end;padding:0}
+
+  /* KYC upload zones */
+  .upload-zone{padding:14px}
+}
+
+/* Extra small — very narrow phones */
+@media(max-width:380px){
+  .creators-grid{grid-template-columns:1fr}
+  .creator-card{flex-direction:column}
+  .creator-card-cover{width:100%;height:80px}
+  .creator-avatar-thumb{bottom:-16px}
+  .creator-card-body{padding:24px 12px 12px}
+  .hero h1{font-size:1.75rem}
+  .dash-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+<script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="showPage('landing')">G<span>ALAXY</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('landing',this)" id="tab-landing">Home</button>
+    <button class="nav-tab" onclick="showPage('explore',this)" id="tab-explore">Explore</button>
+    <button class="nav-tab" onclick="showPage('discover',this)" id="tab-discover">Discover</button>
+    <button class="nav-tab" onclick="showPage('shop',this)" id="tab-shop">🛒 Shop</button>
+    <button class="nav-tab" onclick="requireAuth('feed',this)" id="tab-feed">Feed</button>
+    <button class="nav-tab" onclick="requireAuth('messages',this)" id="tab-messages" style="display:none">
+      💬 Messages<span class="nav-badge" id="msgBadge">0</span>
+    </button>
+    <button class="nav-tab" onclick="requireAuth('notifs',this)" id="tab-notifs" style="display:none">
+      🔔 Alerts<span class="nav-badge" id="notifBadge">0</span>
+    </button>
+    <button class="nav-tab" onclick="requireAuth('dashboard',this)" id="tab-dash" style="display:none">Dashboard</button>
+    <button class="nav-tab" onclick="goAdmin(this)" id="tab-admin" style="display:none">⚙️ Admin</button>
+  </div>
+  <div class="nav-right" id="navGuest">
+    <button class="nav-btn" onclick="openModal('login')">Sign in</button>
+    <button class="nav-btn primary" onclick="openModal('signup')">Start creating</button>
+  </div>
+  <div class="nav-right" id="navUser" style="display:none">
+    <div class="nav-av" id="navAvatar" onclick="requireAuth('dashboard',null)">👤</div>
+    <button class="nav-btn" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="authOverlay"><div class="modal" id="modalContent"></div></div>
+
+<!-- LANDING -->
+<div class="page active" id="page-landing">
+  <div class="hero">
+    <div class="hero-badge">✦ 200,000+ creators worldwide</div>
+    <h1>Your audience.<br>Your <em>terms.</em></h1>
+    <p>Subscribe, connect, and unlock exclusive content from the creators who inspire you.</p>
+    <div class="hero-btns">
+      <button class="btn btn-gold" onclick="openModal('signup')">Start creating free →</button>
+      <button class="btn btn-ghost" onclick="showPage('explore',null)">Browse creators</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">200K+</div><div class="stat-l">Creators</div></div>
+    <div class="stat"><div class="stat-n">85%</div><div class="stat-l">Revenue share</div></div>
+    <div class="stat"><div class="stat-n">$100M+</div><div class="stat-l">Paid out</div></div>
+    <div class="stat"><div class="stat-n">3 min</div><div class="stat-l">To get started</div></div>
+  </div>
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Trending creators</div>
+      <a class="section-link" onclick="showPage('explore',null)">See all →</a>
+    </div>
+    <div class="creators-grid" id="landingCreators"></div>
+  </div>
+  <div class="divider" style="max-width:1100px;margin:0 auto"></div>
+  <div class="section" style="text-align:center">
+    <div class="section-title" style="font-size:1.7rem;margin-bottom:10px">Everything to monetise</div>
+    <p style="color:var(--muted);max-width:440px;margin:0 auto 32px;font-size:.88rem">Subscriptions, messaging, verification, and analytics — built for creators from day one.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;max-width:840px;margin:0 auto">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">💳</div><div style="font-weight:600;margin-bottom:5px">Subscriptions</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Set your own price. Fans pay monthly for exclusive access.</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">💬</div><div style="font-weight:600;margin-bottom:5px">Messaging</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Direct private conversations with your subscribers.</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">✅</div><div style="font-weight:600;margin-bottom:5px">Verified badge</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Complete KYC to get verified and unlock payouts.</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">📊</div><div style="font-weight:600;margin-bottom:5px">Analytics</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Understand earnings and subscriber growth.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPLORE -->
+<div class="page" id="page-explore">
+  <div class="expl-header">
+    <div class="expl-title">Discover creators</div>
+    <div class="cats" id="catTabs">
+      <div class="cat active" onclick="filterCat('all',this)">All</div>
+      <div class="cat" onclick="filterCat('Photography',this)">📷 Photo</div>
+      <div class="cat" onclick="filterCat('Writing',this)">✍️ Writing</div>
+      <div class="cat" onclick="filterCat('Music',this)">🎵 Music</div>
+      <div class="cat" onclick="filterCat('Fitness',this)">🏋️ Fitness</div>
+      <div class="cat" onclick="filterCat('Art',this)">🎨 Art</div>
+      <div class="cat" onclick="filterCat('Gaming',this)">🎮 Gaming</div>
+      <div class="cat" onclick="filterCat('Cooking',this)">🍳 Cooking</div>
+    </div>
+  </div>
+  <div class="section" style="padding-top:8px">
+    <div class="creators-grid" id="exploreCreators"></div>
+  </div>
+</div>
+
+<!-- DISCOVER -->
+<div class="page" id="page-discover">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 24px">
+    <div style="font-family:'Fraunces',serif;font-size:1.8rem;font-weight:400;letter-spacing:-.02em;margin-bottom:6px">Discover</div>
+    <div style="font-size:.88rem;color:var(--muted);margin-bottom:28px">Trending creators, new faces, and curated picks — all in one place.</div>
+    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">🔥 Trending this week</div>
+    <div class="creators-grid" id="discoverTrending" style="margin-bottom:36px"></div>
+    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">✨ New creators</div>
+    <div class="creators-grid" id="discoverNew" style="margin-bottom:36px"></div>
+    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">🎯 Curated picks</div>
+    <div class="creators-grid" id="discoverCurated"></div>
+  </div>
+</div>
+
+<!-- FEED -->
+<div class="page" id="page-feed">
+  <div class="feed-wrap" id="feedContent"></div>
+</div>
+
+<!-- MESSAGES -->
+<div class="page" id="page-messages">
+  <div class="msg-layout">
+    <div class="msg-sidebar">
+      <div class="msg-sidebar-title">Messages</div>
+      <div id="msgThreads"></div>
+    </div>
+    <div class="msg-main" id="msgMain">
+      <div class="msg-empty"><div style="font-size:2rem">💬</div>Select a conversation</div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div class="page" id="page-notifs">
+  <div class="notif-title">Notifications</div>
+  <div id="notifList"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="page-profile">
+  <div class="profile-cover-wrap">
+    <img id="profileCoverImg" src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80" alt="">
+  </div>
+  <div class="profile-body">
+    <div class="profile-head">
+      <img class="profile-pic" id="profilePic" src="" alt="">
+      <div class="profile-info">
+        <div class="profile-name-row" id="profileName">—</div>
+        <div class="profile-handle" id="profileHandle">—</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="profileMsgBtn" onclick="openMsgWith(_profileContext)">💬 Message</button>
+        <button class="btn btn-gold btn-sm" id="profileSubBtn" onclick="profileSubscribe()">Subscribe</button>
+      </div>
+    </div>
+    <div class="profile-bio" id="profileBio"></div>
+    <div class="profile-stats-row">
+      <div><div class="p-stat-n" id="profileSubsCount">0</div><div class="p-stat-l">subscribers</div></div>
+      <div><div class="p-stat-n" id="profilePostsCount">0</div><div class="p-stat-l">posts</div></div>
+    </div>
+    <div id="profileSubCard"></div>
+    <div class="divider"></div>
+    <div class="ds-title">Posts</div>
+    <div id="profilePostsArea" style="margin-bottom:40px"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="page-dashboard">
+  <div class="dash-wrap">
+    <div class="dash-title" id="dashGreeting"></div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-card-label">Earned</div><div class="dash-card-val" id="dEarned">$0</div><div class="dash-card-sub">lifetime</div></div>
+      <div class="dash-card"><div class="dash-card-label">Subscribers</div><div class="dash-card-val" id="dSubs">0</div><div class="dash-card-sub">active</div></div>
+      <div class="dash-card"><div class="dash-card-label">Balance</div><div class="dash-card-val" id="dBal">$0.00</div><div class="dash-card-sub" style="color:var(--muted)">withdrawable</div></div>
+      <div class="dash-card"><div class="dash-card-label">Posts</div><div class="dash-card-val" id="dPosts">0</div><div class="dash-card-sub" style="color:var(--muted)">published</div></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+      <div class="ds-title">My subscription price</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="color:var(--muted);font-size:.9rem">$</span>
+        <input type="number" id="subPriceInput" min="1" max="999" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <span style="color:var(--muted);font-size:.82rem">/month</span>
+        <button class="btn btn-gold btn-sm" onclick="saveSubPrice()">Save</button>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted)">Fans can subscribe to you at this price. You can change it anytime.</div>
+    </div>
+    <div id="kycBoxWrap"></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+      <div class="ds-title">New post</div>
+      <div class="fg"><label>Title</label><input id="postTitle" placeholder="What are you sharing?"></div>
+      <div class="fg"><label>Content</label><textarea id="postContent" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;resize:vertical;min-height:80px;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" placeholder="Write your post..."></textarea></div>
+      <div class="fg"><label>Add image or video <span style="color:var(--muted2);font-weight:400">— optional, image max 4 MB, video max 1 min &amp; 20 MB</span></label>
+        <input id="postMediaFile" type="file" accept="image/*,video/*" style="display:none" onchange="_handlePostMedia(event)">
+        <div id="postMediaPreview" class="cover-up" onclick="document.getElementById('postMediaFile').click()">
+          <div class="cover-up-empty">📸 Tap to add a photo or video<div style="font-size:.7rem;color:var(--muted2);margin-top:4px">Videos limited to 60 seconds</div></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <select id="postTier" style="background:var(--bg3);border:1px solid var(--border);border-radius:100px;padding:7px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;cursor:pointer">
+          <option value="free">🌍 Free</option>
+          <option value="paid">⭐ Subscribers only</option>
+        </select>
+        <button class="btn btn-gold btn-sm" onclick="publishPost()">Publish →</button>
+      </div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+      <div id="creatorProductsWrap"></div>
+    </div>
+    <div id="payoutZone" style="text-align:right;margin-top:6px"></div>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div class="page" id="page-shop">
+  <div class="shop-header">
+    <div class="shop-title">Galaxy Shop</div>
+    <div class="shop-subtitle">Digital products, courses and presets from your favourite creators — instant download after purchase.</div>
+    <div class="shop-cats" id="shopCatTabs">
+      <div class="cat active" onclick="filterShop('all',this)">All</div>
+      <div class="cat" onclick="filterShop('course',this)">🎓 Courses</div>
+      <div class="cat" onclick="filterShop('ebook',this)">📖 E-books</div>
+      <div class="cat" onclick="filterShop('preset',this)">🎨 Presets</div>
+      <div class="cat" onclick="filterShop('template',this)">📄 Templates</div>
+      <div class="cat" onclick="filterShop('audio',this)">🎵 Audio</div>
+    </div>
+    <div class="shop-sort">
+      <span class="shop-sort-label">Sort by</span>
+      <select id="shopSort" onchange="renderShop()">
+        <option value="popular">Most popular</option>
+        <option value="newest">Newest</option>
+        <option value="price_asc">Price: low to high</option>
+        <option value="price_desc">Price: high to low</option>
+        <option value="rating">Highest rated</option>
+      </select>
+    </div>
+  </div>
+  <div class="section" style="padding-top:8px">
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+</div>
+
+<!-- LIBRARY (buyer purchases) -->
+<div class="page" id="page-library">
+  <div class="section">
+    <h1 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.7rem;margin:0 0 4px">📚 Your Library</h1>
+    <div style="color:var(--muted);font-size:.9rem;margin-bottom:24px">Everything you've purchased — open anytime</div>
+    <div id="libraryList"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="admin-wrap">
+    <div class="admin-title">⚙️ Admin Panel</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">Logged in as <strong>dabarey24@gmail.com</strong></div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminTab('overview',this)">Overview</button>
+      <button class="admin-tab" onclick="adminTab('kyc',this)">KYC Requests <span id="kycBadge" class="badge-gold" style="margin-left:4px"></span></button>
+      <button class="admin-tab" onclick="adminTab('payouts',this)">Payouts</button>
+      <button class="admin-tab" onclick="adminTab('users',this)">Users</button>
+    </div>
+    <div class="admin-panel active" id="ap-overview"><div class="admin-stat-grid" id="adminStats"></div></div>
+    <div class="admin-panel" id="ap-kyc"><div class="ds-title" style="margin-bottom:12px">Verification Requests</div><div id="adminKycList"></div></div>
+    <div class="admin-panel" id="ap-payouts"><div class="ds-title" style="margin-bottom:12px">Payout Requests</div><div id="adminPayoutList"></div></div>
+    <div class="admin-panel" id="ap-users">
+      <div class="ds-title" style="margin-bottom:12px">All Users</div>
+      <table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>KYC</th><th>Balance</th><th>Joined</th></tr></thead>
+      <tbody id="adminUserBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB={
+  get(k){try{return JSON.parse(localStorage.getItem('ch_'+k))||null}catch{return null}},
+  set(k,v){localStorage.setItem('ch_'+k,JSON.stringify(v))},
+  del(k){localStorage.removeItem('ch_'+k)}
+};
+
+// ════════════════════════════════════════════════════════════════
+// HOW TO CONNECT SUPABASE FOR REAL PRODUCT DELIVERY
+// ════════════════════════════════════════════════════════════════
+// 1. Create a new Supabase project at supabase.com
+// 2. Set SUPABASE_URL and SUPABASE_KEY below (empty = localStorage only)
+// 3. Create these tables in Supabase:
+//    • products   (id, creator_id, title, type, desc, price, file_path, ...)
+//    • purchases  (id, user_id, product_id, price, status, created_at)
+//    • reviews    (id, user_id, product_id, rating, text, created_at)
+// 4. Upload product files to Supabase Storage bucket "products"
+// 5. In buyProduct(): replace localStorage with a Stripe checkout call
+// 6. Create a Supabase Edge Function "handle-purchase" that:
+//    a) Verifies the Stripe webhook signature
+//    b) Inserts a row into `purchases` table
+//    c) Generates a signed 24h download URL from Supabase Storage
+//    d) Sends email via Resend (resend.com) with the download link
+// 7. Buyer re-downloads from their profile page (purchases tab)
+// ════════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://limjwyrsruhyqhswgbiv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbWp3eXJzcnVoeXFoc3dnYml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDgyMzQsImV4cCI6MjA5NDE4NDIzNH0.9mcITJwLMWXAOjJc7RfZIooGRmbPtwLHE1QgyA5kRac';
+// Supabase client — loaded from CDN in <head>; null if CDN failed
+const sb = (typeof supabase!=='undefined'&&SUPABASE_URL&&SUPABASE_KEY) ? supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
+if(!sb) console.warn('Supabase client not initialised — auth and uploads will fall back to local mode');
+
+const WORKER_URL="https://vygalaxy.dabarey24.workers.dev";
+const ADMIN_EMAIL='dabarey24@gmail.com';
+let currentUser=DB.get('user'),currentPage='landing',_profileContext=null,_activeMsgThread=null;
+
+// Seed creators
+if(!DB.get('creators')){DB.set('creators',[
+  {id:'c1',name:'Elena Vasquez',handle:'@elena.v',cat:'Photography',bio:'Documentary photographer exploring light across 60 countries. Exclusive shoots and photo walks.',cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',avatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',subs:3200,posts:47,verified:true,price:8},
+  {id:'c2',name:'Tom Hargreaves',handle:'@tomwrites',cat:'Writing',bio:'Long-form essays on culture, tech, and what it means to be human.',cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',avatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',subs:12400,posts:138,verified:true,price:6},
+  {id:'c3',name:'Yuki Tanaka',handle:'@yukisounds',cat:'Music',bio:'Ambient composer. Monthly albums, process videos and exclusive live sessions.',cover:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&q=80',avatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',subs:7800,posts:89,verified:true,price:10},
+  {id:'c4',name:'Adaeze Nwosu',handle:'@adaeze.art',cat:'Art',bio:'Bold narrative illustrations celebrating African mythology. Tutorials and WIP content.',cover:'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',avatar:'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80',subs:5100,posts:62,verified:true,price:7},
+  {id:'c5',name:'Marco Bellini',handle:'@marcofood',cat:'Cooking',bio:'Regional Italian recipes, sourcing guides, and weekly cooking videos.',cover:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80',avatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',subs:9300,posts:201,verified:true,price:9},
+  {id:'c6',name:'Priya Sharma',handle:'@priyafit',cat:'Fitness',bio:'Functional strength for busy people. Programs, nutrition guides, and daily check-ins.',cover:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',avatar:'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=200&q=80',subs:22000,posts:415,verified:true,price:12},
+]);}
+if(!DB.get('posts')){DB.set('posts',[
+  {id:'p1',creator:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',title:'Golden hour in Lisbon',content:'Spent three hours chasing this light through the Alfama district. The way the sun catches the tiles at 6pm is something else.',tier:'free',time:'2h ago',tips:12,comments:18},
+  {id:'p2',creator:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',title:'Why attention is the new currency',content:'We talk about the attention economy as if it is a passive resource. But that misses something important about how we choose to spend it...',tier:'paid',time:'5h ago',tips:34,comments:44},
+  {id:'p3',creator:'c3',creatorName:'Yuki Tanaka',creatorAvatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',title:'New album: Coastal Drift preview',content:'A 3-minute preview of my upcoming album. The full 47-minute version drops for subscribers on Friday.',tier:'free',time:'8h ago',tips:51,comments:62},
+  {id:'p4',creator:'c5',creatorName:'Marco Bellini',creatorAvatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',title:"Nonna Rosa's Sunday ragu",content:"This recipe took 14 visits to Calabria to get right. Full recipe for subscribers.",tier:'paid',time:'1d ago',tips:78,comments:89},
+]);}
+
+// NAV
+function showPage(page,tabEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=document.getElementById('page-'+page);if(el)el.classList.add('active');
+  currentPage=page;
+  if(tabEl){document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
+  _syncBnavActive(page);
+  if(page==='landing')renderLandingCreators();
+if(currentUser) _syncMobileNav();
+  if(page==='explore')renderExplore();
+  if(page==='feed')renderFeed();
+  if(page==='discover')renderDiscover();
+  if(page==='shop')renderShop();
+  if(page==='messages')renderMessages();
+  if(page==='notifs')renderNotifs();
+  if(page==='dashboard')renderDashboard();
+  if(page==='library')renderLibrary();
+  if(page==='admin')renderAdmin();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function requireAuth(page,tabEl){if(currentUser)showPage(page,tabEl);else{openModal('login');toast('Please sign in first','🔐');}}
+function goAdmin(tabEl){if(currentUser&&currentUser.role==='admin')showPage('admin',tabEl);else toast('Admin access only','🔐');}
+
+// AUTH
+const modalTemplates={
+  login:`<h2>Welcome back</h2><p>Sign in to your GALAXY account</p>
+    <div class="fg"><label>Email</label><input id="li-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label>Password</label><input id="li-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="err-msg" id="li-err"></div>
+    <button class="modal-btn" id="li-btn" onclick="doLogin()">Sign in →</button>
+    <div class="modal-switch">New here? <a onclick="openModal('signup')">Create an account</a></div>`,
+  signup:`<h2>Join GALAXY</h2><p>Create your free account and start earning</p>
+    <div class="fg"><label>Full name</label><input id="su-name" placeholder="Your name"></div>
+    <div class="fg"><label>Email</label><input id="su-email" type="email" placeholder="you@example.com"></div>
+    <div class="fg"><label>Password</label><input id="su-pw" type="password" placeholder="Min. 6 characters"></div>
+    <div class="fg"><label>Category</label><select id="su-cat">
+      <option>Photography</option><option>Writing</option><option>Music</option><option>Fitness</option><option>Art</option><option>Gaming</option><option>Cooking</option><option>Other</option>
+    </select></div>
+    <div class="err-msg" id="su-err"></div>
+    <button class="modal-btn" id="su-btn" onclick="doSignup()">Create account →</button>
+    <div class="modal-switch">Already have one? <a onclick="openModal('login')">Sign in</a></div>`
+};
+function openModal(type,html){
+  const mc=document.getElementById('modalContent');
+  mc.innerHTML=html||modalTemplates[type]||modalTemplates.signup;
+  mc.classList.toggle('wide', type==='addProduct'||type==='purchase'||type==='tip'||type==='payout');
+  document.getElementById('authOverlay').classList.add('open');document.body.style.overflow='hidden';
+  mc.scrollTop=0;
+  setTimeout(()=>{const f=document.querySelector('#modalContent input');if(f)f.focus();},80);
+}
+function closeModal(){document.getElementById('authOverlay').classList.remove('open');document.body.style.overflow='';}
+document.getElementById('authOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('authOverlay'))closeModal();});
+
+// ═══ AUTH ════════════════════════════════════════════════════════════
+// Sign in via Supabase Auth, then load (or create) the user's row in the
+// public.profiles table. The trigger handle_new_user() inserts a row on
+// signup automatically, so usually we just read it here.
+
+const DEFAULT_COVER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&q=80';
+function _defaultAvatar(name){return 'https://ui-avatars.com/api/?name='+encodeURIComponent(name||'U')+'&background=d4a843&color=0a0a0b&size=200';}
+
+// Load a user's profile row from Supabase. Returns the local-shape object
+// the rest of the app expects (camelCase keys, subscriptions array, etc).
+async function _fetchProfile(authUserId, fallbackEmail, fallbackName){
+  if(!sb) return null;
+  try{
+    let {data:row,error}=await sb.from('profiles').select('*').eq('id',authUserId).maybeSingle();
+    if(error)console.warn('profile fetch error',error);
+    // If trigger didn't fire (very rare), insert manually
+    if(!row){
+      const ins={id:authUserId,email:fallbackEmail,name:fallbackName||(fallbackEmail||'').split('@')[0],role:fallbackEmail===ADMIN_EMAIL?'admin':'creator'};
+      const {data:created,error:e2}=await sb.from('profiles').insert(ins).select().maybeSingle();
+      if(e2){console.warn('profile insert error',e2);return null;}
+      row=created;
+    }
+    // Force admin role if it's the admin email
+    if(row.email===ADMIN_EMAIL&&row.role!=='admin'){
+      const {data:upd}=await sb.from('profiles').update({role:'admin'}).eq('id',row.id).select().maybeSingle();
+      if(upd)row=upd;
+    }
+    return _profileRowToUser(row);
+  }catch(e){console.warn('profile load threw',e);return null;}
+}
+
+// Map a profiles row → the camelCase user object the app uses everywhere
+function _profileRowToUser(row){
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name||(row.email||'').split('@')[0],
+    handle: row.handle||'@'+((row.name||row.email||'').toLowerCase().replace(/\s+/g,'_')),
+    bio: row.bio||'',
+    avatar: row.avatar||_defaultAvatar(row.name||row.email),
+    cover: row.cover||DEFAULT_COVER,
+    cat: row.category||'Other',
+    role: row.role||'creator',
+    price: Number(row.price||9),
+    balance: Number(row.balance||0),
+    earned: Number(row.earned||0),
+    kycStatus: row.kyc_status||'unsubmitted',
+    verified: !!row.verified,
+    joinedAt: row.created_at,
+    emoji: '✨',
+    subscriptions: [],
+    posts: []
+  };
+}
+
+async function doLogin(){
+  const email=(document.getElementById('li-email')||{}).value.trim().toLowerCase()||'',pw=(document.getElementById('li-pw')||{}).value||'';
+  const err=document.getElementById('li-err'),btn=document.getElementById('li-btn');
+  if(!email||!pw){err.textContent='Please fill in all fields.';return;}
+  btn.disabled=true;btn.textContent='Signing in...';
+  if(!sb){err.textContent='Cannot reach server. Check your connection.';btn.disabled=false;btn.textContent='Sign in →';return;}
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error){err.textContent=error.message||'Sign-in failed.';btn.disabled=false;btn.textContent='Sign in →';return;}
+    const u=await _fetchProfile(data.user.id, email);
+    if(!u){err.textContent='Could not load profile. Try again.';btn.disabled=false;btn.textContent='Sign in →';return;}
+    _loginUser(u);closeModal();toast('Welcome back, '+u.name+'!','👋');
+    if(u.role==='admin')showPage('admin',null);else showPage('dashboard',null);
+  }catch(e){
+    console.error(e);err.textContent='Sign-in failed.';btn.disabled=false;btn.textContent='Sign in →';
+  }
+}
+
+async function doSignup(){
+  const name=(document.getElementById('su-name')||{}).value.trim(),email=((document.getElementById('su-email')||{}).value||'').trim().toLowerCase(),pw=(document.getElementById('su-pw')||{}).value,cat=(document.getElementById('su-cat')||{}).value||'Other';
+  const err=document.getElementById('su-err'),btn=document.getElementById('su-btn');
+  if(!name||!email||!pw){err.textContent='Please fill in all fields.';return;}
+  if(pw.length<6){err.textContent='Password must be at least 6 characters.';return;}
+  btn.disabled=true;btn.textContent='Creating...';
+  if(!sb){err.textContent='Cannot reach server. Check your connection.';btn.disabled=false;btn.textContent='Create account →';return;}
+  try{
+    const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{name}}});
+    if(error){err.textContent=error.message||'Sign-up failed.';btn.disabled=false;btn.textContent='Create account →';return;}
+    if(!data.user){err.textContent='Check your email to confirm your account.';btn.disabled=false;btn.textContent='Create account →';return;}
+    // The trigger handle_new_user() creates a profiles row, but we update name+category which it doesn't know about
+    await sb.from('profiles').update({name, category:cat, handle:'@'+name.toLowerCase().replace(/\s+/g,'_'), avatar:_defaultAvatar(name)}).eq('id',data.user.id);
+    const u=await _fetchProfile(data.user.id, email, name);
+    if(!u){err.textContent='Account created but profile failed to load. Try signing in.';btn.disabled=false;btn.textContent='Create account →';return;}
+    _loginUser(u);closeModal();toast('Welcome! 🎉','✨');showPage('dashboard',null);
+  }catch(e){
+    console.error(e);err.textContent='Sign-up failed.';btn.disabled=false;btn.textContent='Create account →';
+  }
+}
+function _loginUser(u){
+  currentUser=u;DB.set('user',u);
+  // Mirror into the local users map so admin panel + profile lookups keep working
+  // (this is transitional — these reads will move to Supabase in later migrations)
+  if(u.email){
+    const users=DB.get('users')||{};
+    users[u.email]={...users[u.email],...u};
+    DB.set('users',users);
+  }
+  document.getElementById('navGuest').style.display='none';
+  document.getElementById('navUser').style.display='flex';
+  document.getElementById('navAvatar').textContent=u.emoji||'👤';  ['tab-messages','tab-notifs','tab-dash'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  if(u.role==='admin'){const a=document.getElementById('tab-admin');if(a)a.style.display='';}
+  _refreshBadges();
+}
+async function logout(){
+  if(sb){try{await sb.auth.signOut();}catch(e){}}
+  currentUser=null;DB.del('user');
+  document.getElementById('navGuest').style.display='flex';document.getElementById('navUser').style.display='none';
+  ['tab-messages','tab-notifs','tab-dash','tab-admin'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  showPage('landing',document.getElementById('tab-landing'));toast('Signed out','👋');
+}
+
+// Mirror local changes back to the profiles table (fire-and-forget).
+// Pass {price:12, kycStatus:'pending', cover:'...'} etc — uses camelCase, gets mapped to snake_case columns.
+async function _saveProfile(patch){
+  if(!sb||!currentUser?.id) return;
+  const map={kycStatus:'kyc_status',cat:'category'};
+  const cols={};
+  for(const [k,v] of Object.entries(patch||{})){
+    cols[map[k]||k]=v;
+  }
+  try{
+    const {error}=await sb.from('profiles').update(cols).eq('id',currentUser.id);
+    if(error) console.warn('profile update failed',error,cols);
+  }catch(e){console.warn('profile update threw',e);}
+}
+
+// BADGES
+function _refreshBadges(){
+  if(!currentUser)return;
+  const msgs=DB.get('messages')||[],unread=msgs.filter(m=>m.to===currentUser.id&&!m.read).length;
+  const mb=document.getElementById('msgBadge');if(mb){mb.textContent=unread;mb.classList.toggle('show',unread>0);}
+  const notifs=(DB.get('notifs_'+currentUser.id)||[]).filter(n=>!n.read).length;
+  const nb=document.getElementById('notifBadge');if(nb){nb.textContent=notifs;nb.classList.toggle('show',notifs>0);}
+}
+
+// CREATORS
+function creatorCard(c){
+  const coverHtml=c.cover&&c.cover.startsWith('http')?`<img src="${c.cover}" alt="" style="width:100%;height:100%;object-fit:cover;filter:brightness(.72)">`:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#d4a843,#b8902e)"></div>`;
+  return `<div class="creator-card" onclick="showProfile('${c.id}')">
+    <div class="creator-card-cover">${coverHtml}<img class="creator-avatar-thumb" src="${c.avatar}" alt="" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=d4a843&color=0a0a0b&size=200'"></div>
+    <div class="creator-card-body">
+      <div class="creator-name">${c.name}${c.verified?'<span class="verified">v</span>':''}</div>
+      <div class="creator-handle">${c.handle} <span class="tag">${c.cat}</span></div>
+      <div class="creator-bio">${c.bio}</div>
+      <div class="creator-meta"><span class="creator-subs">${fmtNum(c.subs||0)} subs</span><span class="creator-price">$${c.price||9}/mo</span></div>
+    </div>
+  </div>`;
+}
+function renderLandingCreators(){document.getElementById('landingCreators').innerHTML=(DB.get('creators')||[]).slice(0,6).map(creatorCard).join('');}
+function renderExplore(cat='all'){
+  const all=DB.get('creators')||[],list=cat==='all'?all:all.filter(c=>c.cat===cat);
+  document.getElementById('exploreCreators').innerHTML=list.length?list.map(creatorCard).join(''):`<div class="empty"><div class="empty-icon">🔍</div>No creators here yet.</div>`;
+}
+function filterCat(cat,el){document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderExplore(cat);}
+
+// PROFILE
+function showProfile(id){
+  const creators=DB.get('creators')||[],users=DB.get('users')||{};
+  let c=creators.find(x=>x.id===id)||Object.values(users).find(u=>u.id===id);
+  if(!c)return;_profileContext=c;
+  document.getElementById('profileCoverImg').src=c.cover&&c.cover.startsWith('http')?c.cover:'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80';
+  document.getElementById('profilePic').src=c.avatar||'';
+  document.getElementById('profileName').innerHTML=c.name+(c.verified?'<span class="verified" style="margin-left:6px">v</span>':'');
+  document.getElementById('profileHandle').textContent=(c.handle||'')+(c.cat?' · '+c.cat:'');
+  document.getElementById('profileBio').textContent=c.bio||'';
+  document.getElementById('profileSubsCount').textContent=fmtNum(c.subs||0);
+  document.getElementById('profilePostsCount').textContent=c.posts||0;
+  const subbed=isSubscribed(id);
+  const btn=document.getElementById('profileSubBtn');btn.textContent=subbed?'Subscribed':'Subscribe';btn.style.opacity=subbed?'.6':'1';
+  const msgBtn=document.getElementById('profileMsgBtn');if(msgBtn)msgBtn.style.display=(currentUser&&currentUser.id===id)?'none':'';
+  const price=c.price||9;
+  document.getElementById('profileSubCard').innerHTML=`<div class="sub-card">
+    <div style="font-weight:700;font-size:1rem;margin-bottom:4px">Subscriber Access</div>
+    <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:var(--gold);letter-spacing:-.03em;margin-bottom:14px">$${price}<span style="font-size:.85rem;color:var(--muted);font-family:'DM Sans',sans-serif">/month</span></div>
+    <div class="sub-feat">All exclusive posts</div>
+    <div class="sub-feat">Direct messaging</div>
+    <div class="sub-feat">Early access to new content</div>
+    <button class="btn btn-gold" style="width:100%;margin-top:14px;justify-content:center" onclick="subscribeCreator('${id}','${c.name}',${price})">${subbed?'Subscribed':'Subscribe for $'+price+'/mo'}</button>
+  </div>`;
+  const posts=(DB.get('posts')||[]).filter(p=>p.creator===id);
+  document.getElementById('profilePostsArea').innerHTML=posts.length?posts.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📝</div>No posts yet.</div>`;
+  showPage('profile',null);
+}
+function isSubscribed(id){if(!currentUser)return false;const u=DB.get('user');return !!(u&&(u.subscriptions||[]).includes(id));}
+function subscribeCreator(id,name,price){
+  if(!currentUser){openModal('signup');return;}
+  if(isSubscribed(id)){toast('Already subscribed to '+name,'ℹ️');return;}
+  const u=DB.get('user');u.subscriptions=u.subscriptions||[];u.subscriptions.push(id);DB.set('user',u);currentUser=u;
+  pushNotif(currentUser.id,{icon:'⭐',text:'You subscribed to '+name+'!',time:'just now'});
+  toast('Subscribed to '+name+'!','⭐');showProfile(id);
+}
+function profileSubscribe(){if(_profileContext)subscribeCreator(_profileContext.id,_profileContext.name,_profileContext.price||9);}
+
+// FEED
+function postCard(p){
+  const subbed=isSubscribed(p.creator),locked=p.tier==='paid'&&!subbed;
+  let media='';
+  if(!locked&&p.media&&p.mediaSrc){
+    if(p.media==='image') media=`<div style="background:#000"><img src="${p.mediaSrc}" alt="" style="width:100%;display:block;max-height:560px;object-fit:contain"></div>`;
+    else if(p.media==='video') media=`<div style="background:#000;position:relative"><video src="${p.mediaSrc}" controls playsinline preload="metadata" style="width:100%;display:block;max-height:560px"></video>${p.mediaDuration?`<div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;padding:3px 7px;border-radius:6px">▶ ${p.mediaDuration}s</div>`:''}</div>`;
+  }
+  return `<div class="post-card">
+    <div class="post-head">
+      <img class="post-avatar" src="${p.creatorAvatar||''}" alt="" onerror="this.style.background='var(--card2)'">
+      <div><div class="post-creator-name">${p.creatorName}</div><div class="post-time">${p.time}</div></div>
+      <span class="post-tier-badge ${p.tier==='free'?'tb-free':'tb-paid'}">${p.tier==='free'?'Free':'Subscribers'}</span>
+    </div>
+    ${locked?`<div style="height:90px;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:1.8rem">🔒</div>
+      <div class="post-body post-lock-box"><div class="post-title">${p.title}</div><div class="post-lock-text">Subscribers-only content</div><button class="btn btn-gold btn-sm" onclick="showProfile('${p.creator}')">Subscribe to unlock</button></div>`:`${media}<div class="post-body"><div class="post-title">${p.title}</div><div class="post-text">${p.content}</div></div>`}
+    <div class="post-actions">
+      <button class="post-action tip-btn" onclick="openTipModal('${p.id}','${p.creator}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">💰 Tip · ${(p.tips||0)}</button>
+      <button class="post-action">💬 ${p.comments}</button>
+      <button class="post-action">↗ Share</button>
+    </div>
+  </div>`;
+}
+function renderFeed(){
+  const posts=DB.get('posts')||[];
+  // Show all posts — free posts visible to all, paid posts locked unless subscribed
+  document.getElementById('feedContent').innerHTML=posts.length?posts.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📭</div>No posts yet. Subscribe to creators to see their posts here.</div>`;
+  // Always re-pull from server so feed stays fresh
+  if(sb) loadPostsFromSupabase();
+}
+// tips shown on posts — no like button
+
+// ═══ TIPS ════════════════════════════════════════════════════════════
+function openTipModal(postId, creatorId, creatorName){
+  if(!currentUser){openModal('login');return;}
+  const html=`
+    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.5rem;margin:0 0 4px">Send a tip 💰</h2>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:18px">To ${creatorName||'this creator'}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      ${[1,3,5,10].map(v=>`<button type="button" class="tip-quick" data-amt="${v}" onclick="_setTipAmt(${v})">$${v}</button>`).join('')}
+    </div>
+    <input id="tipAmt" type="number" min="1" max="500" value="5" inputmode="decimal" oninput="_clearQuick()"
+      style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:1rem;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:16px;box-sizing:border-box;text-align:center">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button type="button" onclick="sendTip('${postId}','${creatorId}','stripe')"
+        style="padding:16px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:1.5rem">💳</span>Card / Stripe
+      </button>
+      <button type="button" onclick="sendTip('${postId}','${creatorId}','paypal')"
+        style="padding:16px;background:#0070ba;color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent">
+        <span style="font-size:1.5rem">🅿️</span>PayPal
+      </button>
+    </div>
+    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:12px">🔒 Secured · No card info stored here</div>`;
+  openModal('tip', html);
+  setTimeout(()=>_setTipAmt(5),50);
+}
+function _setTipAmt(v){
+  const i=document.getElementById('tipAmt');if(i)i.value=v;
+  document.querySelectorAll('.tip-quick').forEach(b=>b.classList.toggle('active',+b.dataset.amt===v));
+}
+function _clearQuick(){
+  document.querySelectorAll('.tip-quick').forEach(b=>b.classList.remove('active'));
+}
+function sendTip(postId, creatorId, method){
+  const amt=parseFloat((document.getElementById('tipAmt')||{}).value||'0');
+  const msg=((document.getElementById('tipMsg')||{}).value||'').trim();
+  if(!amt||amt<1){toast('Tip amount must be at least $1','⚠️');return;}
+  if(amt>500){toast('Maximum tip is $500','⚠️');return;}
+  // ── Real payment flow (connect on backend) ──
+  // card  → Stripe Payment Element / Apple Pay / Google Pay (one-click on saved card)
+  // paypal→ PayPal Smart Buttons (one-tap if logged in)
+  // stripe→ Stripe Checkout session for Link / saved methods
+  // For now we simulate success and record the tip locally.
+  const posts=DB.get('posts')||[];
+  const p=posts.find(x=>x.id===postId);
+  if(p){p.tips=(p.tips||0)+1;DB.set('posts',posts);}
+  const tips=DB.get('tips')||[];
+  tips.push({id:'tip_'+Date.now(),postId,creatorId,fromUserId:currentUser.id,fromName:currentUser.name,amount:amt,method,message:msg,at:new Date().toISOString()});
+  DB.set('tips',tips);
+  pushNotif(creatorId,{icon:'💰',text:currentUser.name+' tipped you $'+amt.toFixed(2)+(msg?' — "'+msg+'"':''),time:'just now'});
+  closeModal();
+  toast('Tipped $'+amt.toFixed(2)+' via '+({card:'card',paypal:'PayPal',stripe:'Stripe'}[method])+'!','💰');
+  if(currentPage==='feed')renderFeed();
+  if(currentPage==='profile')renderProfile&&renderProfile();
+}
+
+// MESSAGES
+function getThreads(){
+  if(!currentUser)return[];
+  const msgs=DB.get('messages')||[],seen={};
+  msgs.forEach(m=>{const other=m.from===currentUser.id?m.to:m.from,k=[currentUser.id,other].sort().join('__');
+    if(!seen[k]||new Date(m.at)>new Date(seen[k].at))seen[k]={otherId:other,otherName:m.from===currentUser.id?m.toName:m.fromName,at:m.at,preview:m.text,unread:m.to===currentUser.id&&!m.read};
+  });
+  return Object.values(seen).sort((a,b)=>new Date(b.at)-new Date(a.at));
+}
+function renderMessages(){
+  if(!currentUser)return;
+  const threads=getThreads();
+  document.getElementById('msgThreads').innerHTML=threads.length?threads.map(t=>`
+    <div class="msg-thread ${_activeMsgThread===t.otherId?'act':''}" onclick="openThread('${t.otherId}','${t.otherName}')">
+      <div class="msg-thread-av">${(t.otherName||'?')[0]}</div>
+      <div style="min-width:0;flex:1"><div class="msg-thread-name">${t.otherName}</div><div class="msg-thread-prev">${t.preview}</div></div>
+      ${t.unread?'<div class="msg-unread-dot"></div>':''}
+    </div>`).join(''):`<div style="padding:16px 14px;font-size:.8rem;color:var(--muted)">No conversations yet.</div>`;
+  if(_activeMsgThread)openThread(_activeMsgThread,'');
+}
+function openThread(userId,name){
+  _activeMsgThread=userId;
+  const msgs=DB.get('messages')||[];
+  msgs.forEach(m=>{if(m.to===currentUser.id&&m.from===userId)m.read=true;});
+  DB.set('messages',msgs);_refreshBadges();
+  const users=DB.get('users')||{},creators=DB.get('creators')||[];
+  const other=Object.values(users).find(u=>u.id===userId)||creators.find(c=>c.id===userId);
+  const otherName=other?other.name:name||'User';
+  const thread=msgs.filter(m=>(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id)).sort((a,b)=>new Date(a.at)-new Date(b.at));
+  document.getElementById('msgMain').innerHTML=`
+    <div class="msg-main-head"><button onclick="document.querySelector('.msg-sidebar').style.display='';document.getElementById('msgMain').style.flex='';" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0;display:none" class="msg-back-btn" id="msgBackBtn">←</button><div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">${otherName[0]||'?'}</div><div class="msg-main-name">${otherName}</div></div>
+    <div class="msg-messages" id="msgBubbles">
+      ${thread.map(m=>`<div class="msg-bubble ${m.from===currentUser.id?'mine':'theirs'}">${m.text}</div>`).join('')}
+      ${!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':''}
+    </div>
+    <div class="msg-input-row">
+      <input class="msg-input" id="msgInputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg('${userId}','${otherName}')">
+      <button class="msg-send-btn" onclick="sendMsg('${userId}','${otherName}')">Send</button>
+    </div>`;
+  const b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
+  renderMessages();
+}
+function sendMsg(toId,toName){
+  const inp=document.getElementById('msgInputBox');if(!inp||!inp.value.trim())return;
+  const text=inp.value.trim(),msgs=DB.get('messages')||[];
+  msgs.push({id:'m'+Date.now(),from:currentUser.id,to:toId,fromName:currentUser.name,toName,text,at:new Date().toISOString(),read:false});
+  DB.set('messages',msgs);pushNotif(toId,{icon:'💬',text:currentUser.name+': '+text.slice(0,50),time:'just now'});
+  openThread(toId,toName);
+}
+function openMsgWith(c){
+  if(!c)return;if(!currentUser){openModal('login');return;}
+  if(currentUser.id===c.id){toast("Can\'t message yourself",'ℹ️');return;}
+  // Only subscribers can message creators (either direction)
+  const mySubscriptions=DB.get('user')?.subscriptions||[];
+  const isSubbedToThem=mySubscriptions.includes(c.id);
+  // Check if they are subscribed to me (creator messaging subscriber)
+  const allUsers=DB.get('users')||{};
+  const themUser=Object.values(allUsers).find(u=>u.id===c.id);
+  const theySubToMe=themUser?(themUser.subscriptions||[]).includes(currentUser.id):false;
+  if(!isSubbedToThem&&!theySubToMe){
+    toast('Subscribe to '+c.name+' to send them a message','🔒');
+    showProfile(c.id);return;
+  }
+  _activeMsgThread=c.id;showPage('messages',null);setTimeout(()=>openThread(c.id,c.name),80);
+}
+
+// NOTIFICATIONS
+function pushNotif(userId,notif){
+  const key='notifs_'+userId,list=DB.get(key)||[];
+  list.unshift({...notif,id:'n'+Date.now(),read:false});DB.set(key,list.slice(0,50));
+  if(currentUser&&currentUser.id===userId)_refreshBadges();
+}
+function renderNotifs(){
+  if(!currentUser)return;
+  const list=DB.get('notifs_'+currentUser.id)||[];
+  list.forEach(n=>n.read=true);DB.set('notifs_'+currentUser.id,list);_refreshBadges();
+  document.getElementById('notifList').innerHTML=list.length?list.map(n=>`
+    <div class="notif-item"><div class="notif-icon">${n.icon||'🔔'}</div>
+    <div><div class="notif-text">${n.text}</div><div class="notif-time">${n.time||''}</div></div></div>`).join(''):`<div class="empty"><div class="empty-icon">🔔</div>No notifications yet.</div>`;
+}
+
+// DASHBOARD
+function renderDashboard(){
+  if(!currentUser)return;
+  const u=DB.get('user')||currentUser;
+  document.getElementById('dashGreeting').textContent='Welcome, '+u.name;
+  document.getElementById('dEarned').textContent='$'+fmtNum(u.earned||0);
+  document.getElementById('dSubs').textContent=fmtNum((u.subs||[]).length);
+  document.getElementById('dBal').textContent='$'+(u.balance||0).toFixed(2);
+  document.getElementById('dPosts').textContent=(DB.get('posts')||[]).filter(p=>p.creator===u.id).length;
+  renderCreatorProducts();
+  const sp=document.getElementById('subPriceInput');if(sp)sp.value=u.price||9;
+  renderKycSection(u);
+  renderPayoutZone(u);
+}
+
+// Payouts no longer gated by KYC — always show the button
+function renderPayoutZone(u){
+  const zone=document.getElementById('payoutZone');if(!zone)return;
+  zone.innerHTML='<button class="btn btn-gold btn-sm" onclick="requestPayout()">💸 Request payout</button>';
+}
+function _scrollToKyc(){
+  const el=document.getElementById('kycBoxWrap');
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='box-shadow .4s';el.style.boxShadow='0 0 0 2px var(--gold)';setTimeout(()=>el.style.boxShadow='',1800);}
+}
+function saveSubPrice(){
+  if(!currentUser)return;
+  const v=parseFloat((document.getElementById('subPriceInput')||{}).value||'9');
+  if(isNaN(v)||v<1){toast('Invalid price','⚠️');return;}
+  const u=DB.get('user');u.price=v;DB.set('user',u);currentUser=u;_saveProfile({price:v});
+  const users=DB.get('users')||{};if(users[u.email])users[u.email].price=v;DB.set('users',users);
+  toast('Price updated to $'+v.toFixed(2)+'/mo','✅');
+}
+
+// KYC
+function renderKycSection(u){
+  const wrap=document.getElementById('kycBoxWrap');if(!wrap)return;
+  const st=u.kycStatus||'unsubmitted';
+  const statMap={unsubmitted:'<span style="background:var(--bg3);color:var(--muted);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">Not submitted</span>',pending:'<span style="background:rgba(212,168,67,.12);color:var(--gold);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">⏳ Pending review</span>',approved:'<span style="background:rgba(74,222,128,.12);color:var(--green);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">✅ Verified</span>',rejected:'<span style="background:rgba(232,108,108,.12);color:var(--rose);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">❌ Rejected</span>'};
+  const statusHtml=statMap[st]||'';
+  let inner='';
+  if(st==='approved'){inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin-top:8px">Identity verified. You can receive payouts and display the verified badge.</div>`;}
+  else if(st==='pending'){inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin-top:8px">Documents under review. We will notify you within 24 hours.</div>`;}
+  else{inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin:8px 0 14px">Verify your identity to unlock payouts and the verified badge.</div>
+    <div class="fg"><label>Full legal name</label><input id="kycName" placeholder="As on your ID" value="${u.name||''}"></div>
+    <div class="fg"><label>Date of birth</label><input id="kycDob" type="date"></div>
+    <div class="fg"><label>Country</label><input id="kycCountry" placeholder="Country of residence"></div>
+    <div class="fg"><label>ID front</label><div class="upload-zone" onclick="document.getElementById('kycFront').click()"><input type="file" id="kycFront" accept="image/*,.pdf" onchange="document.getElementById('kycFrontLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload front of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycFrontLbl">JPG, PNG or PDF</div></div></div>
+    <div class="fg"><label>ID back</label><div class="upload-zone" onclick="document.getElementById('kycBack').click()"><input type="file" id="kycBack" accept="image/*,.pdf" onchange="document.getElementById('kycBackLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload back of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycBackLbl">JPG, PNG or PDF</div></div></div>
+    <div class="fg"><label>Selfie with ID</label><div class="upload-zone" onclick="document.getElementById('kycSelfie').click()"><input type="file" id="kycSelfie" accept="image/*" onchange="document.getElementById('kycSelfieLbl').textContent=this.files[0]?.name||'JPG or PNG'"><div style="font-size:1.3rem;margin-bottom:5px">🤳</div><div style="font-size:.78rem;color:var(--muted)">Selfie holding your ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycSelfieLbl">JPG or PNG</div></div></div>
+    <div class="fg"><label>Payout method</label><select id="kycPayoutMethod"><option value="bank">Bank transfer</option><option value="paypal">PayPal</option></select></div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--text)">Payout schedule:</strong><br>
+      💳 PayPal — minimum <strong style="color:var(--gold)">$100</strong>, processed in <strong style="color:var(--gold)">3–7 business days</strong><br>
+      🏦 Bank transfer — minimum <strong style="color:var(--gold)">$500</strong>, processed in <strong style="color:var(--gold)">14–28 business days</strong>
+    </div>
+    <div class="fg"><label>Payout details</label><input id="kycPayoutDetails" placeholder="IBAN / PayPal email"></div>
+    <button class="btn btn-gold" onclick="submitKyc()">Submit for verification →</button>`;}
+  wrap.innerHTML=`<div class="kyc-box"><div class="ds-title">Identity verification (KYC)</div>${inner}</div>`;
+}
+function submitKyc(){
+  if(!currentUser)return;
+  const name=(document.getElementById('kycName')||{}).value||'',dob=(document.getElementById('kycDob')||{}).value||'',country=(document.getElementById('kycCountry')||{}).value||'';
+  if(!name||!dob||!country){toast('Please fill in all fields','⚠️');return;}
+  const requests=DB.get('kycRequests')||[],ei=requests.findIndex(r=>r.userId===currentUser.id);
+  const req={id:'kyc_'+Date.now(),userId:currentUser.id,userName:currentUser.name,userEmail:currentUser.email,legalName:name,dob,country,payoutMethod:(document.getElementById('kycPayoutMethod')||{}).value||'bank',payoutDetails:(document.getElementById('kycPayoutDetails')||{}).value||'',status:'pending',submittedAt:new Date().toISOString()};
+  if(ei>=0)requests[ei]=req;else requests.push(req);DB.set('kycRequests',requests);
+  const u=DB.get('user');u.kycStatus='pending';DB.set('user',u);currentUser=u;_saveProfile({kycStatus:'pending'});
+  const users=DB.get('users')||{};if(users[u.email]){users[u.email].kycStatus='pending';DB.set('users',users);}
+  renderDashboard();toast('KYC submitted! We will review within 24h','✅');
+}
+// ═══ FILE UPLOADS (Supabase Storage) ═══════════════════════════════════
+// Uploads a File to the `media` bucket and returns the public URL.
+// Returns null on failure — caller falls back to local data URL.
+async function uploadToStorage(file, folder){
+  if(!sb||!file) return null;
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=(folder||'misc')+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+  try{
+    const {data,error}=await sb.storage.from('media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+    if(error){console.warn('Storage upload failed:',error);return null;}
+    const {data:pub}=sb.storage.from('media').getPublicUrl(path);
+    return pub?.publicUrl||null;
+  }catch(e){console.warn('Storage upload threw:',e);return null;}
+}
+
+// Holds pending post media (image data URL or video data URL) until publish
+let _pendingPostMedia=null; // {type:'image'|'video', src:dataURL, publicUrl?:string, duration?:seconds}
+
+function _handlePostMedia(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  const isImg=f.type.startsWith('image/'),isVid=f.type.startsWith('video/');
+  if(!isImg&&!isVid){toast('Pick an image or video file','⚠️');return;}
+  const max=isImg?4*1024*1024:20*1024*1024;
+  if(f.size>max){toast((isImg?'Image':'Video')+' is too large — max '+(isImg?'4 MB':'20 MB'),'⚠️');return;}
+  const r=new FileReader();
+  r.onload=function(e){
+    const src=e.target.result;
+    const startUpload=()=>{
+      // Fire-and-forget upload — preview shows immediately, public URL replaces data URL when ready
+      if(!sb)return;
+      uploadToStorage(f,'posts').then(url=>{
+        if(url&&_pendingPostMedia){_pendingPostMedia.publicUrl=url;}
+      });
+    };
+    if(isImg){
+      _pendingPostMedia={type:'image',src,file:f};
+      _renderPostMediaPreview();
+      startUpload();
+    } else {
+      const v=document.createElement('video');
+      v.preload='metadata';
+      v.onloadedmetadata=function(){
+        const dur=v.duration||0;
+        if(dur>60.5){
+          toast('Video is '+Math.round(dur)+'s — max length is 60 seconds','⚠️');
+          _pendingPostMedia=null;
+          const fi=document.getElementById('postMediaFile');if(fi)fi.value='';
+          return;
+        }
+        _pendingPostMedia={type:'video',src,duration:dur,file:f};
+        _renderPostMediaPreview();
+        startUpload();
+      };
+      v.onerror=function(){toast('Could not read this video','⚠️');_pendingPostMedia=null;};
+      v.src=src;
+    }
+  };
+  r.readAsDataURL(f);
+}
+function _renderPostMediaPreview(){
+  const box=document.getElementById('postMediaPreview');if(!box||!_pendingPostMedia)return;
+  if(_pendingPostMedia.type==='image'){
+    box.innerHTML=`<img src="${_pendingPostMedia.src}" alt="preview"><button type="button" class="cover-rm" title="Remove" onclick="event.stopPropagation();_clearPostMedia()">×</button>`;
+  } else {
+    const sec=Math.round(_pendingPostMedia.duration||0);
+    box.innerHTML=`<video src="${_pendingPostMedia.src}" muted playsinline style="width:100%;max-height:200px;object-fit:cover;display:block" controls></video><button type="button" class="cover-rm" title="Remove" onclick="event.stopPropagation();_clearPostMedia()">×</button><div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;padding:3px 7px;border-radius:6px">▶ ${sec}s</div>`;
+  }
+}
+function _clearPostMedia(){
+  _pendingPostMedia=null;
+  const fi=document.getElementById('postMediaFile');if(fi)fi.value='';
+  const box=document.getElementById('postMediaPreview');
+  if(box) box.innerHTML='<div class="cover-up-empty">📸 Tap to add a photo or video<div style="font-size:.7rem;color:var(--muted2);margin-top:4px">Videos limited to 60 seconds</div></div>';
+}
+
+async function publishPost(){
+  if(!currentUser){openModal('login');return;}
+  const title=(document.getElementById('postTitle')||{}).value.trim(),content=(document.getElementById('postContent')||{}).value.trim(),tier=(document.getElementById('postTier')||{}).value||'free';
+  if(!title||!content){toast('Please add a title and content','⚠️');return;}
+
+  // If a media file is selected, ensure it's uploaded before saving the post
+  let mediaUrl=null, mediaType=null, mediaDuration=null;
+  if(_pendingPostMedia){
+    mediaType=_pendingPostMedia.type;
+    mediaDuration=_pendingPostMedia.duration?Math.round(_pendingPostMedia.duration):null;
+    // If background upload finished already, use that URL; otherwise upload now
+    if(_pendingPostMedia.publicUrl){
+      mediaUrl=_pendingPostMedia.publicUrl;
+    } else if(_pendingPostMedia.file){
+      toast('Uploading media…','⏳');
+      mediaUrl=await uploadToStorage(_pendingPostMedia.file,'posts');
+    }
+    if(!mediaUrl){
+      // Last resort: store the data URL inline so the post isn't lost
+      mediaUrl=_pendingPostMedia.src;
+    }
+  }
+
+  let saved=null;
+  try{
+    saved = await apiFetch('/api/posts','POST',{
+      creator_id: currentUser.id,
+      title, content, tier,
+      media_type: mediaType, media_url: mediaUrl
+    });
+  }catch(e){console.warn('post insert threw',e);toast('Could not publish post','⚠️');return;}
+
+  // Mirror into local cache so the feed updates instantly
+  const localPost={
+    id: saved?.id || ('p'+Date.now()),
+    creator: currentUser.id,
+    creatorName: currentUser.name,
+    creatorAvatar: currentUser.avatar||'',
+    title, content, tier, time:'just now', tips:0, comments:0,
+    media: mediaType, mediaSrc: mediaUrl, mediaDuration
+  };
+  const posts=DB.get('posts')||[];
+  posts.unshift(localPost);DB.set('posts',posts);
+
+  document.getElementById('postTitle').value='';
+  document.getElementById('postContent').value='';
+  _clearPostMedia();
+  toast('Post published!','✅');renderDashboard();
+  // Refresh feed cache from server in the background so other devices stay in sync
+  if(sb) loadPostsFromSupabase();
+}
+
+// Pulls the latest posts from Supabase (joined with profile name/avatar) into local cache.
+// Called on page load and after publishing. Falls back silently if Supabase is unreachable.
+async function loadPostsFromSupabase(){
+  try{
+    const {data,error}=await sb
+      .from('posts')
+      .select('id,creator_id,title,content,tier,media_type,media_url,media_duration,tips_count,comments_count,created_at,profiles:creator_id(name,avatar,handle)')
+      .order('created_at',{ascending:false})
+      .limit(200);
+    if(error){console.warn('posts fetch failed',error);return;}
+    const mapped=(data||[]).map(r=>({
+      id:r.id,
+      creator:r.creator_id,
+      creatorName:r.profiles?.name||'Creator',
+      creatorAvatar:r.profiles?.avatar||'',
+      title:r.title, content:r.content, tier:r.tier||'free',
+      time:_timeAgo(r.created_at),
+      tips:r.tips_count||0, comments:r.comments_count||0,
+      media:r.media_type, mediaSrc:r.media_url, mediaDuration:r.media_duration
+    }));
+    DB.set('posts',mapped);
+    if(currentPage==='feed') renderFeed();
+    else if(currentPage==='profile'&&_profileContext) showProfile(_profileContext);
+  }catch(e){console.warn('posts fetch threw',e);}
+}
+// Auto-refresh feed every 30 seconds when on feed page
+setInterval(()=>{ if(currentPage==='feed'&&sb) loadPostsFromSupabase(); }, 30000);
+
+// Human-friendly time ago, since the DB stores ISO timestamps
+function _timeAgo(iso){
+  if(!iso) return 'just now';
+  const t=new Date(iso).getTime(), s=Math.max(1,Math.floor((Date.now()-t)/1000));
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  if(s<604800) return Math.floor(s/86400)+'d ago';
+  return new Date(iso).toLocaleDateString();
+}
+function requestPayout(){
+  if(!currentUser){openModal('login');return;}
+  const u=DB.get('user');
+  const bal=u.balance||0;
+  if(bal<100){toast('You need at least $100 to request a payout','⚠️');return;}
+  // Pre-fill from previously saved KYC payout details if any
+  const kycReq=(DB.get('kycRequests')||[]).find(r=>r.userEmail===u.email);
+  const savedMethod=kycReq?.payoutMethod||'paypal';
+  const savedDetails=kycReq?.payoutDetails||'';
+  const canBank=bal>=500;
+  const html=`
+    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.5rem;margin:0 0 4px">Request payout</h2>
+    <div style="color:var(--muted);font-size:.85rem;margin-bottom:18px">Available balance: <strong style="color:var(--gold)">$${bal.toFixed(2)}</strong></div>
+
+    <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">Choose method</div>
+    <div style="display:grid;gap:8px;margin-bottom:18px">
+      <label class="payout-opt" data-method="paypal">
+        <input type="radio" name="poMethod" value="paypal" ${savedMethod==='paypal'?'checked':''} onchange="_syncPayoutOpt()">
+        <div class="payout-opt-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>💳 PayPal</strong><span style="font-size:.7rem;color:var(--green);font-weight:600">Faster</span></div>
+          <div style="font-size:.76rem;color:var(--muted);margin-top:3px">Minimum $100 · Processed in 3–7 business days</div>
+        </div>
+      </label>
+      <label class="payout-opt ${canBank?'':'disabled'}" data-method="bank">
+        <input type="radio" name="poMethod" value="bank" ${savedMethod==='bank'&&canBank?'checked':''} ${canBank?'':'disabled'} onchange="_syncPayoutOpt()">
+        <div class="payout-opt-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>🏦 Bank transfer</strong>${canBank?'':'<span style="font-size:.7rem;color:var(--muted2)">Needs $500+</span>'}</div>
+          <div style="font-size:.76rem;color:var(--muted);margin-top:3px">Minimum $500 · Processed in 14–28 business days</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="fg"><label>Amount ($)</label><input id="poAmt" type="number" min="100" max="${bal}" value="${Math.min(bal,100).toFixed(2)}" inputmode="decimal"></div>
+    <div class="fg"><label id="poDestLabel">PayPal email</label><input id="poDest" placeholder="${savedMethod==='bank'?'IBAN / account number':'paypal@example.com'}" value="${savedDetails.replace(/"/g,'&quot;')}"></div>
+    <div id="poSummary" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5"></div>
+
+    <button class="btn btn-gold" style="width:100%" onclick="submitPayout()">Submit request →</button>
+    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:12px">Need to change destination? Update under Identity verification.</div>`;
+  openModal('payout', html);
+  setTimeout(_syncPayoutOpt, 60);
+}
+
+function _syncPayoutOpt(){
+  const sel=document.querySelector('input[name="poMethod"]:checked');
+  if(!sel)return;
+  const m=sel.value;
+  document.querySelectorAll('.payout-opt').forEach(el=>el.classList.toggle('selected', el.dataset.method===m));
+  const lbl=document.getElementById('poDestLabel');
+  const inp=document.getElementById('poDest');
+  const amt=document.getElementById('poAmt');
+  const sum=document.getElementById('poSummary');
+  if(m==='paypal'){
+    if(lbl)lbl.textContent='PayPal email';
+    if(inp)inp.placeholder='paypal@example.com';
+    if(amt){amt.min=100; if(+amt.value<100)amt.value=100;}
+    if(sum)sum.innerHTML='💳 <strong style="color:var(--text)">PayPal</strong> · min <strong style="color:var(--text)">$100</strong> · arrives in 3–7 business days';
+  } else {
+    if(lbl)lbl.textContent='IBAN / account number';
+    if(inp)inp.placeholder='e.g. GB29 NWBK 6016 1331 9268 19';
+    if(amt){amt.min=500; if(+amt.value<500)amt.value=500;}
+    if(sum)sum.innerHTML='🏦 <strong style="color:var(--text)">Bank transfer</strong> · min <strong style="color:var(--text)">$500</strong> · arrives in 14–28 business days';
+  }
+}
+
+function submitPayout(){
+  const u=DB.get('user');if(!u)return;
+  const method=(document.querySelector('input[name="poMethod"]:checked')||{}).value||'paypal';
+  const amt=parseFloat((document.getElementById('poAmt')||{}).value||'0');
+  const dest=((document.getElementById('poDest')||{}).value||'').trim();
+  const minAmt=method==='paypal'?100:500;
+  const schedule=method==='paypal'?'3–7 business days':'14–28 business days';
+  if(!amt||isNaN(amt)){toast('Enter a valid amount','⚠️');return;}
+  if(amt<minAmt){toast('Minimum for '+(method==='paypal'?'PayPal':'bank transfer')+' is $'+minAmt,'⚠️');return;}
+  if(amt>(u.balance||0)){toast('Insufficient balance','⚠️');return;}
+  if(!dest){toast('Enter your '+(method==='paypal'?'PayPal email':'IBAN / account number'),'⚠️');return;}
+  if(method==='paypal'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dest)){toast('That doesn\'t look like a valid email','⚠️');return;}
+  const requests=DB.get('payoutRequests')||[];
+  requests.push({id:'po_'+Date.now(),userId:u.id,userName:u.name,userEmail:u.email,amount:amt.toFixed(2),method,details:dest,status:'pending',requestedAt:new Date().toISOString(),schedule});
+  DB.set('payoutRequests',requests);
+  closeModal();
+  toast('Payout of $'+amt.toFixed(2)+' via '+(method==='paypal'?'PayPal':'bank')+' submitted — arrives in '+schedule,'💸');
+}
+
+// ADMIN
+function adminTab(tab,el){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');const panel=document.getElementById('ap-'+tab);if(panel)panel.classList.add('active');
+  if(tab==='kyc')renderAdminKyc();if(tab==='payouts')renderAdminPayouts();if(tab==='users')renderAdminUsers();if(tab==='overview')renderAdminOverview();
+}
+function renderAdmin(){if(!currentUser||currentUser.role!=='admin'){toast('Admin only','🔐');showPage('landing',null);return;}renderAdminOverview();}
+function renderAdminOverview(){
+  const users=DB.get('users')||{},posts=DB.get('posts')||[],kycs=DB.get('kycRequests')||[],pays=DB.get('payoutRequests')||[];
+  const pending=kycs.filter(k=>k.status==='pending').length;
+  const kb=document.getElementById('kycBadge');if(kb)kb.textContent=pending>0?pending:'';
+  document.getElementById('adminStats').innerHTML=[
+    ['Total users',Object.keys(users).length,''],
+    ['Total posts',posts.length,''],
+    ['KYC pending',pending,'var(--gold)'],
+    ['Payouts pending',pays.filter(p=>p.status==='pending').length,'var(--purple)'],
+  ].map(([l,v,c])=>`<div class="admin-stat-card"><div class="dash-card-label">${l}</div><div style="font-family:'Fraunces',serif;font-size:1.6rem;color:${c||'var(--text)'}">${v}</div></div>`).join('');
+}
+function renderAdminKyc(){
+  const requests=DB.get('kycRequests')||[],el=document.getElementById('adminKycList');
+  if(!requests.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🪪</div>No KYC requests yet.</div>`;return;}
+  el.innerHTML=`<table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Legal name</th><th>Country</th><th>Payout</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  ${requests.map(r=>`<tr>
+    <td data-label="Name">${r.userName}</td><td data-label="Email" style="font-size:.76rem;color:var(--muted)">${r.userEmail}</td>
+    <td data-label="Legal name">${r.legalName}</td><td data-label="Country">${r.country}</td>
+    <td data-label="Payout" style="font-size:.74rem">${r.payoutMethod}: ${r.payoutDetails||'—'}</td>
+    <td data-label="Date" style="font-size:.74rem;color:var(--muted)">${new Date(r.submittedAt).toLocaleDateString()}</td>
+    <td data-label="Status">${{pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved</span>',rejected:'<span class="badge-rose">Rejected</span>'}[r.status]}</td>
+    <td data-label="Action">${r.status==='pending'?`<button class="action-btn approve" onclick="adminKycAction('${r.id}','approved')">✅ Approve</button> <button class="action-btn reject" onclick="adminKycAction('${r.id}','rejected')">❌ Reject</button>`:'—'}</td>
+  </tr>`).join('')}</tbody></table>`;
+}
+function adminKycAction(kycId,action){
+  const requests=DB.get('kycRequests')||[],r=requests.find(x=>x.id===kycId);if(!r)return;
+  r.status=action;DB.set('kycRequests',requests);
+  const users=DB.get('users')||{};
+  if(users[r.userEmail]){users[r.userEmail].kycStatus=action;if(action==='approved')users[r.userEmail].verified=true;DB.set('users',users);}
+  if(currentUser&&currentUser.email===r.userEmail){currentUser.kycStatus=action;if(action==='approved')currentUser.verified=true;DB.set('user',currentUser);_saveProfile({kycStatus:action,verified:action==='approved'});}
+  const uid=Object.values(users).find(u=>u.email===r.userEmail)?.id;
+  if(uid)pushNotif(uid,{icon:action==='approved'?'✅':'❌',text:'KYC '+(action==='approved'?'approved! You are now verified.':'rejected. Please resubmit with clearer documents.'),time:'just now'});
+  toast('KYC '+(action==='approved'?'approved':'rejected')+' for '+r.userName,action==='approved'?'✅':'❌');
+  renderAdminKyc();renderAdminOverview();
+}
+function renderAdminPayouts(){
+  const requests=DB.get('payoutRequests')||[],el=document.getElementById('adminPayoutList');
+  if(!requests.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💸</div>No payout requests yet.</div>`;return;}
+  el.innerHTML=`<table class="admin-table"><thead><tr><th>Creator</th><th>Email</th><th>Amount</th><th>Method</th><th>Details</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  ${requests.map(r=>`<tr>
+    <td>${r.userName}</td><td style="font-size:.76rem;color:var(--muted)">${r.userEmail}</td>
+    <td style="font-weight:700;color:var(--gold)">$${r.amount}</td><td>${r.method}</td>
+    <td style="font-size:.74rem">${r.details||'—'}</td>
+    <td style="font-size:.74rem;color:var(--muted)">${new Date(r.requestedAt).toLocaleDateString()}</td>
+    <td>${{pending:'<span class="badge-gold">Pending</span>',paid:'<span class="badge-green">Paid</span>',rejected:'<span class="badge-rose">Rejected</span>'}[r.status]}</td>
+    <td>${r.status==='pending'?`<button class="action-btn payout" onclick="adminPayoutAction('${r.id}','paid')">💸 Mark Paid</button> <button class="action-btn reject" onclick="adminPayoutAction('${r.id}','rejected')">❌ Reject</button>`:'—'}</td>
+  </tr>`).join('')}</tbody></table>`;
+}
+function adminPayoutAction(pid,action){
+  const requests=DB.get('payoutRequests')||[],r=requests.find(x=>x.id===pid);if(!r)return;
+  r.status=action;DB.set('payoutRequests',requests);
+  if(action==='paid'){const users=DB.get('users')||{};if(users[r.userEmail]){users[r.userEmail].balance=Math.max(0,(users[r.userEmail].balance||0)-parseFloat(r.amount));DB.set('users',users);}}
+  const users2=DB.get('users')||{},uid=Object.values(users2).find(u=>u.email===r.userEmail)?.id;
+  if(uid)pushNotif(uid,{icon:action==='paid'?'💸':'❌',text:'Payout of $'+r.amount+' '+(action==='paid'?'sent to your '+r.method+'!':'was rejected.'),time:'just now'});
+  toast('Payout '+(action==='paid'?'marked as paid':'rejected'),'💸');renderAdminPayouts();renderAdminOverview();
+}
+function renderAdminUsers(){
+  const users=DB.get('users')||{},tbody=document.getElementById('adminUserBody'),list=Object.values(users);
+  tbody.innerHTML=list.length?list.map(u=>`<tr>
+    <td>${u.name}</td><td style="font-size:.76rem;color:var(--muted)">${u.email}</td>
+    <td><span class="${u.role==='admin'?'badge-rose':'badge-blue'}">${u.role}</span></td>
+    <td>${{unsubmitted:'—',pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Verified</span>',rejected:'<span class="badge-rose">Rejected</span>'}[u.kycStatus||'unsubmitted']}</td>
+    <td style="color:var(--gold)">$${(u.balance||0).toFixed(2)}</td>
+    <td style="font-size:.74rem;color:var(--muted)">${u.joinedAt?new Date(u.joinedAt).toLocaleDateString():'—'}</td>
+  </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:22px">No users yet.</td></tr>`;
+}
+
+
+// ═══ SHOP ═══════════════════════════════════════════════════════
+function _seedProducts(){
+  if(DB.get('products')) return;
+  DB.set('products',[
+    {id:'pr1',creatorId:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',verified:true,title:'Lisbon Light — Lightroom Preset Pack',type:'preset',desc:'12 cinematic presets capturing the golden hour tones of Lisbon. One-click magic for travel photography.',includes:['12 .xmp Lightroom presets','Colour profile guide PDF','Mobile DNG versions included','Lifetime updates'],price:29,cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',sales:184,rating:4.8,reviews:62,trending:true,emoji:'🌇',preview:'These presets work on any RAW file. The "Alfama Glow" preset is the hero — warm shadows with lifted highlights.'},
+    {id:'pr2',creatorId:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',verified:true,title:'The Long-form Writing Masterclass',type:'course',desc:'8-week course covering research, structure, voice, and publishing. Used by 2,000+ writers.',includes:['8 weeks of video lessons (6+ hours)','Weekly writing assignments','Private community access','Certificate of completion','Lifetime access'],price:149,cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',sales:412,rating:4.9,reviews:187,bestseller:true,emoji:'✍️',preview:'Week 1 free preview: Why most long-form pieces fail in the first 200 words — and the structural fix.'},
+    {id:'pr3',creatorId:'c3',creatorName:'Yuki Tanaka',creatorAvatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',verified:true,title:'Ambient Composition Starter Kit',type:'audio',desc:'24 royalty-free ambient loops, 8 texture pads and 3 full stems from Coastal Drift.',includes:['24 ambient loops (WAV 48kHz)','8 texture pad samples','3 full production stems','Royalty-free commercial licence'],price:49,cover:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&q=80',sales:263,rating:4.7,reviews:94,emoji:'🎹',preview:'30-second preview of the "Fog Harbour" loop — flagship track from the kit.'},
+    {id:'pr4',creatorId:'c4',creatorName:'Adaeze Nwosu',creatorAvatar:'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80',verified:true,title:'African Pattern Brush Set — Procreate',type:'preset',desc:'60 hand-drawn brushes inspired by Kente, Adire and Ankara patterns. Compatible with Procreate 5+.',includes:['60 .brush files for Procreate','Pattern reference PDF (A4)','3 colour palette .swatches','Video tutorial: applying patterns'],price:39,cover:'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',sales:97,rating:4.6,reviews:41,emoji:'🎨',preview:'The Kente Weave brush is the most versatile — works at any opacity for fabric texture or standalone pattern.'},
+    {id:'pr5',creatorId:'c5',creatorName:'Marco Bellini',creatorAvatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',verified:true,title:'The Italian Home Cook E-book',type:'ebook',desc:'142 pages, 60 recipes from Bologna to Calabria. PDF + ePub included. No pasta machine required.',includes:['142-page PDF (print-ready)','ePub for e-readers','60 tested recipes','Regional ingredient sourcing guide','Metric + imperial measurements'],price:24,cover:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80',sales:731,rating:4.9,reviews:302,bestseller:true,emoji:'🍝',preview:'Chapter 1 free: The ragù that took 14 visits to Calabria — why slow beats fast every single time.'},
+    {id:'pr6',creatorId:'c6',creatorName:'Priya Sharma',creatorAvatar:'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=200&q=80',verified:true,title:'12-Week Functional Strength Programme',type:'course',desc:'Full training plan, nutrition guide and daily check-in tracker. All levels welcome.',includes:['12-week progressive training plan','Nutrition & macro guide','Printable daily tracker','24 video demonstrations','WhatsApp check-in group access'],price:89,cover:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',sales:1203,rating:5.0,reviews:541,bestseller:true,trending:true,emoji:'🏋️',preview:'Week 1 overview: Why progressive overload beats every fitness trend — and your exact starting point.'},
+    {id:'pr7',creatorId:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',verified:true,title:'Newsletter Launch Templates',type:'template',desc:'10 Substack and Beehiiv templates for launch, onboarding, and monetisation. Copy-paste ready.',includes:['10 email templates (HTML + plain text)','Welcome sequence (5 emails)','Monetisation pitch templates','Subject line swipe file (50 lines)'],price:19,cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',sales:558,rating:4.5,reviews:178,emoji:'📄',preview:'Template 1 free: The welcome email that achieves 73% open rate — copy the exact structure.'},
+    {id:'pr8',creatorId:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',verified:true,title:'Travel Photography Masterclass',type:'course',desc:'From gear to editing: 6 hours of video lessons, assignments and community access.',includes:['6 hours of HD video lessons','Gear guide PDF (all budgets)','Editing workflow in Lightroom','Assignment feedback community','Lifetime access + updates'],price:119,cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',sales:329,rating:4.8,reviews:143,trending:true,emoji:'📷',preview:'Lesson 1 free: The single camera setting that will immediately improve 80% of your travel shots.'},
+  ]);
+}
+_seedProducts();
+
+function starsHtml(r){
+  const full=Math.floor(r),half=r%1>=0.5;
+  let s='';
+  for(let i=0;i<5;i++){
+    if(i<full) s+='★';
+    else if(i===full&&half) s+='½';
+    else s+='☆';
+  }
+  return s;
+}
+
+function shopCard(p){
+  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)'}[p.type]||'rgba(122,122,140,.9)';
+  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type;
+  const bought=(DB.get('purchases')||[]).some(b=>b.productId===p.id&&b.userId===currentUser?.id);
+  const reviews=DB.get('reviews_'+p.id)||[];
+  const avgRating=reviews.length?((reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1)):(p.rating||0);
+  const reviewCount=reviews.length||(p.reviews||0);
+  return `<div class="shop-card">
+    <div class="shop-card-img">
+      ${p.cover?`<img src="${p.cover}" alt="">`:''}
+      <span class="shop-card-emoji">${p.emoji||'📦'}</span>
+      <span class="shop-type-badge" style="background:${typeColor};color:#0a0a0b">${typeLabel}</span>
+      ${p.trending?`<span class="shop-momentum">🔥 Trending</span>`:''}
+      ${p.bestseller&&!p.trending?`<span class="shop-momentum" style="background:rgba(212,168,67,.9);color:#0a0a0b">⭐ Bestseller</span>`:''}
+      <span class="shop-instant">📥 Instant download</span>
+    </div>
+    <div class="shop-card-body">
+      <div class="shop-card-title">${p.title}</div>
+      <div class="shop-card-creator">
+        <img src="${p.creatorAvatar}" alt="">
+        ${p.creatorName}${p.verified?' <span class="verified">v</span>':''}
+        <span style="color:var(--muted2);margin-left:2px">· ${fmtNum(p.creatorSubs||0)} subs</span>
+      </div>
+      <div class="shop-rating">
+        <span class="shop-stars">${starsHtml(parseFloat(avgRating))}</span>
+        <span style="font-size:.78rem;font-weight:700;color:var(--text)">${avgRating}</span>
+        <span class="shop-rating-count">(${reviewCount} reviews)</span>
+      </div>
+      <div class="shop-includes">
+        <div class="shop-includes-title">What's included</div>
+        ${(p.includes||[]).slice(0,4).map(i=>`<div class="shop-include-item">${i}</div>`).join('')}
+      </div>
+      ${p.preview?`<div style="background:var(--bg3);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5;font-style:italic">"${p.preview}"</div>`:''}
+      <div class="shop-card-footer">
+        <div>
+          <div class="shop-price">$${p.price}</div>
+          <div class="shop-sales-count">${(p.sales||0).toLocaleString()} sold</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${bought
+            ?`<span style="font-size:.76rem;color:var(--green);font-weight:700">✓ Purchased</span>
+               <button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">View</button>
+               <button class="shop-preview-btn" onclick="leaveReview('${p.id}','${p.title.replace(/'/g,'')}')">Leave review</button>`
+            :`<button class="shop-buy-btn" onclick="buyProduct('${p.id}')">Buy now</button>
+               <button class="shop-preview-btn" onclick="showReviews('${p.id}','${p.title.replace(/'/g,'')}')">Reviews (${reviewCount})</button>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+let _shopCat='all';
+function renderShop(cat){
+  if(cat!==undefined) _shopCat=cat;
+  let all=DB.get('products')||[];
+  if(_shopCat!=='all') all=all.filter(p=>p.type===_shopCat);
+  const sort=(document.getElementById('shopSort')||{}).value||'popular';
+  if(sort==='popular') all=[...all].sort((a,b)=>(b.sales||0)-(a.sales||0));
+  else if(sort==='newest') all=[...all].reverse();
+  else if(sort==='price_asc') all=[...all].sort((a,b)=>a.price-b.price);
+  else if(sort==='price_desc') all=[...all].sort((a,b)=>b.price-a.price);
+  else if(sort==='rating') all=[...all].sort((a,b)=>(b.rating||0)-(a.rating||0));
+  document.getElementById('shopGrid').innerHTML=all.length?all.map(shopCard).join(''):`<div class="empty"><div class="empty-icon">🛒</div>No products in this category yet.</div>`;
+  // Pull latest from server in the background
+  if(sb) loadProductsFromSupabase();
+}
+function filterShop(cat,el){
+  document.querySelectorAll('#shopCatTabs .cat').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');renderShop(cat);
+}
+
+function buyProduct(id){
+  if(!currentUser){openModal('login');return;}
+  const products=DB.get('products')||[],p=products.find(x=>x.id===id);
+  if(!p) return;
+  const purchases=DB.get('purchases')||[];
+  if(purchases.some(b=>b.productId===id&&b.userId===currentUser.id)){viewPurchase(id);return;}
+  // ── Delivery flow (connect Supabase to make this real) ──
+  // 1. On real backend: create Stripe/PayPal checkout session
+  // 2. On payment success webhook: write row to `purchases` table in Supabase
+  // 3. Supabase Edge Function sends email via Resend with signed Supabase Storage download URL
+  // 4. Download URL expires after 24h; buyer can re-request from their library
+  purchases.push({id:'pur_'+Date.now(),productId:id,userId:currentUser.id,productTitle:p.title,price:p.price,boughtAt:new Date().toISOString()});
+  DB.set('purchases',purchases);
+  p.sales=(p.sales||0)+1;DB.set('products',products);
+  pushNotif(currentUser.id,{icon:'📥',text:'Purchased "'+p.title+'" — open it from your Library',time:'just now'});
+  toast('Purchase complete! Opening your delivery…','✅');
+  renderShop();
+  setTimeout(()=>viewPurchase(id),400);
+}
+
+// Show the deliverable contents the creator uploaded — what the buyer paid for
+function viewPurchase(id){
+  if(!currentUser){openModal('login');return;}
+  const products=DB.get('products')||[];
+  // Include seeded + user-created products
+  let p=products.find(x=>x.id===id);
+  if(!p){toast('Product not found','⚠️');return;}
+  const owned=(DB.get('purchases')||[]).some(b=>b.productId===id&&b.userId===currentUser.id);
+  if(!owned){toast('Purchase this product first','🔒');return;}
+  const d=p.deliverables||{};
+  let body='';
+  if(p.type==='course'){
+    body=`${d.intro?`<p style="color:var(--muted);line-height:1.55;margin:0 0 16px">${_esc(d.intro)}</p>`:''}
+      <div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">📚 ${(d.lessons||[]).length} Lessons</div>
+      ${(d.lessons||[]).map((l,i)=>`<a class="lesson-link" href="${_esc(l.url)}" target="_blank" rel="noopener"><span style="background:var(--gold);color:#0a0a0b;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0">${i+1}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(l.title)}</span><span style="color:var(--muted);font-size:.85rem">▶</span></a>`).join('')||'<div style="color:var(--muted);font-size:.85rem">No lessons available yet.</div>'}`;
+  } else if(d.fileUrl){
+    const meta=[];
+    if(d.pages)meta.push(d.pages+' pages');
+    if(d.count)meta.push(d.count+' items');
+    if(d.duration)meta.push(d.duration+' min');
+    if(d.format)meta.push(d.format);
+    if(d.compat)meta.push(d.compat);
+    body=`${meta.length?`<div style="color:var(--muted);font-size:.82rem;margin-bottom:14px">${meta.join(' · ')}</div>`:''}
+      ${d.contents?`<p style="color:var(--text);line-height:1.55;margin:0 0 16px;font-size:.9rem">${_esc(d.contents)}</p>`:''}
+      <a class="modal-btn" href="${_esc(d.fileUrl)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">⬇ Download</a>
+      ${d.install?`<div style="margin-top:16px;padding:12px;background:var(--bg2);border-radius:10px;font-size:.82rem;color:var(--muted);line-height:1.5"><strong style="color:var(--text);display:block;margin-bottom:4px">How to use</strong>${_esc(d.install)}</div>`:''}`;
+  } else {
+    body=`<div style="color:var(--muted);text-align:center;padding:20px 0">${p.includes&&p.includes.length?'<div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">What\'s included</div>'+p.includes.map(i=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);text-align:left">✓ ${_esc(i)}</div>`).join(''):'Delivery details will be emailed by the creator.'}</div>`;
+  }
+  const html=`
+    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.4rem;margin:0 0 4px;display:flex;align-items:center;gap:8px"><span>${p.emoji||'📦'}</span>${_esc(p.title)}</h2>
+    <div style="color:var(--muted);font-size:.82rem;margin-bottom:18px">by ${_esc(p.creatorName||'')}</div>
+    ${body}
+    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:14px">🔒 Access stays in your Library forever</div>`;
+  openModal('purchase', html);
+}
+function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function renderLibrary(){
+  const wrap=document.getElementById('libraryList');if(!wrap)return;
+  if(!currentUser){wrap.innerHTML='<div class="empty">Sign in to view your library.</div>';return;}
+  const purchases=DB.get('purchases')||[];
+  const mine=purchases.filter(b=>b.userId===currentUser.id).reverse();
+  if(!mine.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">📚</div>No purchases yet. Browse the <a onclick="showPage(\'shop\',null)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Shop</a> to find courses, e-books, presets and more.</div>';return;}
+  const products=DB.get('products')||[];
+  wrap.innerHTML=mine.map(pur=>{
+    const p=products.find(x=>x.id===pur.productId);
+    if(!p) return `<div class="lib-card"><h3>${_esc(pur.productTitle||'Product')}</h3><div class="lib-meta">No longer available · paid $${pur.price}</div></div>`;
+    const d=p.deliverables||{};
+    let summary='';
+    if(p.type==='course') summary=(d.lessons||[]).length+' lessons';
+    else if(d.fileUrl) summary=[d.pages&&d.pages+' pages',d.count&&d.count+' items',d.format].filter(Boolean).join(' · ')||'Download ready';
+    else summary='Delivery details available';
+    const date=new Date(pur.boughtAt).toLocaleDateString();
+    return `<div class="lib-card">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        ${p.cover?`<div style="width:64px;height:64px;border-radius:10px;background:url('${_esc(p.cover)}') center/cover;flex-shrink:0"></div>`:`<div style="width:64px;height:64px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">${p.emoji||'📦'}</div>`}
+        <div style="flex:1;min-width:0">
+          <h3 style="overflow:hidden;text-overflow:ellipsis">${_esc(p.title)}</h3>
+          <div class="lib-meta">${_esc(p.creatorName||'')} · ${summary} · bought ${date}</div>
+          <button class="btn btn-gold btn-sm" onclick="viewPurchase('${p.id}')">Open →</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showReviews(productId, title){
+  const reviews=DB.get('reviews_'+productId)||[];
+  const products=DB.get('products')||[];
+  const p=products.find(x=>x.id===productId);
+  const baseRating=p?.rating||4.5,baseCount=p?.reviews||0;
+  const allRevs=[...reviews];
+  // show seed reviews for demo products
+  if(productId.startsWith('pr')&&!reviews.length){
+    allRevs.push({author:'Sarah M.',rating:5,text:'Absolutely worth every penny. The quality is incredible.',at:'2 weeks ago'});
+    allRevs.push({author:'James K.',rating:4,text:'Really solid. Would love even more content but great value.',at:'1 month ago'});
+    allRevs.push({author:'Lena P.',rating:5,text:'Changed how I approach this completely. Highly recommend.',at:'3 weeks ago'});
+  }
+  openModal('reviews',`
+    <h2>Reviews — ${title}</h2>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div style="font-family:'Fraunces',serif;font-size:3rem;font-weight:400;color:var(--gold);line-height:1">${baseRating}</div>
+      <div>
+        <div style="color:var(--gold);font-size:1.1rem;letter-spacing:2px">${starsHtml(baseRating)}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${(reviews.length+baseCount).toLocaleString()} reviews</div>
+      </div>
+    </div>
+    <div class="review-list">
+      ${allRevs.map(r=>`<div class="review-item">
+        <div class="review-author">${r.author||'Anonymous'}</div>
+        <div class="review-stars">${starsHtml(r.rating)}</div>
+        <div class="review-text">${r.text}</div>
+        <div style="font-size:.68rem;color:var(--muted2);margin-top:4px">${r.at||''}</div>
+      </div>`).join('')}
+    </div>
+    <button class="modal-btn outline" onclick="closeModal()">Close</button>
+  `);
+}
+
+function leaveReview(productId, title){
+  if(!currentUser){openModal('login');return;}
+  openModal('review',`
+    <h2>Leave a review</h2>
+    <p>${title}</p>
+    <div class="fg"><label>Rating</label>
+      <select id="revRating">
+        <option value="5">★★★★★ Excellent</option>
+        <option value="4">★★★★☆ Good</option>
+        <option value="3">★★★☆☆ Average</option>
+        <option value="2">★★☆☆☆ Poor</option>
+        <option value="1">★☆☆☆☆ Terrible</option>
+      </select></div>
+    <div class="fg"><label>Your review</label>
+      <textarea id="revText" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;resize:vertical;min-height:80px;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" placeholder="What did you think?"></textarea></div>
+    <div class="err-msg" id="rev-err"></div>
+    <button class="modal-btn" onclick="submitReview('${productId}')">Submit review</button>
+    <button class="modal-btn outline" style="margin-top:8px" onclick="closeModal()">Cancel</button>
+  `);
+}
+
+function submitReview(productId){
+  const rating=parseInt((document.getElementById('revRating')||{}).value||'5');
+  const text=(document.getElementById('revText')||{}).value.trim();
+  if(!text){document.getElementById('rev-err').textContent='Please write a review.';return;}
+  const reviews=DB.get('reviews_'+productId)||[];
+  reviews.unshift({author:currentUser.name,rating,text,at:'just now',userId:currentUser.id});
+  DB.set('reviews_'+productId,reviews);
+  closeModal();toast('Review submitted!','⭐');renderShop();
+}
+
+// ─── Dashboard: add product form + list creator products ───
+function renderCreatorProducts(){
+  const el=document.getElementById('creatorProductsWrap');if(!el)return;
+  const all=DB.get('products')||[];
+  const mine=all.filter(p=>p.creatorId===currentUser?.id);
+  el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;margin-bottom:8px"><div class="ds-title" style="margin:0">My products (${mine.length})</div><button class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:5px 10px" onclick="openAddProductModal()">+ Add</button></div>`+
+    (mine.length?mine.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:1.3rem">${p.emoji||'📦'}</span>
+      <div style="flex:1"><div style="font-weight:600;font-size:.88rem">${p.title}</div><div style="font-size:.74rem;color:var(--muted)">${p.type} · $${p.price} · ${p.sales||0} sold</div></div>
+      <button style="background:none;border:1px solid var(--rose);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="deleteProduct('${p.id}')">Remove</button>
+    </div>`).join(''):'<div style="font-size:.82rem;color:var(--muted);padding:8px 0">No products yet. Tap the gold ➕ button in the bottom bar to upload your first one.</div>');
+}
+
+// Add Product form lives in a modal opened by the + Upload bottom-nav button
+function openAddProductModal(){
+  if(!currentUser){openModal('login');return;}
+  const html=`<h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.5rem;margin:0 0 18px">Add new product</h2>
+    <div class="fg"><label>Title</label><input id="prodTitle" placeholder="e.g. Lightroom Preset Pack" maxlength="60"></div>
+    <div class="add-prod-grid">
+      <div class="fg"><label>Type</label><select id="prodType" onchange="_renderDeliverables()">
+        <option value="course">🎓 Course</option><option value="ebook">📖 E-book</option>
+        <option value="preset">🎨 Presets</option><option value="template">📄 Template</option><option value="audio">🎵 Audio</option>
+      </select></div>
+      <div class="fg"><label>Price ($)</label><input id="prodPrice" type="number" min="1" placeholder="29"></div>
+    </div>
+    <div class="fg"><label>Short description <span style="color:var(--muted2);font-weight:400">— shown on the shop card</span></label><textarea id="prodDesc" maxlength="180" placeholder="One-line pitch: what do buyers get?" oninput="_charCount('prodDesc','prodDescCount',180)"></textarea><div style="font-size:.68rem;color:var(--muted2);text-align:right;margin-top:-6px"><span id="prodDescCount">0</span>/180</div></div>
+    <div class="fg"><label>Cover image <span style="color:var(--muted2);font-weight:400">— optional, max 2 MB</span></label>
+      <input id="prodCoverFile" type="file" accept="image/*" style="display:none" onchange="_handleCoverUpload(event)">
+      <div id="prodCoverPreview" class="cover-up" onclick="document.getElementById('prodCoverFile').click()">
+        <div class="cover-up-empty">📷 Tap to upload cover image<div style="font-size:.7rem;color:var(--muted2);margin-top:4px">PNG, JPG or WebP — falls back to your profile cover</div></div>
+      </div>
+    </div>
+    <div id="prodDeliverables" style="margin-top:14px;padding:16px;background:var(--bg2);border:1px solid var(--gold);border-radius:12px"><div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">📦 What buyers receive</div><div style="color:var(--muted);font-size:.8rem">Loading…</div></div>
+    <button class="btn btn-gold" style="margin-top:18px;width:100%" onclick="addProduct()">Add to shop →</button>`;
+  openModal('addProduct', html);
+  setTimeout(()=>{_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
+}
+
+// Style for consistent inputs across .fg (textarea was inconsistent before)
+(function(){
+  if(document.getElementById('_fgTextareaFix'))return;
+  const s=document.createElement('style');s.id='_fgTextareaFix';
+  s.textContent=".fg textarea{resize:vertical;min-height:72px;line-height:1.5}.del-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}.del-row input{flex:1;min-width:0}.del-rm{background:none;border:1px solid var(--border2);color:var(--muted);width:34px;height:38px;border-radius:8px;cursor:pointer;font-size:1rem;flex-shrink:0}.del-rm:hover{border-color:var(--rose);color:var(--rose)}.del-add{background:none;border:1px dashed var(--border2);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:'DM Sans',sans-serif;width:100%;transition:all .2s}.del-add:hover{border-color:var(--gold);color:var(--gold)}.cover-up{width:100%;min-height:140px;border:1.5px dashed var(--border2);border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s}.cover-up:hover{border-color:var(--gold)}.cover-up-empty{text-align:center;color:var(--muted);font-size:.84rem;padding:20px}.cover-up img{width:100%;height:100%;min-height:140px;max-height:200px;object-fit:cover;display:block}.cover-up .cover-rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}.cover-up .cover-rm:hover{background:var(--rose)}.add-prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.add-prod-grid{grid-template-columns:1fr;gap:0}.del-row{flex-wrap:wrap}.del-row input{flex:1 1 100%}.del-row .del-rm{margin-left:auto}}.tip-btn:hover{color:var(--gold)!important}.tip-quick{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:12px 6px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}.tip-quick:hover{border-color:var(--gold);color:var(--gold)}.tip-quick.active{background:var(--gold);border-color:var(--gold);color:#0a0a0b}.pay-btn{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:14px 6px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;-webkit-tap-highlight-color:transparent}.pay-btn:hover{border-color:var(--gold);transform:translateY(-1px)}.pay-btn:active{transform:translateY(0)}.lib-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}.lib-card h3{margin:0 0 4px;font-size:1.05rem}.lib-meta{color:var(--muted);font-size:.78rem;margin-bottom:12px}.lesson-link{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;margin-bottom:6px;transition:border-color .15s;font-size:.85rem}.lesson-link:hover{border-color:var(--gold);color:var(--gold)}.payout-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--card);border:1.5px solid var(--border2);border-radius:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}.payout-opt input{margin-top:3px;accent-color:var(--gold);cursor:pointer}.payout-opt-body{flex:1;min-width:0}.payout-opt:hover:not(.disabled){border-color:var(--gold)}.payout-opt.selected{border-color:var(--gold);background:rgba(212,168,67,.06)}.payout-opt.disabled{opacity:.5;cursor:not-allowed}";
+  document.head.appendChild(s);
+})();
+
+function _charCount(srcId,tgtId,max){
+  const src=document.getElementById(srcId),tgt=document.getElementById(tgtId);
+  if(src&&tgt)tgt.textContent=src.value.length;
+}
+
+// Type-aware deliverable fields — this is what the buyer actually receives.
+// Values are read by addProduct() and stored on the product for later Supabase delivery.
+function _renderDeliverables(){
+  const wrap=document.getElementById('prodDeliverables');if(!wrap)return;
+  const type=(document.getElementById('prodType')||{}).value||'course';
+  const lbl=`<div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">📦 What buyers receive</div>`;
+  if(type==='course'){
+    wrap.innerHTML=lbl+
+      `<div class="fg"><label>Course intro / what's included</label><textarea id="delIntro" maxlength="400" placeholder="e.g. 8 video lessons covering portrait retouching from scratch, with downloadable practice files."></textarea></div>
+       <div class="fg"><label>Lessons</label><div id="delLessons"></div><button type="button" class="del-add" onclick="_addLesson()">+ Add lesson</button></div>`;
+    _addLesson();_addLesson();
+  } else if(type==='ebook'){
+    wrap.innerHTML=lbl+
+      `<div class="fg"><label>PDF download URL</label><input id="delFileUrl" placeholder="https://… link to your PDF (Drive, Dropbox, S3)"></div>
+       <div class="add-prod-grid">
+         <div class="fg"><label>Pages</label><input id="delPages" type="number" min="1" placeholder="120"></div>
+         <div class="fg"><label>Format</label><select id="delFormat"><option value="PDF">PDF</option><option value="EPUB">EPUB</option><option value="PDF+EPUB">PDF + EPUB</option></select></div>
+       </div>
+       <div class="fg"><label>What's inside</label><textarea id="delContents" maxlength="300" placeholder="Brief overview of chapters or topics covered."></textarea></div>`;
+  } else if(type==='preset'){
+    wrap.innerHTML=lbl+
+      `<div class="fg"><label>Download URL (.zip)</label><input id="delFileUrl" placeholder="https://… link to the preset pack"></div>
+       <div class="add-prod-grid">
+         <div class="fg"><label>Number of presets</label><input id="delCount" type="number" min="1" placeholder="12"></div>
+         <div class="fg"><label>Compatible with</label><select id="delCompat"><option>Lightroom Mobile + Desktop</option><option>Lightroom Mobile only</option><option>Lightroom Desktop only</option><option>Photoshop</option><option>Capture One</option></select></div>
+       </div>
+       <div class="fg"><label>Install instructions</label><textarea id="delInstall" maxlength="300" placeholder="Step-by-step on how to install. Buyers will see this with their download."></textarea></div>`;
+  } else if(type==='template'){
+    wrap.innerHTML=lbl+
+      `<div class="fg"><label>Template URL or download link</label><input id="delFileUrl" placeholder="https://… Figma share link, Notion duplicate link, or file URL"></div>
+       <div class="fg"><label>Format</label><select id="delFormat"><option>Figma</option><option>Notion</option><option>Canva</option><option>Google Docs</option><option>Google Sheets</option><option>Keynote</option><option>PowerPoint</option><option>Other</option></select></div>
+       <div class="fg"><label>How to use it</label><textarea id="delInstall" maxlength="300" placeholder="e.g. Click the link, duplicate to your workspace, edit freely."></textarea></div>`;
+  } else if(type==='audio'){
+    wrap.innerHTML=lbl+
+      `<div class="fg"><label>Audio download URL (.zip or single file)</label><input id="delFileUrl" placeholder="https://… link to your audio files"></div>
+       <div class="add-prod-grid">
+         <div class="fg"><label>Number of tracks</label><input id="delCount" type="number" min="1" placeholder="10"></div>
+         <div class="fg"><label>Total length (min)</label><input id="delDuration" type="number" min="1" placeholder="45"></div>
+       </div>
+       <div class="fg"><label>Format</label><select id="delFormat"><option>WAV</option><option>MP3</option><option>WAV + MP3</option><option>FLAC</option><option>Stems (multitrack)</option></select></div>
+       <div class="fg"><label>Track list / description</label><textarea id="delContents" maxlength="400" placeholder="List the tracks or describe what's included."></textarea></div>`;
+  }
+}
+
+let _lessonIdx=0;
+function _addLesson(){
+  const wrap=document.getElementById('delLessons');if(!wrap)return;
+  _lessonIdx++;const i=_lessonIdx;
+  const row=document.createElement('div');row.className='del-row';
+  row.innerHTML=`<input data-lesson-title placeholder="Lesson ${wrap.children.length+1} title">
+    <input data-lesson-url placeholder="Video URL (YouTube, Vimeo, etc.)">
+    <button type="button" class="del-rm" title="Remove" onclick="this.parentElement.remove()">×</button>`;
+  wrap.appendChild(row);
+}
+function _val(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+
+// Holds the uploaded cover — data URL for preview, publicUrl filled when Supabase upload finishes
+let _pendingCover='';
+let _pendingCoverPublicUrl='';
+let _pendingCoverFile=null;
+
+function _handleCoverUpload(ev){
+  const f=ev.target.files&&ev.target.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){toast('Please pick an image file','⚠️');return;}
+  if(f.size>2*1024*1024){toast('Image is too large — max 2 MB','⚠️');return;}
+  _pendingCoverPublicUrl='';
+  _pendingCoverFile=f;
+  const r=new FileReader();
+  r.onload=function(e){
+    _pendingCover=e.target.result;
+    const box=document.getElementById('prodCoverPreview');
+    if(box){
+      box.innerHTML=`<img src="${_pendingCover}" alt="cover preview"><button type="button" class="cover-rm" title="Remove" onclick="event.stopPropagation();_clearCover()">×</button>`;
+    }
+    // Upload to Supabase in background
+    if(sb){
+      uploadToStorage(f,'covers').then(url=>{if(url)_pendingCoverPublicUrl=url;});
+    }
+  };
+  r.readAsDataURL(f);
+}
+function _clearCover(){
+  _pendingCover='';
+  _pendingCoverPublicUrl='';
+  _pendingCoverFile=null;
+  const fi=document.getElementById('prodCoverFile');if(fi)fi.value='';
+  const box=document.getElementById('prodCoverPreview');
+  if(box) box.innerHTML='<div class="cover-up-empty">📷 Tap to upload cover image<div style="font-size:.7rem;color:var(--muted2);margin-top:4px">PNG, JPG or WebP — falls back to your profile cover</div></div>';
+}
+
+// Accept a real shareable URL (http/https) — rejects junk like "google drive link please"
+function _isUrl(s){
+  if(!s) return false;
+  try{const u=new URL(s);return u.protocol==='http:'||u.protocol==='https:';}catch(e){return false;}
+}
+
+async function addProduct(){
+  if(!currentUser) return;
+  const title=_val('prodTitle');
+  const type=(document.getElementById('prodType')||{}).value||'ebook';
+  const desc=_val('prodDesc');
+  const price=parseFloat((document.getElementById('prodPrice')||{}).value||'0');
+  if(!title||!desc||!price||price<1){toast('Fill in title, description and price','⚠️');return;}
+
+  // Gather what buyers actually receive based on type
+  const deliverables={};
+  if(type==='course'){
+    const rows=[...document.querySelectorAll('#delLessons .del-row')];
+    const lessons=rows.map(r=>({
+      title:r.querySelector('[data-lesson-title]').value.trim(),
+      url:r.querySelector('[data-lesson-url]').value.trim()
+    })).filter(l=>l.title&&l.url);
+    if(!lessons.length){toast('Add at least one lesson with title and video URL','⚠️');return;}
+    const bad=lessons.find(l=>!_isUrl(l.url));
+    if(bad){toast('Lesson URL must start with https:// — check "'+bad.title+'"','⚠️');return;}
+    deliverables.intro=_val('delIntro');
+    deliverables.lessons=lessons;
+    deliverables.lessonCount=lessons.length;
+  } else if(type==='ebook'){
+    const url=_val('delFileUrl');
+    if(!_isUrl(url)){toast('Paste a valid PDF link (https://…)','⚠️');return;}
+    deliverables.fileUrl=url;
+    deliverables.pages=parseInt(_val('delPages'))||null;
+    deliverables.format=_val('delFormat')||'PDF';
+    deliverables.contents=_val('delContents');
+  } else if(type==='preset'){
+    const url=_val('delFileUrl');
+    if(!_isUrl(url)){toast('Paste a valid download link (https://…)','⚠️');return;}
+    deliverables.fileUrl=url;
+    deliverables.count=parseInt(_val('delCount'))||null;
+    deliverables.compat=_val('delCompat');
+    deliverables.install=_val('delInstall');
+  } else if(type==='template'){
+    const url=_val('delFileUrl');
+    if(!_isUrl(url)){toast('Paste a valid template link (https://…)','⚠️');return;}
+    deliverables.fileUrl=url;
+    deliverables.format=_val('delFormat');
+    deliverables.install=_val('delInstall');
+  } else if(type==='audio'){
+    const url=_val('delFileUrl');
+    if(!_isUrl(url)){toast('Paste a valid audio download link (https://…)','⚠️');return;}
+    deliverables.fileUrl=url;
+    deliverables.count=parseInt(_val('delCount'))||null;
+    deliverables.duration=parseInt(_val('delDuration'))||null;
+    deliverables.format=_val('delFormat');
+    deliverables.contents=_val('delContents');
+  }
+
+  const emoji={course:'🎓',ebook:'📖',preset:'🎨',template:'📄',audio:'🎵'}[type]||'📦';
+  // Ensure cover image is uploaded BEFORE saving — wait for background upload, or upload now
+  let cover=_pendingCoverPublicUrl||'';
+  if(!cover&&_pendingCoverFile){
+    toast('Uploading cover…','⏳');
+    cover=await uploadToStorage(_pendingCoverFile,'covers')||'';
+  }
+  if(!cover) cover=currentUser.cover||'';
+
+  if(sb){
+    try{
+      const {data,error}=await sb.from('products').insert({
+        creator_id: currentUser.id,
+        title, type, description: desc, price, cover, emoji,
+        deliverables
+      }).select().maybeSingle();
+      if(error){console.error('product insert failed',error);toast('Could not save: '+(error.message||'server error'),'⚠️');return;}
+      // Mirror into local cache so the UI updates immediately
+      const products=DB.get('products')||[];
+      products.unshift({id:data.id,creatorId:currentUser.id,creatorName:currentUser.name,creatorAvatar:currentUser.avatar||'',title,type,desc,price,cover,sales:0,emoji,deliverables});
+      DB.set('products',products);
+    }catch(e){console.error('product insert threw',e);toast('Could not save product','⚠️');return;}
+  } else {
+    // Local-only fallback
+    const products=DB.get('products')||[];
+    products.unshift({id:'pr'+Date.now(),creatorId:currentUser.id,creatorName:currentUser.name,creatorAvatar:currentUser.avatar||'',title,type,desc,price,cover,sales:0,emoji,deliverables});
+    DB.set('products',products);
+  }
+  _pendingCover='';_pendingCoverFile=null;_pendingCoverPublicUrl='';
+  closeModal();
+  toast('Product added to shop!','🛒');renderCreatorProducts();renderShop();
+  if(sb) loadProductsFromSupabase();
+}
+
+async function deleteProduct(id){
+  if(sb){
+    try{
+      const {error}=await sb.from('products').delete().eq('id',id);
+      if(error){console.warn('delete failed',error);toast('Could not delete: '+(error.message||'server error'),'⚠️');return;}
+    }catch(e){console.warn(e);}
+  }
+  const products=DB.get('products')||[];
+  DB.set('products',products.filter(p=>p.id!==id));
+  toast('Product removed','🗑️');renderCreatorProducts();renderShop();
+}
+
+// Pull latest products from Supabase into local cache
+async function loadProductsFromSupabase(){
+  if(!sb) return;
+  try{
+    const {data,error}=await sb
+      .from('products')
+      .select('id,creator_id,title,type,description,price,cover,emoji,sales_count,deliverables,created_at,profiles:creator_id(name,avatar)')
+      .order('created_at',{ascending:false})
+      .limit(500);
+    if(error){console.warn('products fetch failed',error);return;}
+    // Keep seeded local products that aren't in the server (helps demo content show)
+    const existing=DB.get('products')||[];
+    const seeded=existing.filter(p=>String(p.id).startsWith('pr_seed'));
+    const mapped=(data||[]).map(r=>({
+      id:r.id,
+      creatorId:r.creator_id,
+      creatorName:r.profiles?.name||'Creator',
+      creatorAvatar:r.profiles?.avatar||'',
+      title:r.title, type:r.type, desc:r.description||'',
+      price:Number(r.price), cover:r.cover||'', emoji:r.emoji||'📦',
+      sales:r.sales_count||0, deliverables:r.deliverables||{}
+    }));
+    DB.set('products',[...mapped,...seeded]);
+    if(currentPage==='shop') renderShop();
+    if(currentPage==='dashboard') renderCreatorProducts();
+    if(currentPage==='library') renderLibrary();
+  }catch(e){console.warn('products fetch threw',e);}
+}
+
+// DISCOVER
+function renderDiscover(){
+  const all=DB.get('creators')||[];
+  // Trending: sort by subs desc
+  const trending=[...all].sort((a,b)=>(b.subs||0)-(a.subs||0)).slice(0,3);
+  // New: last 3 (reverse order)
+  const newCreators=[...all].reverse().slice(0,3);
+  // Curated: middle ones
+  const curated=all.slice(1,4);
+  const el1=document.getElementById('discoverTrending');
+  const el2=document.getElementById('discoverNew');
+  const el3=document.getElementById('discoverCurated');
+  if(el1)el1.innerHTML=trending.map(creatorCard).join('');
+  if(el2)el2.innerHTML=newCreators.map(creatorCard).join('');
+  if(el3)el3.innerHTML=curated.map(creatorCard).join('');
+}
+
+
+// ═══ MOBILE NAV ══════════════════════════════════════════════════
+function mobileNav(page, btn){
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  showPage(page, null);
+  closeMobileMenu();
+}
+function mobileNavAuth(page, btn){
+  if(!currentUser){openModal('login');return;}
+  mobileNav(page, btn);
+}
+// Home button: feed when logged in, landing when not
+function mobileHome(btn){
+  if(currentUser){
+    mobileNav('feed', btn);
+  } else {
+    mobileNav('landing', btn);
+  }
+}
+// Center upload button: takes creator straight to "Add new product" on the dashboard
+function mobileUpload(){
+  if(!currentUser){openModal('login');return;}
+  closeMobileMenu();
+  openAddProductModal();
+}
+// Highlight the right bottom-nav slot based on current page
+function _syncBnavActive(page){
+  const homePages=['landing','feed'];
+  const map={shop:'bnav-shop',messages:'bnav-messages'};
+  const id=homePages.indexOf(page)>=0?'bnav-home':(map[page]||null);
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  if(id){const el=document.getElementById(id);if(el)el.classList.add('active');}
+}
+function toggleMobileMenu(){
+  const m=document.getElementById('mobileMenu');
+  if(m) m.style.display=m.style.display==='none'?'block':'none';
+}
+function closeMobileMenu(){
+  const m=document.getElementById('mobileMenu');
+  if(m) m.style.display='none';
+}
+function _syncMobileNav(){
+  // Sync bottom nav badge
+  if(!currentUser) return;
+  const msgs=DB.get('messages')||[];
+  const unread=msgs.filter(m=>m.to===currentUser.id&&!m.read).length;
+  const bb=document.getElementById('bnavMsgBadge');
+  if(bb){bb.textContent=unread;bb.classList.toggle('show',unread>0);}
+  // Show auth-only menu items
+  ['mmDash','mmNotifs','mmSignout','mmLibrary'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.display='flex';}
+  });
+  const mmsi=document.getElementById('mmSignin');if(mmsi)mmsi.style.display='none';
+  if(currentUser.role==='admin'){
+    const ma=document.getElementById('mmAdmin');if(ma)ma.style.display='flex';
+  }
+}
+// Close mobile menu when tapping outside
+document.addEventListener('click',function(e){
+  const menu=document.getElementById('mobileMenu');
+  const moreBtn=document.getElementById('bnav-more');
+  if(menu&&menu.style.display==='block'&&!menu.contains(e.target)&&e.target!==moreBtn&&!moreBtn.contains(e.target)){
+    closeMobileMenu();
+  }
+});
+// Sync after login
+const _origLoginUser=_loginUser;
+
+// UTILS
+let _tt;
+function toast(msg,icon='ℹ️'){const el=document.getElementById('toast');el.innerHTML=icon+' '+msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return String(n);}
+
+// INIT
+if(currentUser){
+  document.getElementById('navGuest').style.display='none';document.getElementById('navUser').style.display='flex';
+  document.getElementById('navAvatar').textContent=currentUser.emoji||'👤';
+  ['tab-messages','tab-notifs','tab-dash'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  if(currentUser.role==='admin'){const a=document.getElementById('tab-admin');if(a)a.style.display='';}
+  _refreshBadges();
+  _syncMobileNav();
+}
+renderLandingCreators();
+if(currentUser) _syncMobileNav();
+
+// Restore Supabase session on page load — refresh profile from DB so balance/role/etc are current
+(async function restoreSession(){
+  if(!sb) return;
+  try{
+    const {data}=await sb.auth.getSession();
+    if(!data.session){
+      // No active Supabase session — clear stale local user to avoid showing a logged-in state we can't back up
+      if(currentUser){currentUser=null;DB.del('user');location.reload();}
+      return;
+    }
+    const fresh=await _fetchProfile(data.session.user.id, data.session.user.email);
+    if(fresh){
+      currentUser=fresh;DB.set('user',fresh);
+      // Reflect any updates (e.g. role promotion, KYC status)
+      document.getElementById('navAvatar').textContent=fresh.emoji||'👤';
+      if(fresh.role==='admin'){const a=document.getElementById('tab-admin');if(a)a.style.display='';}
+    }
+  }catch(e){console.warn('session restore failed',e);}
+})();
+
+// Pull latest posts and products in the background regardless of login state
+if(sb){
+  loadPostsFromSupabase();
+  loadProductsFromSupabase();
+}
+</script>
+
+<!-- BOTTOM NAV (mobile) -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="bnav-btn active" id="bnav-home" onclick="mobileHome(this)">
+    <span class="bnav-icon">🏠</span>Home
+  </button>
+  <button class="bnav-btn" id="bnav-shop" onclick="mobileNav('shop',this)">
+    <span class="bnav-icon">🛒</span>Shop
+  </button>
+  <button class="bnav-fab" id="bnav-upload" onclick="mobileUpload()" aria-label="Upload">
+    <span class="bnav-fab-icon">+</span>
+  </button>
+  <button class="bnav-btn" id="bnav-messages" onclick="mobileNavAuth('messages',this)">
+    <span class="bnav-icon">💬</span>
+    <span class="bnav-badge" id="bnavMsgBadge">0</span>
+    Inbox
+  </button>
+  <button class="bnav-btn" id="bnav-more" onclick="toggleMobileMenu()">
+    <span class="bnav-icon">☰</span>More
+  </button>
+</div>
+
+<!-- Mobile More Menu -->
+<div id="mobileMenu" style="display:none;position:fixed;bottom:62px;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:999;padding:12px 16px 16px">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <button onclick="mobileNav('explore',null);toggleMobileMenu()" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🔍</span>Explore</button>
+    <button id="mmLibrary" onclick="mobileNavAuth('library',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">📚</span>Library</button>
+    <button id="mmDash" onclick="mobileNavAuth('dashboard',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:none;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">📊</span>Dashboard</button>
+    <button id="mmNotifs" onclick="mobileNavAuth('notifs',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:none;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🔔</span>Alerts</button>
+    <button id="mmAdmin" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent" onclick="goAdmin(null);toggleMobileMenu()"><span style="font-size:1.3rem">⚙️</span>Admin</button>
+    <button id="mmSignin" onclick="openModal('login');toggleMobileMenu()" style="background:var(--gold);border:none;border-radius:12px;padding:14px 8px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">👤</span>Sign in</button>
+    <button id="mmSignout" onclick="logout();toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🚪</span>Sign out</button>
+  </div>
+</div>
+
+
+<!-- STRIPE PAYMENT MODAL -->
+<div id="stripeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(14px);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:20px;padding:32px;max-width:420px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.4)">
+    <button onclick="closeStripeModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;line-height:1">×</button>
+    <div id="stripeModalTitle" style="font-size:1.2rem;font-weight:700;margin-bottom:4px;color:#0f172a"></div>
+    <div id="stripeModalSub" style="font-size:.85rem;color:#64748b;margin-bottom:20px"></div>
+    <div id="stripeCardMount" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:10px"></div>
+    <div id="stripeCardError" style="color:#dc2626;font-size:.8rem;min-height:18px;margin-bottom:8px"></div>
+    <button id="stripePayBtn" onclick="stripeDoCharge()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:100px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <span id="stripePayBtnText">🔒 Pay</span>
+    </button>
+    <div style="font-size:.7rem;color:#94a3b8;text-align:center;margin-top:10px">Secured by Stripe · Card info never stored here</div>
+  </div>
+</div>
+
+<script>
+// ═══ STRIPE ═══
+const STRIPE_PK='pk_live_51TU56a3nYJqGuN7ThxiSW7OQrTNGs5iPcbr7tNU8XOUCbSg3agNLr5iKMvWp6J1nKP6atT827UqeJRyoJ8G2dqUv006rg0OcXs';
+let _stripe=null,_stripeCard=null,_stripeCtx={};
+function getStripe(){if(!_stripe&&window.Stripe)_stripe=Stripe(STRIPE_PK);return _stripe;}
+
+function openStripeModal(title,sub,amountUsd,meta){
+  _stripeCtx={amountUsd,meta};
+  document.getElementById('stripeModalTitle').textContent=title;
+  document.getElementById('stripeModalSub').textContent=sub;
+  document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+Number(amountUsd).toFixed(2);
+  document.getElementById('stripeCardError').textContent='';
+  document.getElementById('stripeOverlay').style.display='flex';
+  const stripe=getStripe();
+  if(!stripe){alert('Stripe failed to load — please refresh.');return;}
+  if(_stripeCard){_stripeCard.destroy();_stripeCard=null;}
+  const els=stripe.elements({appearance:{theme:'stripe'}});
+  _stripeCard=els.create('card',{style:{base:{fontSize:'15px',color:'#0f172a'}}});
+  _stripeCard.mount('#stripeCardMount');
+  _stripeCard.on('change',e=>{document.getElementById('stripeCardError').textContent=e.error?e.error.message:'';});
+}
+
+function closeStripeModal(){
+  document.getElementById('stripeOverlay').style.display='none';
+  if(_stripeCard){_stripeCard.destroy();_stripeCard=null;}
+}
+
+async function stripeDoCharge(){
+  const stripe=getStripe();
+  const btn=document.getElementById('stripePayBtn');
+  const errEl=document.getElementById('stripeCardError');
+  const amt=Number(_stripeCtx.amountUsd);
+  btn.disabled=true;
+  document.getElementById('stripePayBtnText').textContent='Processing…';
+  errEl.textContent='';
+  try{
+    const {paymentMethod,error:pmErr}=await stripe.createPaymentMethod({
+      type:'card',card:_stripeCard,
+      billing_details:{name:currentUser?.name||'User',email:currentUser?.email||''}
+    });
+    if(pmErr){errEl.textContent=pmErr.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);return;}
+
+    const res=await fetch(WORKER_URL+'/api/pay',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        payment_method_id:paymentMethod.id,
+        user_email:currentUser?.email||'',
+        user_name:currentUser?.name||'User',
+        price_usd:amt,
+        ..._stripeCtx.meta
+      })
+    });
+    const result=await res.json();
+    if(!res.ok||result.error)throw new Error(result.error||'Payment failed');
+
+    if(result.requires_action&&result.client_secret){
+      const {error:ce}=await stripe.confirmCardPayment(result.client_secret);
+      if(ce){errEl.textContent=ce.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);return;}
+    }
+
+    closeStripeModal();
+    closeModal();
+    const m=_stripeCtx.meta;
+    if(m.plan==='tip'){
+      const posts=DB.get('posts')||[];
+      const p=posts.find(x=>x.id===m.post_id);
+      if(p){p.tips=(p.tips||0)+1;DB.set('posts',posts);}
+      toast('Tip sent! 💰','✅');
+      if(currentPage==='feed')renderFeed();
+    } else if(m.plan==='purchase'){
+      const purchases=DB.get('purchases')||[];
+      purchases.push({id:'pur_'+Date.now(),productId:m.product_id,userId:currentUser.id,productTitle:m.product_title,price:amt,boughtAt:new Date().toISOString()});
+      DB.set('purchases',purchases);
+      const products=DB.get('products')||[];
+      const prod=products.find(x=>x.id===m.product_id);
+      if(prod){prod.sales=(prod.sales||0)+1;DB.set('products',products);}
+      toast('Purchase complete!','✅');
+      renderShop();
+      setTimeout(()=>viewPurchase(m.product_id),400);
+    } else {
+      const subs=currentUser.subscriptions||[];
+      subs.push({id:m.creator_id,name:m.creator_name,plan:m.plan,price:amt,since:new Date().toLocaleDateString()});
+      currentUser.subscriptions=subs;
+      DB.set('user',currentUser);
+      toast('Subscribed! ⭐','✅');
+    }
+  }catch(e){
+    errEl.textContent=e.message||'Payment failed. Please try again.';
+    btn.disabled=false;
+    document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);
+  }
+}
+
+// Override sendTip with real Stripe
+function sendTip(postId,creatorId,method){
+  if(method!=='card'&&method!=='stripe'){toast('Card payments only for now','⚠️');return;}
+  const amt=parseFloat((document.getElementById('tipAmt')||{}).value||'0');
+  if(!amt||amt<1){toast('Tip must be at least $1','⚠️');return;}
+  if(amt>500){toast('Max tip is $500','⚠️');return;}
+  openStripeModal('Send a tip 💰','Supporting this creator — thank you!',amt,
+    {plan:'tip',creator_id:creatorId,creator_name:creatorId,post_id:postId,price_usd:amt});
+}
+
+// Override buyProduct with real Stripe
+function buyProduct(id){
+  if(!currentUser){openModal('login');return;}
+  const products=DB.get('products')||[],p=products.find(x=>x.id===id);
+  if(!p)return;
+  const purchases=DB.get('purchases')||[];
+  if(purchases.some(b=>b.productId===id&&b.userId===currentUser.id)){viewPurchase(id);return;}
+  openStripeModal('Buy · '+p.title,p.desc||'Digital product',parseFloat(p.price)||0,
+    {plan:'purchase',creator_id:p.creator||'',creator_name:p.creatorName||'',product_id:id,product_title:p.title,price_usd:parseFloat(p.price)||0});
+}
+
+document.addEventListener('click',e=>{if(e.target===document.getElementById('stripeOverlay'))closeStripeModal();});
+</script>
+</body>
+</html>
