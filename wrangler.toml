@@ -10,3 +10,4 @@ database_id = "9b829d2d-7bb2-4674-88b7-a33cc9504e81"
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "galaxy-media"
+
