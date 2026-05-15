@@ -1,181 +1,234 @@
-// Galaxy Platform — Cloudflare Worker
-// Bindings: DB (D1), MEDIA (R2), STRIPE_SK, PAYPAL_CLIENT_ID, PAYPAL_SK
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+// worker.js
+var CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization"
 };
-
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(data), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
+__name(json, "json");
 function err(msg, status = 400) {
-  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
-
-// ── STRIPE ─────────────────────────────────────────────────────
-async function stripeReq(env, path, method = 'GET', params = null) {
+__name(err, "err");
+async function stripeReq(env, path, method = "GET", params = null) {
   const key = env.STRIPE_SK;
-  if (!key) throw new Error('STRIPE_SK not set');
+  if (!key) throw new Error("STRIPE_SK not set");
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
     method,
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params ? new URLSearchParams(params).toString() : undefined,
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: params ? new URLSearchParams(params).toString() : void 0
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || `Stripe ${res.status}`);
   return data;
 }
-
-// ── PAYPAL ─────────────────────────────────────────────────────
+__name(stripeReq, "stripeReq");
 async function getPayPalToken(env) {
-  const clientId = env.PAYPAL_CLIENT_ID || 'AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO';
-  const secret = env.PAYPAL_SK || 'EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa';
-  if (!clientId || !secret) throw new Error('PayPal credentials not set');
-  const creds = btoa(clientId + ':' + secret);
-  const res = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Basic ' + creds,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
+  const clientId = env.PAYPAL_CLIENT_ID || "AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO";
+  const secret = env.PAYPAL_SK || "EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa";
+  if (!clientId || !secret) throw new Error("PayPal credentials not set");
+  const creds = btoa(clientId + ":" + secret);
+  const res = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
+    method: "POST",
+    headers: { "Authorization": "Basic " + creds, "Content-Type": "application/x-www-form-urlencoded" },
+    body: "grant_type=client_credentials"
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error('PayPal auth failed: ' + JSON.stringify(data));
+  if (!data.access_token) throw new Error("PayPal auth failed: " + JSON.stringify(data));
   return data.access_token;
 }
-
-async function paypalReq(env, path, method = 'GET', body = null) {
+__name(getPayPalToken, "getPayPalToken");
+async function paypalReq(env, path, method = "GET", body = null) {
   const token = await getPayPalToken(env);
-  const res = await fetch('https://api-m.paypal.com' + path, {
+  const res = await fetch("https://api-m.paypal.com" + path, {
     method,
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : void 0
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || JSON.stringify(data));
   return data;
 }
-
-// ── PASSWORD ───────────────────────────────────────────────────
+__name(paypalReq, "paypalReq");
 async function hashPassword(password) {
   const enc = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 1e5, hash: "SHA-256" }, key, 256);
   const hashArr = Array.from(new Uint8Array(bits));
   const saltArr = Array.from(salt);
-  return saltArr.map(b => b.toString(16).padStart(2, '0')).join('') + ':' + hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+  return saltArr.map((b) => b.toString(16).padStart(2, "0")).join("") + ":" + hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
+__name(hashPassword, "hashPassword");
 async function verifyPassword(password, stored) {
   try {
-    const [saltHex, hashHex] = stored.split(':');
-    const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+    const [saltHex, hashHex] = stored.split(":");
+    const salt = new Uint8Array(saltHex.match(/.{2}/g).map((b) => parseInt(b, 16)));
     const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+    const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 1e5, hash: "SHA-256" }, key, 256);
     const hashArr = Array.from(new Uint8Array(bits));
-    const computed = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+    const computed = hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
     return computed === hashHex;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
+__name(verifyPassword, "verifyPassword");
 
-export default {
+// ── Balance helper ───────────────────────────────────────────────────────
+async function creditBalance(env, creatorId, amountUsd) {
+  const creatorEarns = Math.round(amountUsd * 0.71 * 100) / 100;
+  if (!creatorId || creatorEarns <= 0) return;
+  await env.DB.prepare(`
+    INSERT INTO balances (creator_id, balance, lifetime, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(creator_id) DO UPDATE SET
+      balance  = balance + excluded.balance,
+      lifetime = lifetime + excluded.lifetime,
+      updated_at = excluded.updated_at
+  `).bind(creatorId, creatorEarns, creatorEarns).run();
+}
+__name(creditBalance, "creditBalance");
+
+var worker_default = {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS });
-
+    if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
     const url = new URL(request.url);
     const path = url.pathname;
     const method = request.method;
 
-    // Serve index.html for root
-    if (path === '/' || path === '/index.html') {
-      const obj = await env.MEDIA.get('index.html');
+    // ── PAYOUT ROUTES ────────────────────────────────────────────────────
+    if (path === "/api/payout/balance" && method === "GET") {
+      const creatorId = url.searchParams.get("creator_id");
+      if (!creatorId) return err("Missing creator_id");
+      const bal = await env.DB.prepare("SELECT balance, lifetime FROM balances WHERE creator_id=?").bind(creatorId).first();
+      const history = await env.DB.prepare("SELECT * FROM payouts WHERE creator_id=? ORDER BY requested_at DESC LIMIT 20").bind(creatorId).all();
+      return json({ balance: bal?.balance||0, lifetime: bal?.lifetime||0, history: history.results||[] });
+    }
+    if (path === "/api/payout/settings" && method === "GET") {
+      const creatorId = url.searchParams.get("creator_id");
+      if (!creatorId) return err("Missing creator_id");
+      const row = await env.DB.prepare("SELECT * FROM payout_settings WHERE creator_id=?").bind(creatorId).first();
+      return json(row || {});
+    }
+    if (path === "/api/payout/settings" && method === "POST") {
+      let body2 = {};
+      try { body2 = await request.json(); } catch {}
+      const { creator_id, method: m, paypal_email, country } = body2;
+      if (!creator_id) return err("Missing creator_id");
+      await env.DB.prepare(`
+        INSERT INTO payout_settings (creator_id, method, paypal_email, country, updated_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(creator_id) DO UPDATE SET
+          method=excluded.method, paypal_email=excluded.paypal_email,
+          country=excluded.country, updated_at=excluded.updated_at
+      `).bind(creator_id, m||"paypal", paypal_email||null, country||null).run();
+      return json({ ok: true });
+    }
+    if (path === "/api/payout/request" && method === "POST") {
+      let body2 = {};
+      try { body2 = await request.json(); } catch {}
+      const { creator_id, method: m } = body2;
+      if (!creator_id) return err("Missing creator_id");
+      const bal = await env.DB.prepare("SELECT balance FROM balances WHERE creator_id=?").bind(creator_id).first();
+      const balance = bal?.balance || 0;
+      const payoutMethod = m || "paypal";
+      const min = payoutMethod === "stripe" ? 500 : 100;
+      if (balance < min) return err(`Minimum for ${payoutMethod==="stripe"?"bank transfer":"PayPal"} is $${min}. Your balance is $${balance.toFixed(2)}.`);
+      const pending = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND status='pending'").bind(creator_id).first();
+      if (pending) return err("You already have a pending payout. It will be processed on the 1st of next month.");
+      const thisMonth = new Date().toISOString().slice(0,7);
+      const already = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND requested_at LIKE ? AND status!='failed'").bind(creator_id, `${thisMonth}%`).first();
+      if (already) return err("You already requested a payout this month.");
+      const settings = await env.DB.prepare("SELECT * FROM payout_settings WHERE creator_id=?").bind(creator_id).first();
+      const id = "pay_" + Date.now();
+      await env.DB.prepare(`
+        INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, stripe_account, requested_at)
+        VALUES (?, ?, ?, 0, ?, 'pending', ?, ?, datetime('now'))
+      `).bind(id, creator_id, balance, payoutMethod, settings?.paypal_email||null, settings?.stripe_account_id||null).run();
+      return json({ ok:true, message:`Payout of $${balance.toFixed(2)} requested. Processed on the 1st of next month.`, amount: balance });
+    }
+    // ── END PAYOUT ROUTES ────────────────────────────────────────────────
+
+    if (path === "/" || path === "/index.html") {
+      const obj = await env.MEDIA.get("index.html");
       if (obj) {
-        return new Response(obj.body, { headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', ...CORS } });
+        return new Response(obj.body, { headers: { "Content-Type": "text/html", "Cache-Control": "no-cache", ...CORS } });
       }
     }
-
     let body = {};
-    if (method === 'POST' || method === 'PUT') {
-      const ct = request.headers.get('Content-Type') || '';
-      if (ct.includes('application/json')) {
+    if (method === "POST" || method === "PUT") {
+      const ct = request.headers.get("Content-Type") || "";
+      if (ct.includes("application/json")) {
         try { body = await request.json(); } catch {}
       }
     }
-
     try {
-
-      // ── PAYPAL TEST ────────────────────────────────────────
-      if (path === '/api/paypal/test') {
+      if (path === "/api/paypal/test") {
         try {
           const token = await getPayPalToken(env);
-          return json({ success: true, preview: token.substring(0, 20) + '...' });
-        } catch(e) {
+          return json({ success: true, preview: token.substring(0, 20) + "..." });
+        } catch (e) {
           return json({ success: false, error: e.message });
         }
       }
-
-      // ── PAYPAL CREATE ORDER ────────────────────────────────
-      if (path === '/api/paypal/order' && method === 'POST') {
+      if (path === "/api/paypal/order" && method === "POST") {
         const { amount, description, user_id, creator_id, post_id, product_id, plan, user_name } = body;
-        if (!amount) return err('Missing amount');
-        const order = await paypalReq(env, '/v2/checkout/orders', 'POST', {
-          intent: 'CAPTURE',
+        if (!amount) return err("Missing amount");
+        const order = await paypalReq(env, "/v2/checkout/orders", "POST", {
+          intent: "CAPTURE",
           purchase_units: [{
-            amount: { currency_code: 'USD', value: Number(amount).toFixed(2) },
-            description: description || 'Galaxy Payment',
+            amount: { currency_code: "USD", value: Number(amount).toFixed(2) },
+            description: description || "Galaxy Payment"
           }],
           application_context: {
-            return_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=success',
-            cancel_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=cancel',
-            brand_name: 'Galaxy',
-            user_action: 'PAY_NOW',
-            landing_page: 'BILLING',
-          },
+            return_url: "https://vygalaxy.dabarey24.workers.dev/?pp=success",
+            cancel_url: "https://vygalaxy.dabarey24.workers.dev/?pp=cancel",
+            brand_name: "Galaxy",
+            user_action: "PAY_NOW",
+            landing_page: "BILLING"
+          }
         });
         return json({ id: order.id, status: order.status });
       }
-
-      // ── PAYPAL CAPTURE ─────────────────────────────────────
-      if (path === '/api/paypal/capture' && method === 'POST') {
+      if (path === "/api/paypal/capture" && method === "POST") {
         const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name } = body;
-        if (!order_id) return err('Missing order_id');
-        const capture = await paypalReq(env, '/v2/checkout/orders/' + order_id + '/capture', 'POST', {});
-        if (capture.status !== 'COMPLETED') return err('Payment not completed: ' + capture.status);
+        if (!order_id) return err("Missing order_id");
+        const capture = await paypalReq(env, "/v2/checkout/orders/" + order_id + "/capture", "POST", {});
+        if (capture.status !== "COMPLETED") return err("Payment not completed: " + capture.status);
         const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
-        if (plan === 'tip' && post_id) {
+        if (plan === "tip" && post_id) {
           await env.DB.prepare(
             `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-          ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
+          ).bind("tip_" + Date.now(), post_id, creator_id, user_id || "", user_name || "", creatorAmount).run();
           await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
         }
-        if (plan === 'purchase' && product_id) {
+        if (plan === "purchase" && product_id) {
           await env.DB.prepare(
             `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
-          ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, 'paypal_' + order_id).run();
+          ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, "paypal_" + order_id).run();
           await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
         }
+        // Credit creator balance for PayPal payments
+        if (creator_id) await creditBalance(env, creator_id, Number(amount));
         return json({ success: true, capture_id: order_id });
       }
-
-      // ── POSTS ──────────────────────────────────────────────
-      if (path === '/api/posts' && method === 'GET') {
-        const creatorId = url.searchParams.get('creator_id');
+      if (path === "/api/posts" && method === "GET") {
+        const creatorId = url.searchParams.get("creator_id");
         if (creatorId) {
-          const { results } = await env.DB.prepare(
+          const { results: results2 } = await env.DB.prepare(
             `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
              FROM posts p LEFT JOIN users u ON p.creator_id = u.id
              WHERE p.creator_id = ?
              ORDER BY p.created_at DESC LIMIT 100`
           ).bind(creatorId).all();
-          return json(results || []);
+          return json(results2 || []);
         }
         const { results } = await env.DB.prepare(
           `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
@@ -184,78 +237,92 @@ export default {
         ).all();
         return json(results || []);
       }
-
-      if (path === '/api/posts' && method === 'POST') {
+      if (path === "/api/posts" && method === "POST") {
         const { creator_id, title, content, tier, media_type, media_url } = body;
-        if (!creator_id || !content) return err('Missing fields');
-        const id = 'post_' + Date.now();
+        if (!creator_id || !content) return err("Missing fields");
+        const id = "post_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO posts (id, creator_id, title, content, tier, media_type, media_url, tips_count, comments_count, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, datetime('now'))`
-        ).bind(id, creator_id, title || '', content, tier || 'free', media_type || '', media_url || '').run();
+        ).bind(id, creator_id, title || "", content, tier || "free", media_type || "", media_url || "").run();
         return json({ id, success: true });
       }
-
-      // ── MEDIA UPLOAD ───────────────────────────────────────
-      if (path === '/api/upload' && method === 'POST') {
+      if (path.startsWith("/api/posts/") && method === "DELETE") {
+        const postId = path.split("/").pop();
+        await env.DB.prepare(`DELETE FROM posts WHERE id=?`).bind(postId).run();
+        return json({ success: true });
+      }
+      if (path === "/api/upload" && method === "POST") {
         const formData = await request.formData();
-        const file = formData.get('file');
-        if (!file) return err('No file provided');
-        const ext = file.name?.split('.').pop() || 'bin';
+        const file = formData.get("file");
+        if (!file) return err("No file provided");
+        const ext = file.name?.split(".").pop() || "bin";
         const key = `media/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         await env.MEDIA.put(key, file.stream(), {
-          httpMetadata: { contentType: file.type || 'application/octet-stream' }
+          httpMetadata: { contentType: file.type || "application/octet-stream" }
         });
-        // Serve media through worker
         const publicUrl = `https://vygalaxy.dabarey24.workers.dev/media/${key}`;
         return json({ url: publicUrl, key });
       }
-
-      // ── USERS ──────────────────────────────────────────────
-      if (path === '/api/users/register' && method === 'POST') {
+      if (path === "/api/upload/sign" && method === "POST") {
+        const { key, mimeType } = body;
+        if (!key || !mimeType) return err("Missing key or mimeType");
+        const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
+        if (!allowed.includes(mimeType)) return err("File type not allowed");
+        if (key.includes("..") || key.startsWith("/")) return err("Invalid key");
+        const url2 = await env.MEDIA_BUCKET.createPresignedUrl("PUT", key, {
+          expiresIn: 300,
+          httpMetadata: { contentType: mimeType }
+        });
+        return json({ url: url2, publicUrl: "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key });
+      }
+      if (path === "/api/users/register" && method === "POST") {
         const { email, password, name, category } = body;
-        if (!email || !password || !name) return err('Missing fields');
-        const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
-        if (existing) return err('Email already registered', 409);
-        const id = 'user_' + Date.now();
+        if (!email || !password || !name) return err("Missing fields");
+        const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+        if (existing) return err("Email already registered", 409);
+        const id = "user_" + Date.now();
         const hash = await hashPassword(password);
-        const role = email === 'dabarey24@gmail.com' ? 'admin' : 'user';
+        const role = email === "dabarey24@gmail.com" ? "admin" : "user";
         await env.DB.prepare(
           `INSERT INTO users (id, email, password_hash, name, role, category, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-        ).bind(id, email, hash, name, role, category || 'Other').run();
-        return json({ id, email, name, role, category: category || 'Other' });
+        ).bind(id, email, hash, name, role, category || "Other").run();
+        return json({ id, email, name, role, category: category || "Other" });
       }
-
-      if (path === '/api/users/login' && method === 'POST') {
+      if (path === "/api/users/login" && method === "POST") {
         const { email, password } = body;
-        if (!email || !password) return err('Missing fields');
-        const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
-        if (!user) return err('Invalid email or password', 401);
+        if (!email || !password) return err("Missing fields");
+        const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+        if (!user) return err("Invalid email or password", 401);
         const valid = await verifyPassword(password, user.password_hash);
-        if (!valid) return err('Invalid email or password', 401);
+        if (!valid) return err("Invalid email or password", 401);
         const { password_hash, ...safe } = user;
         return json(safe);
       }
-
-
-
-      if (path === '/api/users' && method === 'GET') {
-        const id = url.searchParams.get('id');
-        const role = url.searchParams.get('role');
-        if (role === 'creator') {
+      if (path === "/api/users" && method === "GET") {
+        const id = url.searchParams.get("id");
+        const role = url.searchParams.get("role");
+        if (role === "creator") {
           const { results } = await env.DB.prepare(
             `SELECT id,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE role!='admin' ORDER BY created_at DESC`
           ).all();
           return json(results || []);
         }
-        if (!id) return err('Missing id');
-        const user = await env.DB.prepare('SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE id=?').bind(id).first();
-        if (!user) return err('User not found', 404);
+        if (!id) return err("Missing id");
+        const user = await env.DB.prepare("SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE id=?").bind(id).first();
+        if (!user) return err("User not found", 404);
         return json(user);
       }
-
-      // ── PRODUCTS ───────────────────────────────────────────
-      if (path === '/api/products' && method === 'GET') {
+      if (path === "/api/products" && method === "GET") {
+        const creatorId = url.searchParams.get("creator_id");
+        if (creatorId) {
+          const { results } = await env.DB.prepare(
+            `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+             FROM products p LEFT JOIN users u ON p.creator_id = u.id
+             WHERE p.creator_id=? ORDER BY p.created_at DESC`
+          ).bind(creatorId).all();
+          return json(results || []);
+        }
         const { results } = await env.DB.prepare(
           `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
            FROM products p LEFT JOIN users u ON p.creator_id = u.id
@@ -263,32 +330,27 @@ export default {
         ).all();
         return json(results || []);
       }
-
-      if (path === '/api/products' && method === 'POST') {
+      if (path === "/api/products" && method === "POST") {
         const { creator_id, title, desc, type, price, emoji, deliverables } = body;
-        if (!creator_id || !title || !price) return err('Missing fields');
-        const id = 'prod_' + Date.now();
+        if (!creator_id || !title || !price) return err("Missing fields");
+        const id = "prod_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO products (id, creator_id, title, desc, type, price, emoji, deliverables, sales, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
-        ).bind(id, creator_id, title, desc || '', type || 'digital', price, emoji || '📦', JSON.stringify(deliverables || {})).run();
+        ).bind(id, creator_id, title, desc || "", type || "digital", price, emoji || "📦", JSON.stringify(deliverables || {})).run();
         return json({ id, success: true });
       }
-
-      // ── SUBSCRIPTIONS ──────────────────────────────────────
-      if (path === '/api/subscriptions' && method === 'GET') {
-        const userId = url.searchParams.get('user_id');
-        if (!userId) return err('Missing user_id');
+      if (path === "/api/subscriptions" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
         const { results } = await env.DB.prepare(
           `SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active'`
         ).bind(userId).all();
         return json(results || []);
       }
-
-      // ── PURCHASES ──────────────────────────────────────────
-      if (path === '/api/purchases' && method === 'GET') {
-        const userId = url.searchParams.get('user_id');
-        if (!userId) return err('Missing user_id');
+      if (path === "/api/purchases" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
         const { results } = await env.DB.prepare(
           `SELECT pu.*, p.title as product_title, p.emoji, p.deliverables
            FROM purchases pu LEFT JOIN products p ON pu.product_id = p.id
@@ -296,133 +358,126 @@ export default {
         ).bind(userId).all();
         return json(results || []);
       }
-
-      // ── STRIPE PAYMENT ─────────────────────────────────────
-      if (path === '/api/pay' && method === 'POST') {
-        const { payment_method_id, user_id, user_email, user_name,
-                plan, price_usd, creator_id, creator_name,
-                product_id, product_title, post_id } = body;
-
-        if (!payment_method_id || !user_email || !price_usd) return err('Missing payment fields');
-
+      if (path === "/api/pay" && method === "POST") {
+        const {
+          payment_method_id, user_id, user_email, user_name, plan, price_usd,
+          creator_id, creator_name, product_id, product_title, post_id
+        } = body;
+        if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
         const amountCents = Math.round(Number(price_usd) * 100);
         const creatorAmount = Math.round(Number(price_usd) * 0.71 * 100) / 100;
-
-        const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, 'GET');
+        const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
         let customerId;
         if (existing.data?.length > 0) {
           customerId = existing.data[0].id;
         } else {
-          const c = await stripeReq(env, '/customers', 'POST', { email: user_email, name: user_name || user_email });
+          const c = await stripeReq(env, "/customers", "POST", { email: user_email, name: user_name || user_email });
           customerId = c.id;
         }
-
-        await stripeReq(env, `/payment_methods/${payment_method_id}/attach`, 'POST', { customer: customerId });
-        await stripeReq(env, `/customers/${customerId}`, 'POST', { 'invoice_settings[default_payment_method]': payment_method_id });
-
-        if (plan === 'tip' || plan === 'purchase') {
-          const pi = await stripeReq(env, '/payment_intents', 'POST', {
+        await stripeReq(env, `/payment_methods/${payment_method_id}/attach`, "POST", { customer: customerId });
+        await stripeReq(env, `/customers/${customerId}`, "POST", { "invoice_settings[default_payment_method]": payment_method_id });
+        if (plan === "tip" || plan === "purchase") {
+          const pi = await stripeReq(env, "/payment_intents", "POST", {
             amount: String(amountCents),
-            currency: 'usd',
+            currency: "usd",
             customer: customerId,
             payment_method: payment_method_id,
-            confirm: 'true',
-            'automatic_payment_methods[enabled]': 'true',
-            'automatic_payment_methods[allow_redirects]': 'never',
-            'metadata[type]': plan,
-            'metadata[user_id]': user_id || '',
-            'metadata[creator_id]': creator_id || '',
+            confirm: "true",
+            "automatic_payment_methods[enabled]": "true",
+            "automatic_payment_methods[allow_redirects]": "never",
+            "metadata[plan]": plan,
+            "metadata[user_id]": user_id || "",
+            "metadata[creator_id]": creator_id || "",
+            "metadata[post_id]": post_id || "",
+            "metadata[product_id]": product_id || ""
           });
-
-          if (pi.status === 'requires_action') return json({ requires_action: true, client_secret: pi.client_secret });
-
-          if (plan === 'tip' && post_id) {
+          if (pi.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret });
+          if (plan === "tip" && post_id) {
             await env.DB.prepare(
               `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-            ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
+            ).bind("tip_" + Date.now(), post_id, creator_id, user_id || "", user_name || "", creatorAmount).run();
             await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
           }
-
-          if (plan === 'purchase' && product_id) {
+          if (plan === "purchase" && product_id) {
             await env.DB.prepare(
               `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
-            ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, pi.id).run();
+            ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, pi.id).run();
             await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
           }
-
+          // Credit creator balance
+          if (creator_id) await creditBalance(env, creator_id, Number(price_usd));
           return json({ success: true, payment_intent_id: pi.id });
-
         } else {
-          const priceObj = await stripeReq(env, '/prices', 'POST', {
+          // Subscription
+          const priceObj = await stripeReq(env, "/prices", "POST", {
             unit_amount: String(amountCents),
-            currency: 'usd',
-            'recurring[interval]': 'month',
-            'product_data[name]': `Galaxy - ${creator_name} (${plan})`,
+            currency: "usd",
+            "recurring[interval]": "month",
+            "product_data[name]": `Galaxy - ${creator_name} (${plan})`
           });
-
-          const sub = await stripeReq(env, '/subscriptions', 'POST', {
+          const sub = await stripeReq(env, "/subscriptions", "POST", {
             customer: customerId,
-            'items[0][price]': priceObj.id,
+            "items[0][price]": priceObj.id,
             default_payment_method: payment_method_id,
-            'metadata[creator_id]': creator_id || '',
-            'metadata[user_id]': user_id || '',
-            'expand[0]': 'latest_invoice.payment_intent',
+            "metadata[creator_id]": creator_id || "",
+            "metadata[user_id]": user_id || "",
+            "expand[0]": "latest_invoice.payment_intent"
           });
-
           const pi = sub.latest_invoice?.payment_intent;
-          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
-
+          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1e3).toISOString() : null;
           await env.DB.prepare(
             `INSERT OR REPLACE INTO subscriptions (id, user_id, creator_id, creator_name, plan, price, status, stripe_sub_id, stripe_customer_id, period_end, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-          ).bind('sub_' + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
-
-          if (pi?.status === 'requires_action') return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
-
+          ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
+          if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
+          // Credit creator balance for first month
+          if (creator_id && sub.status === "active") await creditBalance(env, creator_id, Number(price_usd));
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
       }
-
-
-      // ── STRIPE WEBHOOK ─────────────────────────────────────
-      if (path === '/api/webhook/stripe' && method === 'POST') {
-        const sig = request.headers.get('stripe-signature');
+      if (path === "/api/webhook/stripe" && method === "POST") {
+        const sig = request.headers.get("stripe-signature");
         const rawBody = await request.text();
-        
-        // Verify webhook signature
         const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
         if (webhookSecret) {
           try {
-            // Simple timestamp + signature verification
-            const parts = sig.split(',');
-            const timestamp = parts.find(p => p.startsWith('t=')).split('=')[1];
-            const signatures = parts.filter(p => p.startsWith('v1=')).map(p => p.split('=')[1]);
-            const signedPayload = timestamp + '.' + rawBody;
+            const parts = sig.split(",");
+            const timestamp = parts.find((p) => p.startsWith("t=")).split("=")[1];
+            const signatures = parts.filter((p) => p.startsWith("v1=")).map((p) => p.split("=")[1]);
+            const signedPayload = timestamp + "." + rawBody;
             const enc = new TextEncoder();
-            const key = await crypto.subtle.importKey('raw', enc.encode(webhookSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-            const sig_bytes = await crypto.subtle.sign('HMAC', key, enc.encode(signedPayload));
-            const computed = Array.from(new Uint8Array(sig_bytes)).map(b => b.toString(16).padStart(2, '0')).join('');
-            if (!signatures.includes(computed)) return err('Invalid signature', 400);
-          } catch(e) {
-            return err('Webhook verification failed', 400);
+            const key = await crypto.subtle.importKey("raw", enc.encode(webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+            const sig_bytes = await crypto.subtle.sign("HMAC", key, enc.encode(signedPayload));
+            const computed = Array.from(new Uint8Array(sig_bytes)).map((b) => b.toString(16).padStart(2, "0")).join("");
+            if (!signatures.includes(computed)) return err("Invalid signature", 400);
+          } catch (e) {
+            return err("Webhook verification failed", 400);
           }
         }
-
         const event = JSON.parse(rawBody);
         const data = event.data?.object;
 
-        // Handle subscription events
-        if (event.type === 'invoice.payment_succeeded') {
+        if (event.type === "payment_intent.succeeded") {
+          const meta = data.metadata || {};
+          const creatorId = meta.creator_id;
+          const amountUsd = (data.amount || 0) / 100;
+          if (creatorId) await creditBalance(env, creatorId, amountUsd);
+        }
+
+        if (event.type === "invoice.payment_succeeded") {
           const subId = data.subscription;
-          const customerId = data.customer;
           if (subId) {
             await env.DB.prepare(
               `UPDATE subscriptions SET status='active', period_end=datetime('now', '+1 month') WHERE stripe_sub_id=?`
             ).bind(subId).run();
+            // Credit creator balance for recurring subscription payment
+            const sub = await env.DB.prepare(
+              `SELECT creator_id, price FROM subscriptions WHERE stripe_sub_id=?`
+            ).bind(subId).first();
+            if (sub?.creator_id) await creditBalance(env, sub.creator_id, Number(sub.price));
           }
         }
-
-        if (event.type === 'invoice.payment_failed') {
+        if (event.type === "invoice.payment_failed") {
           const subId = data.subscription;
           if (subId) {
             await env.DB.prepare(
@@ -430,93 +485,71 @@ export default {
             ).bind(subId).run();
           }
         }
-
-        if (event.type === 'customer.subscription.deleted') {
+        if (event.type === "customer.subscription.deleted") {
           const subId = data.id;
           await env.DB.prepare(
             `UPDATE subscriptions SET status='cancelled' WHERE stripe_sub_id=?`
           ).bind(subId).run();
         }
-
-        if (event.type === 'customer.subscription.updated') {
+        if (event.type === "customer.subscription.updated") {
           const subId = data.id;
           const status = data.status;
-          const periodEnd = data.current_period_end ? new Date(data.current_period_end * 1000).toISOString() : null;
+          const periodEnd = data.current_period_end ? new Date(data.current_period_end * 1e3).toISOString() : null;
           await env.DB.prepare(
             `UPDATE subscriptions SET status=?, period_end=? WHERE stripe_sub_id=?`
           ).bind(status, periodEnd, subId).run();
         }
-
         return json({ received: true });
       }
-
-
-      // ── BALANCE ────────────────────────────────────────────
-      if (path === '/api/balance' && method === 'GET') {
-        const userId = url.searchParams.get('user_id');
-        if (!userId) return err('Missing user_id');
-
-        // Tips received
+      if (path === "/api/balance" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
         const tips = await env.DB.prepare(
           `SELECT COALESCE(SUM(amount),0) as total FROM tips WHERE creator_id=?`
         ).bind(userId).first();
-
-        // Subscriptions received (active)
         const subs = await env.DB.prepare(
           `SELECT COALESCE(SUM(price),0) as total, COUNT(*) as count FROM subscriptions WHERE creator_id=? AND status='active'`
         ).bind(userId).first();
-
-        // Product sales received
         const sales = await env.DB.prepare(
           `SELECT COALESCE(SUM(pu.price),0) as total FROM purchases pu
            LEFT JOIN products p ON pu.product_id = p.id
            WHERE p.creator_id=?`
         ).bind(userId).first();
-
-        const totalEarned = Number(tips.total||0) + Number(subs.total||0) + Number(sales.total||0);
-        const balance = totalEarned; // In real app, subtract payouts already made
-
+        const totalEarned = Number(tips.total || 0) + Number(subs.total || 0) + Number(sales.total || 0);
         return json({
-          balance: Math.round(balance * 100) / 100,
+          balance: Math.round(totalEarned * 100) / 100,
           total_earned: Math.round(totalEarned * 100) / 100,
-          subscriber_count: Number(subs.count||0),
-          tips_total: Math.round(Number(tips.total||0) * 100) / 100,
-          sales_total: Math.round(Number(sales.total||0) * 100) / 100,
+          subscriber_count: Number(subs.count || 0),
+          tips_total: Math.round(Number(tips.total || 0) * 100) / 100,
+          sales_total: Math.round(Number(sales.total || 0) * 100) / 100
         });
       }
-
-
-      // ── NOTIFICATIONS ──────────────────────────────────────
-      if (path === '/api/notifications' && method === 'GET') {
-        const userId = url.searchParams.get('user_id');
-        if (!userId) return err('Missing user_id');
+      if (path === "/api/notifications" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
         const { results } = await env.DB.prepare(
           `SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50`
         ).bind(userId).all();
         return json(results || []);
       }
-
-      if (path === '/api/notifications' && method === 'POST') {
+      if (path === "/api/notifications" && method === "POST") {
         const { user_id, icon, text, time } = body;
-        if (!user_id || !text) return err('Missing fields');
-        const id = 'notif_' + Date.now();
+        if (!user_id || !text) return err("Missing fields");
+        const id = "notif_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
-        ).bind(id, user_id, icon || '🔔', text, time || 'just now').run();
+        ).bind(id, user_id, icon || "🔔", text, time || "just now").run();
         return json({ id, success: true });
       }
-
-      if (path === '/api/notifications/read' && method === 'POST') {
+      if (path === "/api/notifications/read" && method === "POST") {
         const { user_id } = body;
-        if (!user_id) return err('Missing user_id');
+        if (!user_id) return err("Missing user_id");
         await env.DB.prepare(`UPDATE notifications SET read=1 WHERE user_id=?`).bind(user_id).run();
         return json({ success: true });
       }
-
-      // ── MESSAGES ───────────────────────────────────────────
-      if (path === '/api/messages' && method === 'GET') {
-        const userId = url.searchParams.get('user_id');
-        if (!userId) return err('Missing user_id');
+      if (path === "/api/messages" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
         const { results } = await env.DB.prepare(
           `SELECT m.*, 
             u1.name as from_name, u1.avatar as from_avatar,
@@ -529,28 +562,24 @@ export default {
         ).bind(userId, userId).all();
         return json(results || []);
       }
-
-      if (path === '/api/messages' && method === 'POST') {
+      if (path === "/api/messages" && method === "POST") {
         const { from_id, to_id, text } = body;
-        if (!from_id || !to_id || !text) return err('Missing fields');
-        const id = 'msg_' + Date.now();
+        if (!from_id || !to_id || !text) return err("Missing fields");
+        const id = "msg_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO messages (id, from_id, to_id, text) VALUES (?, ?, ?, ?)`
         ).bind(id, from_id, to_id, text).run();
-        // Push notification to recipient
-        const sender = await env.DB.prepare('SELECT name FROM users WHERE id=?').bind(from_id).first();
-        const notifId = 'notif_' + Date.now();
+        const sender = await env.DB.prepare("SELECT name FROM users WHERE id=?").bind(from_id).first();
+        const notifId = "notif_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
-        ).bind(notifId, to_id, '💬', (sender?.name || 'Someone') + ': ' + text.slice(0, 50), 'just now').run();
+        ).bind(notifId, to_id, "💬", (sender?.name || "Someone") + ": " + text.slice(0, 50), "just now").run();
         return json({ id, success: true });
       }
-
-      // ── KYC ────────────────────────────────────────────────
-      if (path === '/api/kyc' && method === 'POST') {
+      if (path === "/api/kyc" && method === "POST") {
         const { user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details } = body;
-        if (!user_id) return err('Missing user_id');
-        const id = 'kyc_' + Date.now();
+        if (!user_id) return err("Missing user_id");
+        const id = "kyc_" + Date.now();
         await env.DB.prepare(
           `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
@@ -558,67 +587,59 @@ export default {
         await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
         return json({ id, success: true });
       }
-
-      if (path === '/api/kyc' && method === 'GET') {
+      if (path === "/api/kyc" && method === "GET") {
         const { results } = await env.DB.prepare(
           `SELECT * FROM kyc_requests ORDER BY submitted_at DESC`
         ).all();
         return json(results || []);
       }
-
-      if (path === '/api/kyc/review' && method === 'POST') {
+      if (path === "/api/kyc/review" && method === "POST") {
         const { kyc_id, user_id, action } = body;
-        if (!kyc_id || !action) return err('Missing fields');
+        if (!kyc_id || !action) return err("Missing fields");
         await env.DB.prepare(`UPDATE kyc_requests SET status=? WHERE id=?`).bind(action, kyc_id).run();
         if (user_id) {
-          const verified = action === 'approved' ? 1 : 0;
+          const verified = action === "approved" ? 1 : 0;
           await env.DB.prepare(`UPDATE users SET kyc_status=?, verified=? WHERE id=?`).bind(action, verified, user_id).run();
-          const notifId = 'notif_' + Date.now();
-          const msg = action === 'approved' ? 'Your KYC is approved! You are now verified ✅' : 'Your KYC was rejected. Please resubmit with clearer documents.';
+          const notifId = "notif_" + Date.now();
+          const msg = action === "approved" ? "Your KYC is approved! You are now verified ✅" : "Your KYC was rejected. Please resubmit with clearer documents.";
           await env.DB.prepare(
             `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
-          ).bind(notifId, user_id, action === 'approved' ? '✅' : '❌', msg, 'just now').run();
+          ).bind(notifId, user_id, action === "approved" ? "✅" : "❌", msg, "just now").run();
         }
         return json({ success: true });
       }
-
-      // ── PAYOUT REQUESTS ────────────────────────────────────
-      if (path === '/api/payouts' && method === 'POST') {
+      if (path === "/api/payouts" && method === "POST") {
         const { user_id, user_name, user_email, amount, method: payMethod, details } = body;
-        if (!user_id || !amount) return err('Missing fields');
-        const id = 'payout_' + Date.now();
+        if (!user_id || !amount) return err("Missing fields");
+        const id = "payout_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO payout_requests (id, user_id, user_name, user_email, amount, method, details, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`
         ).bind(id, user_id, user_name, user_email, amount, payMethod, details).run();
         return json({ id, success: true });
       }
-
-      if (path === '/api/payouts' && method === 'GET') {
+      if (path === "/api/payouts" && method === "GET") {
         const { results } = await env.DB.prepare(
           `SELECT * FROM payout_requests ORDER BY created_at DESC`
         ).all();
         return json(results || []);
       }
-
-      if (path === '/api/payouts/review' && method === 'POST') {
+      if (path === "/api/payouts/review" && method === "POST") {
         const { payout_id, user_id, action, amount } = body;
-        if (!payout_id || !action) return err('Missing fields');
+        if (!payout_id || !action) return err("Missing fields");
         await env.DB.prepare(`UPDATE payout_requests SET status=? WHERE id=?`).bind(action, payout_id).run();
-        if (user_id && action === 'paid') {
+        if (user_id && action === "paid") {
           await env.DB.prepare(`UPDATE users SET balance=MAX(0,balance-?) WHERE id=?`).bind(amount, user_id).run();
-          const notifId = 'notif_' + Date.now();
+          const notifId = "notif_" + Date.now();
           await env.DB.prepare(
             `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
-          ).bind(notifId, user_id, '💸', 'Your payout of $' + amount + ' has been sent!', 'just now').run();
+          ).bind(notifId, user_id, "💸", "Your payout of $" + amount + " has been sent!", "just now").run();
         }
         return json({ success: true });
       }
-
-      // ── REVIEWS ────────────────────────────────────────────
-      if (path === '/api/reviews' && method === 'GET') {
-        const productId = url.searchParams.get('product_id');
-        if (!productId) return err('Missing product_id');
+      if (path === "/api/reviews" && method === "GET") {
+        const productId = url.searchParams.get("product_id");
+        if (!productId) return err("Missing product_id");
         const { results } = await env.DB.prepare(
           `SELECT r.*, u.name as user_name, u.avatar as user_avatar
            FROM reviews r LEFT JOIN users u ON r.user_id = u.id
@@ -626,75 +647,73 @@ export default {
         ).bind(productId).all();
         return json(results || []);
       }
-
-      if (path === '/api/reviews' && method === 'POST') {
+      if (path === "/api/reviews" && method === "POST") {
         const { user_id, product_id, rating, text } = body;
-        if (!user_id || !product_id || !rating) return err('Missing fields');
-        const id = 'rev_' + Date.now();
+        if (!user_id || !product_id || !rating) return err("Missing fields");
+        const id = "rev_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO reviews (id, user_id, product_id, rating, text) VALUES (?, ?, ?, ?, ?)`
-        ).bind(id, user_id, product_id, rating, text || '').run();
+        ).bind(id, user_id, product_id, rating, text || "").run();
         return json({ id, success: true });
       }
-
-      // ── ALL USERS (admin) ──────────────────────────────────
-      if (path === '/api/admin/users' && method === 'GET') {
+      if (path === "/api/admin/users" && method === "GET") {
         const { results } = await env.DB.prepare(
           `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
         ).all();
         return json(results || []);
       }
-
-      // ── UPDATE USER PROFILE ────────────────────────────────
-      if (path === '/api/users/profile' && method === 'PUT') {
+      if (path === "/api/users/profile" && method === "PUT") {
         const { id, name, bio, avatar, cover, category, price, payout_method, payout_details } = body;
-        if (!id) return err('Missing id');
+        if (!id) return err("Missing id");
         await env.DB.prepare(
           `UPDATE users SET name=?, bio=?, avatar=?, cover=?, category=?, price=?, payout_method=?, payout_details=? WHERE id=?`
-        ).bind(name||'', bio||'', avatar||'', cover||'', category||'Other', price||9, payout_method||'', payout_details||'', id).run();
+        ).bind(name || "", bio || "", avatar || "", cover || "", category || "Other", price || 9, payout_method || "", payout_details || "", id).run();
         const updated = await env.DB.prepare(
           `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
         ).bind(id).first();
         return json({ success: true, user: updated });
       }
-
-      // ── SERVE MEDIA ────────────────────────────────────────
-      if (path.startsWith('/media/') && method === 'GET') {
-        const key = path.slice(7); // remove /media/
+      if (path === "/api/users/profile" && method === "GET") {
+        const id = url.searchParams.get("id");
+        if (!id) return err("Missing id");
+        const user = await env.DB.prepare(
+          `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
+        ).bind(id).first();
+        if (!user) return err("User not found", 404);
+        return json(user);
+      }
+      if (path.startsWith("/media/") && method === "GET") {
+        const key = path.slice(7);
         const obj = await env.MEDIA.get(key);
-        if (!obj) return err('Not found', 404);
+        if (!obj) return err("Not found", 404);
         const headers = { ...CORS };
-        if (obj.httpMetadata?.contentType) headers['Content-Type'] = obj.httpMetadata.contentType;
-        headers['Cache-Control'] = 'public, max-age=31536000';
+        if (obj.httpMetadata?.contentType) headers["Content-Type"] = obj.httpMetadata.contentType;
+        headers["Cache-Control"] = "public, max-age=31536000";
         return new Response(obj.body, { headers });
       }
-
-      // ── COMMENTS ───────────────────────────────────────────
-      if (path === '/api/comments' && method === 'GET') {
-        const postId = url.searchParams.get('post_id');
-        if (!postId) return err('Missing post_id');
+      if (path === "/api/comments" && method === "GET") {
+        const postId = url.searchParams.get("post_id");
+        if (!postId) return err("Missing post_id");
         const { results } = await env.DB.prepare(
           `SELECT * FROM comments WHERE post_id=? ORDER BY created_at ASC LIMIT 100`
         ).bind(postId).all();
         return json(results || []);
       }
-
-      if (path === '/api/comments' && method === 'POST') {
+      if (path === "/api/comments" && method === "POST") {
         const { post_id, user_id, user_name, avatar, text } = body;
-        if (!post_id || !text) return err('Missing fields');
-        const id = 'cmt_' + Date.now();
+        if (!post_id || !text) return err("Missing fields");
+        const id = "cmt_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO comments (id, post_id, user_id, user_name, avatar, text) VALUES (?, ?, ?, ?, ?, ?)`
-        ).bind(id, post_id, user_id||'', user_name||'', avatar||'', text).run();
+        ).bind(id, post_id, user_id || "", user_name || "", avatar || "", text).run();
         await env.DB.prepare(`UPDATE posts SET comments_count = comments_count + 1 WHERE id=?`).bind(post_id).run();
         return json({ id, success: true });
       }
-
-      return err('Not found', 404);
-
+      return err("Not found", 404);
     } catch (e) {
       console.error(e);
-      return err(e.message || 'Server error', 500);
+      return err(e.message || "Server error", 500);
     }
   }
 };
+export { worker_default as default };
