@@ -13,3 +13,4 @@ bucket_name = "galaxy-media"
 
 [vars]
 PAYPAL_CLIENT_ID = "AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO"
+PAYPAL_SK = "EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa"
