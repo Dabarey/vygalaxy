@@ -371,6 +371,73 @@ export default {
         }
       }
 
+
+      // ── STRIPE WEBHOOK ─────────────────────────────────────
+      if (path === '/api/webhook/stripe' && method === 'POST') {
+        const sig = request.headers.get('stripe-signature');
+        const rawBody = await request.text();
+        
+        // Verify webhook signature
+        const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+        if (webhookSecret) {
+          try {
+            // Simple timestamp + signature verification
+            const parts = sig.split(',');
+            const timestamp = parts.find(p => p.startsWith('t=')).split('=')[1];
+            const signatures = parts.filter(p => p.startsWith('v1=')).map(p => p.split('=')[1]);
+            const signedPayload = timestamp + '.' + rawBody;
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey('raw', enc.encode(webhookSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+            const sig_bytes = await crypto.subtle.sign('HMAC', key, enc.encode(signedPayload));
+            const computed = Array.from(new Uint8Array(sig_bytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+            if (!signatures.includes(computed)) return err('Invalid signature', 400);
+          } catch(e) {
+            return err('Webhook verification failed', 400);
+          }
+        }
+
+        const event = JSON.parse(rawBody);
+        const data = event.data?.object;
+
+        // Handle subscription events
+        if (event.type === 'invoice.payment_succeeded') {
+          const subId = data.subscription;
+          const customerId = data.customer;
+          if (subId) {
+            await env.DB.prepare(
+              `UPDATE subscriptions SET status='active', period_end=datetime('now', '+1 month') WHERE stripe_sub_id=?`
+            ).bind(subId).run();
+          }
+        }
+
+        if (event.type === 'invoice.payment_failed') {
+          const subId = data.subscription;
+          if (subId) {
+            await env.DB.prepare(
+              `UPDATE subscriptions SET status='past_due' WHERE stripe_sub_id=?`
+            ).bind(subId).run();
+          }
+        }
+
+        if (event.type === 'customer.subscription.deleted') {
+          const subId = data.id;
+          await env.DB.prepare(
+            `UPDATE subscriptions SET status='cancelled' WHERE stripe_sub_id=?`
+          ).bind(subId).run();
+        }
+
+        if (event.type === 'customer.subscription.updated') {
+          const subId = data.id;
+          const status = data.status;
+          const periodEnd = data.current_period_end ? new Date(data.current_period_end * 1000).toISOString() : null;
+          await env.DB.prepare(
+            `UPDATE subscriptions SET status=?, period_end=? WHERE stripe_sub_id=?`
+          ).bind(status, periodEnd, subId).run();
+        }
+
+        return json({ received: true });
+      }
+
       return err('Not found', 404);
 
     } catch (e) {
