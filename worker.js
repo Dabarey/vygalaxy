@@ -30,8 +30,8 @@ async function stripeReq(env, path, method = 'GET', params = null) {
 
 // ── PAYPAL ─────────────────────────────────────────────────────
 async function getPayPalToken(env) {
-  const clientId = env.PAYPAL_CLIENT_ID;
-  const secret = env.PAYPAL_SK;
+  const clientId = env.PAYPAL_CLIENT_ID || 'AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO';
+  const secret = env.PAYPAL_SK || 'EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa';
   if (!clientId || !secret) throw new Error('PayPal credentials not set');
   const creds = btoa(clientId + ':' + secret);
   const res = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
