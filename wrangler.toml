@@ -11,3 +11,5 @@ database_id = "9b829d2d-7bb2-4674-88b7-a33cc9504e81"
 binding = "MEDIA"
 bucket_name = "galaxy-media"
 
+[vars]
+PAYPAL_CLIENT_ID = "AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO"
