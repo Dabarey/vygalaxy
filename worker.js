@@ -167,6 +167,16 @@ export default {
 
       // ── POSTS ──────────────────────────────────────────────
       if (path === '/api/posts' && method === 'GET') {
+        const creatorId = url.searchParams.get('creator_id');
+        if (creatorId) {
+          const { results } = await env.DB.prepare(
+            `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+             FROM posts p LEFT JOIN users u ON p.creator_id = u.id
+             WHERE p.creator_id = ?
+             ORDER BY p.created_at DESC LIMIT 100`
+          ).bind(creatorId).all();
+          return json(results || []);
+        }
         const { results } = await env.DB.prepare(
           `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
            FROM posts p LEFT JOIN users u ON p.creator_id = u.id
@@ -640,8 +650,11 @@ export default {
         if (!id) return err('Missing id');
         await env.DB.prepare(
           `UPDATE users SET name=?, bio=?, avatar=?, cover=?, category=?, price=?, payout_method=?, payout_details=? WHERE id=?`
-        ).bind(name, bio, avatar, cover, category, price, payout_method, payout_details, id).run();
-        return json({ success: true });
+        ).bind(name||'', bio||'', avatar||'', cover||'', category||'Other', price||9, payout_method||'', payout_details||'', id).run();
+        const updated = await env.DB.prepare(
+          `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
+        ).bind(id).first();
+        return json({ success: true, user: updated });
       }
 
       return err('Not found', 404);
