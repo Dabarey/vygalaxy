@@ -230,8 +230,15 @@ export default {
 
       if (path === '/api/users' && method === 'GET') {
         const id = url.searchParams.get('id');
+        const role = url.searchParams.get('role');
+        if (role === 'creator') {
+          const { results } = await env.DB.prepare(
+            `SELECT id,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE role!='admin' ORDER BY created_at DESC`
+          ).all();
+          return json(results || []);
+        }
         if (!id) return err('Missing id');
-        const user = await env.DB.prepare('SELECT id,email,name,bio,avatar,category,price,role,created_at FROM users WHERE id=?').bind(id).first();
+        const user = await env.DB.prepare('SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE id=?').bind(id).first();
         if (!user) return err('User not found', 404);
         return json(user);
       }
