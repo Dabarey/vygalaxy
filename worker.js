@@ -202,16 +202,17 @@ export default {
 
       // ── USERS ──────────────────────────────────────────────
       if (path === '/api/users/register' && method === 'POST') {
-        const { email, password, name } = body;
+        const { email, password, name, category } = body;
         if (!email || !password || !name) return err('Missing fields');
         const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
         if (existing) return err('Email already registered', 409);
         const id = 'user_' + Date.now();
         const hash = await hashPassword(password);
+        const role = email === 'dabarey24@gmail.com' ? 'admin' : 'user';
         await env.DB.prepare(
-          `INSERT INTO users (id, email, password_hash, name, role, created_at) VALUES (?, ?, ?, ?, 'user', datetime('now'))`
-        ).bind(id, email, hash, name).run();
-        return json({ id, email, name, role: 'user' });
+          `INSERT INTO users (id, email, password_hash, name, role, category, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+        ).bind(id, email, hash, name, role, category || 'Other').run();
+        return json({ id, email, name, role, category: category || 'Other' });
       }
 
       if (path === '/api/users/login' && method === 'POST') {
@@ -225,14 +226,7 @@ export default {
         return json(safe);
       }
 
-      if (path === '/api/users/profile' && method === 'PUT') {
-        const { id, name, bio, avatar, category, price } = body;
-        if (!id) return err('Missing id');
-        await env.DB.prepare(
-          `UPDATE users SET name=?, bio=?, avatar=?, category=?, price=? WHERE id=?`
-        ).bind(name, bio, avatar, category, price, id).run();
-        return json({ success: true });
-      }
+
 
       if (path === '/api/users' && method === 'GET') {
         const id = url.searchParams.get('id');
@@ -436,6 +430,211 @@ export default {
         }
 
         return json({ received: true });
+      }
+
+
+      // ── BALANCE ────────────────────────────────────────────
+      if (path === '/api/balance' && method === 'GET') {
+        const userId = url.searchParams.get('user_id');
+        if (!userId) return err('Missing user_id');
+
+        // Tips received
+        const tips = await env.DB.prepare(
+          `SELECT COALESCE(SUM(amount),0) as total FROM tips WHERE creator_id=?`
+        ).bind(userId).first();
+
+        // Subscriptions received (active)
+        const subs = await env.DB.prepare(
+          `SELECT COALESCE(SUM(price),0) as total, COUNT(*) as count FROM subscriptions WHERE creator_id=? AND status='active'`
+        ).bind(userId).first();
+
+        // Product sales received
+        const sales = await env.DB.prepare(
+          `SELECT COALESCE(SUM(pu.price),0) as total FROM purchases pu
+           LEFT JOIN products p ON pu.product_id = p.id
+           WHERE p.creator_id=?`
+        ).bind(userId).first();
+
+        const totalEarned = Number(tips.total||0) + Number(subs.total||0) + Number(sales.total||0);
+        const balance = totalEarned; // In real app, subtract payouts already made
+
+        return json({
+          balance: Math.round(balance * 100) / 100,
+          total_earned: Math.round(totalEarned * 100) / 100,
+          subscriber_count: Number(subs.count||0),
+          tips_total: Math.round(Number(tips.total||0) * 100) / 100,
+          sales_total: Math.round(Number(sales.total||0) * 100) / 100,
+        });
+      }
+
+
+      // ── NOTIFICATIONS ──────────────────────────────────────
+      if (path === '/api/notifications' && method === 'GET') {
+        const userId = url.searchParams.get('user_id');
+        if (!userId) return err('Missing user_id');
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50`
+        ).bind(userId).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/notifications' && method === 'POST') {
+        const { user_id, icon, text, time } = body;
+        if (!user_id || !text) return err('Missing fields');
+        const id = 'notif_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+        ).bind(id, user_id, icon || '🔔', text, time || 'just now').run();
+        return json({ id, success: true });
+      }
+
+      if (path === '/api/notifications/read' && method === 'POST') {
+        const { user_id } = body;
+        if (!user_id) return err('Missing user_id');
+        await env.DB.prepare(`UPDATE notifications SET read=1 WHERE user_id=?`).bind(user_id).run();
+        return json({ success: true });
+      }
+
+      // ── MESSAGES ───────────────────────────────────────────
+      if (path === '/api/messages' && method === 'GET') {
+        const userId = url.searchParams.get('user_id');
+        if (!userId) return err('Missing user_id');
+        const { results } = await env.DB.prepare(
+          `SELECT m.*, 
+            u1.name as from_name, u1.avatar as from_avatar,
+            u2.name as to_name, u2.avatar as to_avatar
+           FROM messages m
+           LEFT JOIN users u1 ON m.from_id = u1.id
+           LEFT JOIN users u2 ON m.to_id = u2.id
+           WHERE m.from_id=? OR m.to_id=?
+           ORDER BY m.created_at DESC LIMIT 100`
+        ).bind(userId, userId).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/messages' && method === 'POST') {
+        const { from_id, to_id, text } = body;
+        if (!from_id || !to_id || !text) return err('Missing fields');
+        const id = 'msg_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO messages (id, from_id, to_id, text) VALUES (?, ?, ?, ?)`
+        ).bind(id, from_id, to_id, text).run();
+        // Push notification to recipient
+        const sender = await env.DB.prepare('SELECT name FROM users WHERE id=?').bind(from_id).first();
+        const notifId = 'notif_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+        ).bind(notifId, to_id, '💬', (sender?.name || 'Someone') + ': ' + text.slice(0, 50), 'just now').run();
+        return json({ id, success: true });
+      }
+
+      // ── KYC ────────────────────────────────────────────────
+      if (path === '/api/kyc' && method === 'POST') {
+        const { user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details } = body;
+        if (!user_id) return err('Missing user_id');
+        const id = 'kyc_' + Date.now();
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
+        ).bind(id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details).run();
+        await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
+        return json({ id, success: true });
+      }
+
+      if (path === '/api/kyc' && method === 'GET') {
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM kyc_requests ORDER BY submitted_at DESC`
+        ).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/kyc/review' && method === 'POST') {
+        const { kyc_id, user_id, action } = body;
+        if (!kyc_id || !action) return err('Missing fields');
+        await env.DB.prepare(`UPDATE kyc_requests SET status=? WHERE id=?`).bind(action, kyc_id).run();
+        if (user_id) {
+          const verified = action === 'approved' ? 1 : 0;
+          await env.DB.prepare(`UPDATE users SET kyc_status=?, verified=? WHERE id=?`).bind(action, verified, user_id).run();
+          const notifId = 'notif_' + Date.now();
+          const msg = action === 'approved' ? 'Your KYC is approved! You are now verified ✅' : 'Your KYC was rejected. Please resubmit with clearer documents.';
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+          ).bind(notifId, user_id, action === 'approved' ? '✅' : '❌', msg, 'just now').run();
+        }
+        return json({ success: true });
+      }
+
+      // ── PAYOUT REQUESTS ────────────────────────────────────
+      if (path === '/api/payouts' && method === 'POST') {
+        const { user_id, user_name, user_email, amount, method: payMethod, details } = body;
+        if (!user_id || !amount) return err('Missing fields');
+        const id = 'payout_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO payout_requests (id, user_id, user_name, user_email, amount, method, details, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`
+        ).bind(id, user_id, user_name, user_email, amount, payMethod, details).run();
+        return json({ id, success: true });
+      }
+
+      if (path === '/api/payouts' && method === 'GET') {
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM payout_requests ORDER BY created_at DESC`
+        ).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/payouts/review' && method === 'POST') {
+        const { payout_id, user_id, action, amount } = body;
+        if (!payout_id || !action) return err('Missing fields');
+        await env.DB.prepare(`UPDATE payout_requests SET status=? WHERE id=?`).bind(action, payout_id).run();
+        if (user_id && action === 'paid') {
+          await env.DB.prepare(`UPDATE users SET balance=MAX(0,balance-?) WHERE id=?`).bind(amount, user_id).run();
+          const notifId = 'notif_' + Date.now();
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+          ).bind(notifId, user_id, '💸', 'Your payout of $' + amount + ' has been sent!', 'just now').run();
+        }
+        return json({ success: true });
+      }
+
+      // ── REVIEWS ────────────────────────────────────────────
+      if (path === '/api/reviews' && method === 'GET') {
+        const productId = url.searchParams.get('product_id');
+        if (!productId) return err('Missing product_id');
+        const { results } = await env.DB.prepare(
+          `SELECT r.*, u.name as user_name, u.avatar as user_avatar
+           FROM reviews r LEFT JOIN users u ON r.user_id = u.id
+           WHERE r.product_id=? ORDER BY r.created_at DESC`
+        ).bind(productId).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/reviews' && method === 'POST') {
+        const { user_id, product_id, rating, text } = body;
+        if (!user_id || !product_id || !rating) return err('Missing fields');
+        const id = 'rev_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO reviews (id, user_id, product_id, rating, text) VALUES (?, ?, ?, ?, ?)`
+        ).bind(id, user_id, product_id, rating, text || '').run();
+        return json({ id, success: true });
+      }
+
+      // ── ALL USERS (admin) ──────────────────────────────────
+      if (path === '/api/admin/users' && method === 'GET') {
+        const { results } = await env.DB.prepare(
+          `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
+        ).all();
+        return json(results || []);
+      }
+
+      // ── UPDATE USER PROFILE ────────────────────────────────
+      if (path === '/api/users/profile' && method === 'PUT') {
+        const { id, name, bio, avatar, cover, category, price, payout_method, payout_details } = body;
+        if (!id) return err('Missing id');
+        await env.DB.prepare(
+          `UPDATE users SET name=?, bio=?, avatar=?, cover=?, category=?, price=?, payout_method=?, payout_details=? WHERE id=?`
+        ).bind(name, bio, avatar, cover, category, price, payout_method, payout_details, id).run();
+        return json({ success: true });
       }
 
       return err('Not found', 404);
