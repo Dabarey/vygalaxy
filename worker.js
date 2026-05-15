@@ -1,5 +1,29 @@
 // Galaxy Platform — Cloudflare Worker
-// Bindings: DB (D1), MEDIA (R2), STRIPE_SK (Secret)
+// Bindings: DB (D1), MEDIA (R2), STRIPE_SK (Secret), PAYPAL_CLIENT_ID, PAYPAL_SK
+async function getPayPalToken(env) {
+  const creds = btoa(env.PAYPAL_CLIENT_ID + ':' + env.PAYPAL_SK);
+  const res = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + creds, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=client_credentials'
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error('PayPal auth failed');
+  return data.access_token;
+}
+
+async function paypalReq(env, path, method = 'GET', body = null) {
+  const token = await getPayPalToken(env);
+  const res = await fetch('https://api-m.paypal.com' + path, {
+    method,
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'PayPal error');
+  return data;
+}
+
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -258,6 +282,61 @@ export default {
 
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
+      }
+
+
+      // ── PAYPAL TEST ────────────────────────────────────────────
+      if (path === '/api/paypal/test' && method === 'GET') {
+        try {
+          const token = await getPayPalToken(env);
+          return json({ success: true, token_preview: token.substring(0, 20) + '...' });
+        } catch(e) {
+          return json({ success: false, error: e.message });
+        }
+      }
+
+      // ── PAYPAL ─────────────────────────────────────────────
+      if (path === '/api/paypal/order' && method === 'POST') {
+        const { amount, description, user_id, creator_id, post_id, product_id, plan, user_name } = body;
+        if (!amount) return err('Missing amount');
+        const order = await paypalReq(env, '/v2/checkout/orders', 'POST', {
+          intent: 'CAPTURE',
+          purchase_units: [{ amount: { currency_code: 'USD', value: Number(amount).toFixed(2) }, description: description || 'Galaxy Payment' }],
+          application_context: {
+            return_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=success',
+            cancel_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=cancel',
+            brand_name: 'Galaxy',
+            user_action: 'PAY_NOW'
+          }
+        });
+        return json({ id: order.id, status: order.status });
+      }
+
+      if (path === '/api/paypal/capture' && method === 'POST') {
+        const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name, creator_name } = body;
+        if (!order_id) return err('Missing order_id');
+        const capture = await paypalReq(env, '/v2/checkout/orders/' + order_id + '/capture', 'POST');
+        if (capture.status !== 'COMPLETED') return err('Payment not completed');
+
+        const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
+
+        if (plan === 'tip' && post_id) {
+          await env.DB.prepare(
+            `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
+          await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
+        }
+
+        if (plan === 'purchase' && product_id) {
+          await env.DB.prepare(
+            `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at)
+             VALUES (?, ?, ?, ?, ?, datetime('now'))`
+          ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, 'paypal_' + order_id).run();
+          await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+        }
+
+        return json({ success: true, capture_id: order_id });
       }
 
       return err('Not found', 404);
