@@ -1,29 +1,5 @@
 // Galaxy Platform — Cloudflare Worker
-// Bindings: DB (D1), MEDIA (R2), STRIPE_SK (Secret), PAYPAL_CLIENT_ID, PAYPAL_SK
-async function getPayPalToken(env) {
-  const creds = btoa(env.PAYPAL_CLIENT_ID + ':' + env.PAYPAL_SK);
-  const res = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
-    method: 'POST',
-    headers: { Authorization: 'Basic ' + creds, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'grant_type=client_credentials'
-  });
-  const data = await res.json();
-  if (!data.access_token) throw new Error('PayPal auth failed');
-  return data.access_token;
-}
-
-async function paypalReq(env, path, method = 'GET', body = null) {
-  const token = await getPayPalToken(env);
-  const res = await fetch('https://api-m.paypal.com' + path, {
-    method,
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'PayPal error');
-  return data;
-}
-
+// Bindings: DB (D1), MEDIA (R2), STRIPE_SK, PAYPAL_CLIENT_ID, PAYPAL_SK
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -38,6 +14,7 @@ function err(msg, status = 400) {
   return new Response(JSON.stringify({ error: msg }), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
+// ── STRIPE ─────────────────────────────────────────────────────
 async function stripeReq(env, path, method = 'GET', params = null) {
   const key = env.STRIPE_SK;
   if (!key) throw new Error('STRIPE_SK not set');
@@ -49,6 +26,64 @@ async function stripeReq(env, path, method = 'GET', params = null) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || `Stripe ${res.status}`);
   return data;
+}
+
+// ── PAYPAL ─────────────────────────────────────────────────────
+async function getPayPalToken(env) {
+  const clientId = env.PAYPAL_CLIENT_ID;
+  const secret = env.PAYPAL_SK;
+  if (!clientId || !secret) throw new Error('PayPal credentials not set');
+  const creds = btoa(clientId + ':' + secret);
+  const res = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + creds,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error('PayPal auth failed: ' + JSON.stringify(data));
+  return data.access_token;
+}
+
+async function paypalReq(env, path, method = 'GET', body = null) {
+  const token = await getPayPalToken(env);
+  const res = await fetch('https://api-m.paypal.com' + path, {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+  return data;
+}
+
+// ── PASSWORD ───────────────────────────────────────────────────
+async function hashPassword(password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+  const hashArr = Array.from(new Uint8Array(bits));
+  const saltArr = Array.from(salt);
+  return saltArr.map(b => b.toString(16).padStart(2, '0')).join('') + ':' + hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyPassword(password, stored) {
+  try {
+    const [saltHex, hashHex] = stored.split(':');
+    const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+    const hashArr = Array.from(new Uint8Array(bits));
+    const computed = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+    return computed === hashHex;
+  } catch { return false; }
 }
 
 export default {
@@ -63,7 +98,7 @@ export default {
     if (path === '/' || path === '/index.html') {
       const obj = await env.MEDIA.get('index.html');
       if (obj) {
-        return new Response(obj.body, { headers: { 'Content-Type': 'text/html', ...CORS } });
+        return new Response(obj.body, { headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', ...CORS } });
       }
     }
 
@@ -76,6 +111,59 @@ export default {
     }
 
     try {
+
+      // ── PAYPAL TEST ────────────────────────────────────────
+      if (path === '/api/paypal/test') {
+        try {
+          const token = await getPayPalToken(env);
+          return json({ success: true, preview: token.substring(0, 20) + '...' });
+        } catch(e) {
+          return json({ success: false, error: e.message });
+        }
+      }
+
+      // ── PAYPAL CREATE ORDER ────────────────────────────────
+      if (path === '/api/paypal/order' && method === 'POST') {
+        const { amount, description, user_id, creator_id, post_id, product_id, plan, user_name } = body;
+        if (!amount) return err('Missing amount');
+        const order = await paypalReq(env, '/v2/checkout/orders', 'POST', {
+          intent: 'CAPTURE',
+          purchase_units: [{
+            amount: { currency_code: 'USD', value: Number(amount).toFixed(2) },
+            description: description || 'Galaxy Payment',
+          }],
+          application_context: {
+            return_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=success',
+            cancel_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=cancel',
+            brand_name: 'Galaxy',
+            user_action: 'PAY_NOW',
+            landing_page: 'BILLING',
+          },
+        });
+        return json({ id: order.id, status: order.status });
+      }
+
+      // ── PAYPAL CAPTURE ─────────────────────────────────────
+      if (path === '/api/paypal/capture' && method === 'POST') {
+        const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name } = body;
+        if (!order_id) return err('Missing order_id');
+        const capture = await paypalReq(env, '/v2/checkout/orders/' + order_id + '/capture', 'POST', {});
+        if (capture.status !== 'COMPLETED') return err('Payment not completed: ' + capture.status);
+        const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
+        if (plan === 'tip' && post_id) {
+          await env.DB.prepare(
+            `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
+          await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
+        }
+        if (plan === 'purchase' && product_id) {
+          await env.DB.prepare(
+            `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+          ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, 'paypal_' + order_id).run();
+          await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+        }
+        return json({ success: true, capture_id: order_id });
+      }
 
       // ── POSTS ──────────────────────────────────────────────
       if (path === '/api/posts' && method === 'GET') {
@@ -197,7 +285,7 @@ export default {
         return json(results || []);
       }
 
-      // ── PAYMENT ────────────────────────────────────────────
+      // ── STRIPE PAYMENT ─────────────────────────────────────
       if (path === '/api/pay' && method === 'POST') {
         const { payment_method_id, user_id, user_email, user_name,
                 plan, price_usd, creator_id, creator_name,
@@ -206,6 +294,7 @@ export default {
         if (!payment_method_id || !user_email || !price_usd) return err('Missing payment fields');
 
         const amountCents = Math.round(Number(price_usd) * 100);
+        const creatorAmount = Math.round(Number(price_usd) * 0.71 * 100) / 100;
 
         const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, 'GET');
         let customerId;
@@ -237,17 +326,15 @@ export default {
 
           if (plan === 'tip' && post_id) {
             await env.DB.prepare(
-              `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-            ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', price_usd).run();
+              `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+            ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
             await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
           }
 
           if (plan === 'purchase' && product_id) {
             await env.DB.prepare(
-              `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at)
-               VALUES (?, ?, ?, ?, ?, datetime('now'))`
-            ).bind('pur_' + Date.now(), user_id, product_id, price_usd, pi.id).run();
+              `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+            ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, pi.id).run();
             await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
           }
 
@@ -284,61 +371,6 @@ export default {
         }
       }
 
-
-      // ── PAYPAL TEST ────────────────────────────────────────────
-      if (path === '/api/paypal/test' && method === 'GET') {
-        try {
-          const token = await getPayPalToken(env);
-          return json({ success: true, token_preview: token.substring(0, 20) + '...' });
-        } catch(e) {
-          return json({ success: false, error: e.message });
-        }
-      }
-
-      // ── PAYPAL ─────────────────────────────────────────────
-      if (path === '/api/paypal/order' && method === 'POST') {
-        const { amount, description, user_id, creator_id, post_id, product_id, plan, user_name } = body;
-        if (!amount) return err('Missing amount');
-        const order = await paypalReq(env, '/v2/checkout/orders', 'POST', {
-          intent: 'CAPTURE',
-          purchase_units: [{ amount: { currency_code: 'USD', value: Number(amount).toFixed(2) }, description: description || 'Galaxy Payment' }],
-          application_context: {
-            return_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=success',
-            cancel_url: 'https://vygalaxy.dabarey24.workers.dev/?pp=cancel',
-            brand_name: 'Galaxy',
-            user_action: 'PAY_NOW'
-          }
-        });
-        return json({ id: order.id, status: order.status });
-      }
-
-      if (path === '/api/paypal/capture' && method === 'POST') {
-        const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name, creator_name } = body;
-        if (!order_id) return err('Missing order_id');
-        const capture = await paypalReq(env, '/v2/checkout/orders/' + order_id + '/capture', 'POST');
-        if (capture.status !== 'COMPLETED') return err('Payment not completed');
-
-        const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
-
-        if (plan === 'tip' && post_id) {
-          await env.DB.prepare(
-            `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-          ).bind('tip_' + Date.now(), post_id, creator_id, user_id || '', user_name || '', creatorAmount).run();
-          await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
-        }
-
-        if (plan === 'purchase' && product_id) {
-          await env.DB.prepare(
-            `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at)
-             VALUES (?, ?, ?, ?, ?, datetime('now'))`
-          ).bind('pur_' + Date.now(), user_id, product_id, creatorAmount, 'paypal_' + order_id).run();
-          await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
-        }
-
-        return json({ success: true, capture_id: order_id });
-      }
-
       return err('Not found', 404);
 
     } catch (e) {
@@ -347,26 +379,3 @@ export default {
     }
   }
 };
-
-async function hashPassword(password) {
-  const enc = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
-  const hashArr = Array.from(new Uint8Array(bits));
-  const saltArr = Array.from(salt);
-  return saltArr.map(b => b.toString(16).padStart(2, '0')).join('') + ':' + hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPassword(password, stored) {
-  try {
-    const [saltHex, hashHex] = stored.split(':');
-    const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
-    const hashArr = Array.from(new Uint8Array(bits));
-    const computed = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
-    return computed === hashHex;
-  } catch { return false; }
-}
