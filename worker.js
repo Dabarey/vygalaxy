@@ -206,7 +206,8 @@ export default {
         await env.MEDIA.put(key, file.stream(), {
           httpMetadata: { contentType: file.type || 'application/octet-stream' }
         });
-        const publicUrl = `https://pub-${env.R2_PUBLIC_ID || 'your-r2'}.r2.dev/${key}`;
+        // Serve media through worker
+        const publicUrl = `https://vygalaxy.dabarey24.workers.dev/media/${key}`;
         return json({ url: publicUrl, key });
       }
 
@@ -655,6 +656,38 @@ export default {
           `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
         ).bind(id).first();
         return json({ success: true, user: updated });
+      }
+
+      // ── SERVE MEDIA ────────────────────────────────────────
+      if (path.startsWith('/media/') && method === 'GET') {
+        const key = path.slice(7); // remove /media/
+        const obj = await env.MEDIA.get(key);
+        if (!obj) return err('Not found', 404);
+        const headers = { ...CORS };
+        if (obj.httpMetadata?.contentType) headers['Content-Type'] = obj.httpMetadata.contentType;
+        headers['Cache-Control'] = 'public, max-age=31536000';
+        return new Response(obj.body, { headers });
+      }
+
+      // ── COMMENTS ───────────────────────────────────────────
+      if (path === '/api/comments' && method === 'GET') {
+        const postId = url.searchParams.get('post_id');
+        if (!postId) return err('Missing post_id');
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM comments WHERE post_id=? ORDER BY created_at ASC LIMIT 100`
+        ).bind(postId).all();
+        return json(results || []);
+      }
+
+      if (path === '/api/comments' && method === 'POST') {
+        const { post_id, user_id, user_name, avatar, text } = body;
+        if (!post_id || !text) return err('Missing fields');
+        const id = 'cmt_' + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO comments (id, post_id, user_id, user_name, avatar, text) VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(id, post_id, user_id||'', user_name||'', avatar||'', text).run();
+        await env.DB.prepare(`UPDATE posts SET comments_count = comments_count + 1 WHERE id=?`).bind(post_id).run();
+        return json({ id, success: true });
       }
 
       return err('Not found', 404);
