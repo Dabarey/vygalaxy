@@ -261,7 +261,7 @@ var worker_default = {
         await env.MEDIA.put(key, file.stream(), {
           httpMetadata: { contentType: file.type || "application/octet-stream" }
         });
-        const publicUrl = `https://vygalaxy.dabarey24.workers.dev/media/${key}`;
+        const publicUrl = `https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/${key}`;
         return json({ url: publicUrl, key });
       }
       if (path === "/api/upload/sign" && method === "POST") {
