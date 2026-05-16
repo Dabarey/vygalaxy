@@ -125,15 +125,32 @@ var worker_default = {
     if (path === "/api/payout/settings" && method === "POST") {
       let body2 = {};
       try { body2 = await request.json(); } catch {}
-      const { creator_id, method: m, paypal_email, country } = body2;
+      const { creator_id, method: m, paypal_email, country,
+        bank_name, bank_iban, bank_swift, bank_account, bank_routing,
+        bank_sortcode, bank_bsb, bank_transit, bank_institution,
+        bank_bankname, bank_country } = body2;
       if (!creator_id) return err("Missing creator_id");
       await env.DB.prepare(`
-        INSERT INTO payout_settings (creator_id, method, paypal_email, country, updated_at)
-        VALUES (?, ?, ?, ?, datetime('now'))
+        INSERT INTO payout_settings (creator_id, method, paypal_email, country,
+          bank_name, bank_iban, bank_swift, bank_account, bank_routing,
+          bank_sortcode, bank_bsb, bank_transit, bank_institution,
+          bank_bankname, bank_country, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
         ON CONFLICT(creator_id) DO UPDATE SET
           method=excluded.method, paypal_email=excluded.paypal_email,
-          country=excluded.country, updated_at=excluded.updated_at
-      `).bind(creator_id, m||"paypal", paypal_email||null, country||null).run();
+          country=excluded.country, bank_name=excluded.bank_name,
+          bank_iban=excluded.bank_iban, bank_swift=excluded.bank_swift,
+          bank_account=excluded.bank_account, bank_routing=excluded.bank_routing,
+          bank_sortcode=excluded.bank_sortcode, bank_bsb=excluded.bank_bsb,
+          bank_transit=excluded.bank_transit, bank_institution=excluded.bank_institution,
+          bank_bankname=excluded.bank_bankname, bank_country=excluded.bank_country,
+          updated_at=excluded.updated_at
+      `).bind(
+        creator_id, m||"paypal", paypal_email||null, country||null,
+        bank_name||null, bank_iban||null, bank_swift||null, bank_account||null,
+        bank_routing||null, bank_sortcode||null, bank_bsb||null, bank_transit||null,
+        bank_institution||null, bank_bankname||null, bank_country||null
+      ).run();
       return json({ ok: true });
     }
     if (path === "/api/payout/request" && method === "POST") {
@@ -146,18 +163,66 @@ var worker_default = {
       const payoutMethod = m || "paypal";
       const min = payoutMethod === "stripe" ? 500 : 100;
       if (balance < min) return err(`Minimum for ${payoutMethod==="stripe"?"bank transfer":"PayPal"} is $${min}. Your balance is $${balance.toFixed(2)}.`);
-      const pending = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND status='pending'").bind(creator_id).first();
-      if (pending) return err("You already have a pending payout. It will be processed on the 1st of next month.");
-      const thisMonth = new Date().toISOString().slice(0,7);
-      const already = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND requested_at LIKE ? AND status!='failed'").bind(creator_id, `${thisMonth}%`).first();
-      if (already) return err("You already requested a payout this month.");
+      const pending = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND status IN ('pending','processing')").bind(creator_id).first();
+      if (pending) return err("You already have a payout in progress.");
       const settings = await env.DB.prepare("SELECT * FROM payout_settings WHERE creator_id=?").bind(creator_id).first();
       const id = "pay_" + Date.now();
+      const now = new Date().toISOString();
+
+      // ── PayPal: fire immediately ─────────────────────────────────────
+      if (payoutMethod === "paypal") {
+        if (!settings?.paypal_email) return err("No PayPal email saved. Please add it first.");
+        try {
+          const token = await getPayPalToken(env);
+          const batchId = "GALAXY_" + id;
+          const res = await fetch("https://api-m.paypal.com/v1/payments/payouts", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender_batch_header: {
+                sender_batch_id: batchId,
+                email_subject: "Your GALAXY payout is here!",
+                email_message: `You have received a payout of $${balance.toFixed(2)} from GALAXY.`
+              },
+              items: [{
+                recipient_type: "EMAIL",
+                amount: { value: balance.toFixed(2), currency: "USD" },
+                receiver: settings.paypal_email,
+                note: "GALAXY creator payout",
+                sender_item_id: id
+              }]
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+          const batchStatus = data.batch_header?.payout_batch_id || batchId;
+
+          // Record as paid immediately
+          await env.DB.prepare(`
+            INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, reference, requested_at, paid_at)
+            VALUES (?, ?, ?, 0, 'paypal', 'paid', ?, ?, datetime('now'), datetime('now'))
+          `).bind(id, creator_id, balance, settings.paypal_email, batchStatus).run();
+
+          // Zero balance
+          await env.DB.prepare("UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?").bind(now, creator_id).run();
+
+          // Notify creator
+          await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+            .bind("notif_"+Date.now(), creator_id, "💸",
+              `Your PayPal payout of $${balance.toFixed(2)} has been sent to ${settings.paypal_email}!`, "just now").run();
+
+          return json({ ok:true, message:`$${balance.toFixed(2)} sent to your PayPal (${settings.paypal_email}). Arrives within 24 hours.`, amount: balance });
+        } catch(e) {
+          return err("PayPal payout failed: " + (e.message || "Unknown error"));
+        }
+      }
+
+      // ── Bank transfer: save as pending, process manually on 1st ─────
       await env.DB.prepare(`
         INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, stripe_account, requested_at)
         VALUES (?, ?, ?, 0, ?, 'pending', ?, ?, datetime('now'))
       `).bind(id, creator_id, balance, payoutMethod, settings?.paypal_email||null, settings?.stripe_account_id||null).run();
-      return json({ ok:true, message:`Payout of $${balance.toFixed(2)} requested. Processed on the 1st of next month.`, amount: balance });
+      return json({ ok:true, message:`Bank transfer of $${balance.toFixed(2)} requested. We will process it within 3 business days.`, amount: balance });
     }
     // ── END PAYOUT ROUTES ────────────────────────────────────────────────
 
