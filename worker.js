@@ -325,13 +325,20 @@ var worker_default = {
       if (path === "/api/upload" && method === "POST") {
         const formData = await request.formData();
         const file = formData.get("file");
+        const folder = formData.get("folder") || "misc";
         if (!file) return err("No file provided");
-        const ext = file.name?.split(".").pop() || "bin";
-        const key = `media/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        await env.MEDIA.put(key, file.stream(), {
-          httpMetadata: { contentType: file.type || "application/octet-stream" }
+        // Safe filename — strip any path separators
+        const originalName = (file.name || "file").replace(/[/\\]/g, "_");
+        const ext = originalName.split(".").pop() || "bin";
+        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        const key = folder + "/" + safeName;
+        const mimeType = file.type || "application/octet-stream";
+        // Convert to ArrayBuffer for reliable R2 upload
+        const arrayBuffer = await file.arrayBuffer();
+        await env.MEDIA.put(key, arrayBuffer, {
+          httpMetadata: { contentType: mimeType }
         });
-        const publicUrl = `https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/${key}`;
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
         return json({ url: publicUrl, key });
       }
       // ── Stripe Connect onboarding ──────────────────────────────────────
@@ -776,6 +783,50 @@ var worker_default = {
         ).bind(id, user_id, product_id, rating, text || "").run();
         return json({ id, success: true });
       }
+      // ── Admin: list all payouts ──────────────────────────────────────────
+      if (path === "/api/admin/payouts" && method === "GET") {
+        const { results } = await env.DB.prepare(`
+          SELECT p.*, ps.paypal_email, ps.bank_name, ps.bank_iban, ps.bank_swift,
+            ps.bank_account, ps.bank_routing, ps.bank_sortcode, ps.bank_bankname, ps.bank_country,
+            u.name as creator_name, u.email as creator_email
+          FROM payouts p
+          LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
+          LEFT JOIN users u ON p.creator_id = u.id
+          ORDER BY p.requested_at DESC LIMIT 200
+        `).all();
+        return json({ payouts: results || [] });
+      }
+
+      // ── Admin: mark payout paid or rejected ─────────────────────────────
+      if (path === "/api/admin/payouts/mark-paid" && method === "POST") {
+        const { payout_id, reference, action } = body;
+        if (!payout_id) return err("Missing payout_id");
+        const payout = await env.DB.prepare("SELECT * FROM payouts WHERE id=?").bind(payout_id).first();
+        if (!payout) return err("Payout not found", 404);
+        const newStatus = action === "rejected" ? "rejected" : "paid";
+        const now = new Date().toISOString();
+        await env.DB.prepare(
+          "UPDATE payouts SET status=?, reference=?, paid_at=? WHERE id=?"
+        ).bind(newStatus, reference||"manual", now, payout_id).run();
+        if (newStatus === "paid") {
+          // Zero creator balance
+          await env.DB.prepare(
+            "UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?"
+          ).bind(now, payout.creator_id).run();
+          // Notify creator
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+          ).bind("notif_"+Date.now(), payout.creator_id, "💸",
+            `Your payout of $${Number(payout.amount).toFixed(2)} has been sent!`, "just now").run();
+        } else {
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+          ).bind("notif_"+Date.now(), payout.creator_id, "❌",
+            `Your payout request of $${Number(payout.amount).toFixed(2)} was rejected. Please contact support.`, "just now").run();
+        }
+        return json({ ok: true });
+      }
+
       if (path === "/api/admin/users" && method === "GET") {
         const { results } = await env.DB.prepare(
           `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
@@ -846,8 +897,9 @@ async function processMonthlyPayouts(env) {
   const now = new Date().toISOString();
   // Get all pending payout requests
   const { results: pending } = await env.DB.prepare(
-    `SELECT p.*, 
-      ps.paypal_email, ps.stripe_account_id, ps.bank_name, ps.bank_iban, ps.bank_bankname, ps.bank_country
+    `SELECT p.*,
+      ps.paypal_email, ps.stripe_account_id, ps.bank_name, ps.bank_iban, ps.bank_swift,
+      ps.bank_account, ps.bank_routing, ps.bank_sortcode, ps.bank_bankname, ps.bank_country
      FROM payouts p
      LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
      WHERE p.status = 'pending'`
