@@ -97,6 +97,11 @@ async function creditBalance(env, creatorId, amountUsd) {
 __name(creditBalance, "creditBalance");
 
 var worker_default = {
+  async scheduled(event, env, ctx) {
+    if (event.cron === '0 6 1 * *') {
+      ctx.waitUntil(processMonthlyPayouts(env));
+    }
+  },
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
     const url = new URL(request.url);
@@ -264,6 +269,56 @@ var worker_default = {
         const publicUrl = `https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/${key}`;
         return json({ url: publicUrl, key });
       }
+      // ── Stripe Connect onboarding ──────────────────────────────────────
+      if (path === "/api/stripe/connect" && method === "POST") {
+        const { creator_id, email, country } = body;
+        const supported = ['US','GB','DE','FR','IT','ES','NL','BE','AT','PT','PL','SE','DK','FI','NO','CH','IE','CZ','HU','SK','SI','BG','HR','CY','EE','LV','LT','LU','MT','RO','CA','MX','BR','AU','NZ','SG','HK','JP','MY','TH','PH','AE','ZA','IL'];
+        if (!supported.includes((country||'').toUpperCase())) {
+          return err("Bank transfer not available in your country. Please use PayPal.");
+        }
+        try {
+          // Create Express account
+          const account = await stripeReq(env, "/accounts", "POST", {
+            type: "express",
+            country: country.toUpperCase(),
+            email,
+            "capabilities[transfers][requested]": "true",
+            "metadata[creator_id]": creator_id
+          });
+          // Save account ID
+          await env.DB.prepare(`
+            INSERT INTO payout_settings (creator_id, stripe_account_id, country, updated_at)
+            VALUES (?, ?, ?, datetime('now'))
+            ON CONFLICT(creator_id) DO UPDATE SET
+              stripe_account_id=excluded.stripe_account_id,
+              country=excluded.country,
+              updated_at=excluded.updated_at
+          `).bind(creator_id, account.id, country.toUpperCase()).run();
+          // Generate onboarding link
+          const link = await stripeReq(env, "/account_links", "POST", {
+            account: account.id,
+            refresh_url: "https://vygalaxy.dabarey24.workers.dev/?stripe_connect=refresh&creator_id=" + creator_id,
+            return_url: "https://vygalaxy.dabarey24.workers.dev/?stripe_connect=complete&creator_id=" + creator_id,
+            type: "account_onboarding"
+          });
+          return json({ url: link.url });
+        } catch(e) {
+          return err(e.message || "Stripe Connect failed");
+        }
+      }
+
+      // ── Stripe Connect callback ─────────────────────────────────────────
+      if (path === "/api/stripe/connect/callback" && method === "GET") {
+        const status = url.searchParams.get("status");
+        const creatorId = url.searchParams.get("creator_id");
+        if (status === "complete" && creatorId) {
+          await env.DB.prepare(
+            "UPDATE payout_settings SET stripe_onboarded=1, method='stripe' WHERE creator_id=?"
+          ).bind(creatorId).run();
+        }
+        return Response.redirect("https://vygalaxy.dabarey24.workers.dev/?stripe_connect=" + status, 302);
+      }
+
       if (path === "/api/upload/sign" && method === "POST") {
         const { key, mimeType } = body;
         if (!key || !mimeType) return err("Missing key or mimeType");
@@ -716,4 +771,99 @@ var worker_default = {
     }
   }
 };
+// ── AUTO PAYOUT CRON ────────────────────────────────────────────────────
+// Runs on the 1st of every month at 6am UTC
+// Add to wrangler.toml:
+//   [triggers]
+//   crons = ["0 6 1 * *"]
+
+async function processMonthlyPayouts(env) {
+  const now = new Date().toISOString();
+  // Get all pending payout requests
+  const { results: pending } = await env.DB.prepare(
+    `SELECT p.*, 
+      ps.paypal_email, ps.stripe_account_id, ps.bank_name, ps.bank_iban, ps.bank_bankname, ps.bank_country
+     FROM payouts p
+     LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
+     WHERE p.status = 'pending'`
+  ).all();
+
+  for (const payout of pending) {
+    try {
+      if (payout.method === 'paypal' && payout.paypal_email) {
+        // ── PayPal Payout (automatic) ─────────────────────────────────
+        const token = await getPayPalToken(env);
+        const batchId = 'GALAXY_' + payout.id;
+        const res = await fetch('https://api-m.paypal.com/v1/payments/payouts', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender_batch_header: {
+              sender_batch_id: batchId,
+              email_subject: 'Your GALAXY payout is here!',
+              email_message: `You've received a payout of $${payout.amount.toFixed(2)} from GALAXY.`
+            },
+            items: [{
+              recipient_type: 'EMAIL',
+              amount: { value: payout.amount.toFixed(2), currency: 'USD' },
+              receiver: payout.paypal_email,
+              note: 'GALAXY creator payout',
+              sender_item_id: payout.id
+            }]
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+        const batchStatus = data.batch_header?.payout_batch_id || batchId;
+
+        await env.DB.prepare(
+          `UPDATE payouts SET status='paid', reference=?, paid_at=? WHERE id=?`
+        ).bind(batchStatus, now, payout.id).run();
+
+        // Zero out balance
+        await env.DB.prepare(
+          `UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?`
+        ).bind(now, payout.creator_id).run();
+
+        // Notify creator
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '💸',
+          `Your payout of $${payout.amount.toFixed(2)} has been sent to your PayPal!`, 'just now').run();
+
+      } else if (payout.method === 'stripe' && payout.bank_iban) {
+        // ── Bank transfer — mark as processing, admin sends manually ──
+        // (Auto bank transfer requires Stripe Connect onboarding)
+        await env.DB.prepare(
+          `UPDATE payouts SET status='processing', note=?, paid_at=? WHERE id=?`
+        ).bind(
+          `Bank: ${payout.bank_name} | IBAN: ${payout.bank_iban} | Bank: ${payout.bank_bankname} | Country: ${payout.bank_country}`,
+          now, payout.id
+        ).run();
+
+        // Notify creator
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '🏦',
+          `Your bank transfer of $${payout.amount.toFixed(2)} is being processed. Allow 3–5 business days.`, 'just now').run();
+
+      } else {
+        await env.DB.prepare(
+          `UPDATE payouts SET status='failed', note='Missing payout destination' WHERE id=?`
+        ).bind(payout.id).run();
+      }
+    } catch (e) {
+      console.error('Payout failed for', payout.id, e.message);
+      await env.DB.prepare(
+        `UPDATE payouts SET status='failed', note=? WHERE id=?`
+      ).bind(e.message || 'Unknown error', payout.id).run();
+    }
+  }
+
+  console.log(`Processed ${pending.length} payouts`);
+}
+
 export { worker_default as default };
