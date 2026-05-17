@@ -525,13 +525,15 @@ var worker_default = {
           creator_id, creator_name, product_id, product_title, post_id
         } = body;
         if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
-        const amountUsd = Number(price_usd);
-        // Enforce minimums
-        if ((plan === "tip") && amountUsd < 2) return err("Minimum tip is $2.");
-        if (plan === "purchase" && amountUsd < 5) return err("Minimum product price is $5.");
-        if ((plan !== "tip" && plan !== "purchase") && amountUsd < 3) return err("Minimum subscription is $3/mo.");
+        const amountUsd = Number(price_usd); // gross charge including Stripe fee passthrough
+        const originalPrice = Number(body.original_price || price_usd); // original price before fee
+        // Enforce minimums on original price (not gross)
+        if ((plan === "tip") && originalPrice < 2) return err("Minimum tip is $2.");
+        if (plan === "purchase" && originalPrice < 5) return err("Minimum product price is $5.");
+        if ((plan !== "tip" && plan !== "purchase") && originalPrice < 3) return err("Minimum subscription is $3/mo.");
         const amountCents = Math.round(amountUsd * 100);
-        const creatorAmount = Math.round(Number(price_usd) * 0.71 * 100) / 100;
+        // Creator earns 71% of original price (not gross charge)
+        const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
         const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
         let customerId;
         if (existing.data?.length > 0) {
@@ -571,7 +573,7 @@ var worker_default = {
             await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
           }
           // Credit creator balance
-          if (creator_id) await creditBalance(env, creator_id, Number(price_usd));
+          if (creator_id) await creditBalance(env, creator_id, originalPrice);
           return json({ success: true, payment_intent_id: pi.id });
         } else {
           // Subscription
@@ -597,7 +599,7 @@ var worker_default = {
           ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
           if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
           // Credit creator balance for first month
-          if (creator_id && sub.status === "active") await creditBalance(env, creator_id, Number(price_usd));
+          if (creator_id && sub.status === "active") await creditBalance(env, creator_id, originalPrice);
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
       }
