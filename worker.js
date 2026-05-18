@@ -423,6 +423,30 @@ var worker_default = {
         return Response.redirect("https://vygalaxy.dabarey24.workers.dev/?stripe_connect=" + status, 302);
       }
 
+      // ── Stories ──────────────────────────────────────────────────────────
+      if (path === "/api/stories" && method === "GET") {
+        const { results } = await env.DB.prepare(`
+          SELECT s.*, u.name as creator_name, u.avatar as creator_avatar
+          FROM stories s LEFT JOIN users u ON s.creator_id = u.id
+          WHERE s.expires_at > datetime('now')
+          ORDER BY s.created_at DESC LIMIT 200
+        `).all();
+        return json(results || []);
+      }
+
+      if (path === "/api/stories" && method === "POST") {
+        const { creator_id, creator_name, creator_avatar, media_url, media_type, caption } = body;
+        if (!creator_id || !media_url) return err("Missing fields");
+        const id = "story_" + Date.now();
+        await env.DB.prepare(`
+          INSERT INTO stories (id, creator_id, creator_name, creator_avatar, media_url, media_type, caption, created_at, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now', '+24 hours'))
+        `).bind(id, creator_id, creator_name||'', creator_avatar||'', media_url, media_type||'image', caption||'').run();
+        return json({ id, success: true });
+      }
+
+      // ── Referral: register saves ref_code, credit on first sub ──────────
+
       if (path === "/api/upload/sign" && method === "POST") {
         const { key, mimeType } = body;
         if (!key || !mimeType) return err("Missing key or mimeType");
@@ -436,7 +460,7 @@ var worker_default = {
         return json({ url: url2, publicUrl: "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key });
       }
       if (path === "/api/users/register" && method === "POST") {
-        const { email, password, name, category } = body;
+        const { email, password, name, category, ref_code } = body;
         if (!email || !password || !name) return err("Missing fields");
         const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (existing) return err("Email already registered", 409);
@@ -444,8 +468,8 @@ var worker_default = {
         const hash = await hashPassword(password);
         const role = email === "dabarey24@gmail.com" ? "admin" : "user";
         await env.DB.prepare(
-          `INSERT INTO users (id, email, password_hash, name, role, category, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-        ).bind(id, email, hash, name, role, category || "Other").run();
+          `INSERT INTO users (id, email, password_hash, name, role, category, ref_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+        ).bind(id, email, hash, name, role, category || "Other", ref_code||null).run();
         return json({ id, email, name, role, category: category || "Other" });
       }
       if (path === "/api/users/login" && method === "POST") {
@@ -606,6 +630,22 @@ var worker_default = {
           ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
           if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
           // Do NOT credit here — webhook invoice.payment_succeeded handles first + recurring payments
+          // Credit referrer 1% if user was referred and within 12 months
+          try {
+            const referredUser = await env.DB.prepare("SELECT ref_code, created_at FROM users WHERE id=?").bind(user_id).first();
+            if (referredUser?.ref_code) {
+              const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
+              if (monthsOld <= 12) {
+                const referrer = await env.DB.prepare("SELECT id FROM users WHERE handle=? OR name=?").bind(referredUser.ref_code, referredUser.ref_code).first();
+                if (referrer) {
+                  const refBonus = Math.round(originalPrice * 0.01 * 100) / 100;
+                  await creditBalance(env, referrer.id, refBonus / 0.71); // gross so creditBalance gives them the right 71%
+                  await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+                    .bind("notif_"+Date.now(), referrer.id, "🎉", "Referral bonus: $"+refBonus.toFixed(2)+" from a new subscriber!", "just now").run();
+                }
+              }
+            }
+          } catch(e) { console.warn("referral credit failed:", e.message); }
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
       }
