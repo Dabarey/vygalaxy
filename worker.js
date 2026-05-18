@@ -169,12 +169,14 @@ var worker_default = {
       const id = "pay_" + Date.now();
       const now = new Date().toISOString();
 
-      // ── PayPal: fire immediately ─────────────────────────────────────
+      // ── PayPal: fire immediately with email verification ────────────
       if (payoutMethod === "paypal") {
         if (!settings?.paypal_email) return err("No PayPal email saved. Please add it first.");
         try {
           const token = await getPayPalToken(env);
           const batchId = "GALAXY_" + id;
+
+          // Send payout
           const res = await fetch("https://api-m.paypal.com/v1/payments/payouts", {
             method: "POST",
             headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
@@ -195,25 +197,52 @@ var worker_default = {
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.message || JSON.stringify(data));
-          const batchStatus = data.batch_header?.payout_batch_id || batchId;
 
-          // Record as paid immediately
+          const batchId2 = data.batch_header?.payout_batch_id || batchId;
+
+          // Wait 3 seconds then check item status to catch invalid emails
+          await new Promise(r => setTimeout(r, 3000));
+          const checkRes = await fetch(`https://api-m.paypal.com/v1/payments/payouts/${batchId2}`, {
+            headers: { "Authorization": "Bearer " + token }
+          });
+          const checkData = await checkRes.json();
+          const item = checkData.items?.[0];
+          const itemStatus = item?.transaction_status || item?.errors?.[0]?.name || "PENDING";
+
+          // These statuses mean the email is invalid / not a PayPal account
+          const invalidStatuses = ["RECEIVER_UNREGISTERED", "RECEIVER_UNVERIFIED", "INVALID_EMAIL", "FAILED"];
+          if (invalidStatuses.includes(itemStatus)) {
+            // Record as failed — balance NOT deducted
+            await env.DB.prepare(`
+              INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, reference, requested_at, note)
+              VALUES (?, ?, ?, 0, 'paypal', 'failed', ?, ?, datetime('now'), ?)
+            `).bind(id, creator_id, balance, settings.paypal_email, batchId2,
+              `PayPal rejected: ${itemStatus} — email not registered with PayPal`).run();
+
+            // Notify creator — balance NOT touched
+            await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+              .bind("notif_"+Date.now(), creator_id, "❌",
+                `Payout failed — "${settings.paypal_email}" is not registered with PayPal. Please update your PayPal email and try again.`, "just now").run();
+
+            return err(`Payout failed: "${settings.paypal_email}" is not a registered PayPal account. Your balance has NOT been deducted. Please update your PayPal email.`);
+          }
+
+          // Success — record and zero balance
           await env.DB.prepare(`
             INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, reference, requested_at, paid_at)
             VALUES (?, ?, ?, 0, 'paypal', 'paid', ?, ?, datetime('now'), datetime('now'))
-          `).bind(id, creator_id, balance, settings.paypal_email, batchStatus).run();
+          `).bind(id, creator_id, balance, settings.paypal_email, batchId2).run();
 
-          // Zero balance
           await env.DB.prepare("UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?").bind(now, creator_id).run();
 
-          // Notify creator
           await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
             .bind("notif_"+Date.now(), creator_id, "💸",
               `Your PayPal payout of $${balance.toFixed(2)} has been sent to ${settings.paypal_email}!`, "just now").run();
 
           return json({ ok:true, message:`$${balance.toFixed(2)} sent to your PayPal (${settings.paypal_email}). Arrives within 24 hours.`, amount: balance });
         } catch(e) {
-          return err("PayPal payout failed: " + (e.message || "Unknown error"));
+          // Network/API error — balance NOT deducted
+          return err("PayPal payout failed: " + (e.message || "Unknown error") + ". Your balance has not been changed.");
         }
       }
 
@@ -270,6 +299,9 @@ var worker_default = {
       if (path === "/api/paypal/capture" && method === "POST") {
         const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name } = body;
         if (!order_id) return err("Missing order_id");
+        const amountNum = Number(amount||0);
+        if (amountNum < 1) return err("Minimum payment is $1.");
+        if (plan === "purchase" && amountNum < 5) return err("Minimum product price is $5.");
         const capture = await paypalReq(env, "/v2/checkout/orders/" + order_id + "/capture", "POST", {});
         if (capture.status !== "COMPLETED") return err("Payment not completed: " + capture.status);
         const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
@@ -442,24 +474,34 @@ var worker_default = {
       }
       if (path === "/api/products" && method === "GET") {
         const creatorId = url.searchParams.get("creator_id");
+        const normalize = rows => (rows||[]).map(p => ({
+          ...p,
+          creatorId:    p.creator_id,
+          creatorName:  p.creator_name  || '',
+          creatorAvatar:p.creator_avatar || '',
+          desc:         p.desc || p.description || '',
+          sales:        p.sales || p.sales_count || 0,
+          includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
+        }));
         if (creatorId) {
           const { results } = await env.DB.prepare(
             `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
              FROM products p LEFT JOIN users u ON p.creator_id = u.id
              WHERE p.creator_id=? ORDER BY p.created_at DESC`
           ).bind(creatorId).all();
-          return json(results || []);
+          return json(normalize(results));
         }
         const { results } = await env.DB.prepare(
           `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
            FROM products p LEFT JOIN users u ON p.creator_id = u.id
            ORDER BY p.created_at DESC`
         ).all();
-        return json(results || []);
+        return json(normalize(results));
       }
       if (path === "/api/products" && method === "POST") {
         const { creator_id, title, desc, type, price, emoji, deliverables } = body;
         if (!creator_id || !title || !price) return err("Missing fields");
+        if (Number(price) < 5) return err("Minimum product price is $5.");
         const id = "prod_" + Date.now();
         await env.DB.prepare(
           `INSERT INTO products (id, creator_id, title, desc, type, price, emoji, deliverables, sales, created_at)
@@ -491,8 +533,14 @@ var worker_default = {
           creator_id, creator_name, product_id, product_title, post_id
         } = body;
         if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
-        const amountCents = Math.round(Number(price_usd) * 100);
-        const creatorAmount = Math.round(Number(price_usd) * 0.71 * 100) / 100;
+        const amountUsd = Number(price_usd); // gross charge including Stripe fee passthrough
+        const originalPrice = Number(body.original_price || price_usd); // original price before fee
+        // Enforce minimum $1 for all — Stripe fee added on top by client
+        if (originalPrice < 1) return err("Minimum payment is $1.");
+        if (plan === "purchase" && originalPrice < 5) return err("Minimum product price is $5.");
+        const amountCents = Math.round(amountUsd * 100);
+        // Creator earns 71% of original price (not gross charge)
+        const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
         const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
         let customerId;
         if (existing.data?.length > 0) {
@@ -532,7 +580,7 @@ var worker_default = {
             await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
           }
           // Credit creator balance
-          if (creator_id) await creditBalance(env, creator_id, Number(price_usd));
+          if (creator_id) await creditBalance(env, creator_id, originalPrice);
           return json({ success: true, payment_intent_id: pi.id });
         } else {
           // Subscription
@@ -557,8 +605,7 @@ var worker_default = {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
           ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
           if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
-          // Credit creator balance for first month
-          if (creator_id && sub.status === "active") await creditBalance(env, creator_id, Number(price_usd));
+          // Do NOT credit here — webhook invoice.payment_succeeded handles first + recurring payments
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
       }
@@ -594,10 +641,14 @@ var worker_default = {
         if (event.type === "invoice.payment_succeeded") {
           const subId = data.subscription;
           if (subId) {
+            // Use actual period end from Stripe, not +1 month estimate
+            const periodEnd = data.lines?.data?.[0]?.period?.end
+              ? new Date(data.lines.data[0].period.end * 1000).toISOString()
+              : null;
             await env.DB.prepare(
-              `UPDATE subscriptions SET status='active', period_end=datetime('now', '+1 month') WHERE stripe_sub_id=?`
+              `UPDATE subscriptions SET status='active'${periodEnd ? ", period_end='" + periodEnd + "'" : ", period_end=datetime('now', '+1 month')"} WHERE stripe_sub_id=?`
             ).bind(subId).run();
-            // Credit creator balance for recurring subscription payment
+            // Credit creator — use stored price (original, before fee passthrough)
             const sub = await env.DB.prepare(
               `SELECT creator_id, price FROM subscriptions WHERE stripe_sub_id=?`
             ).bind(subId).first();
@@ -628,6 +679,32 @@ var worker_default = {
         }
         return json({ received: true });
       }
+      // ── Cancel subscription ──────────────────────────────────────────────
+      if (path === "/api/subscriptions/cancel" && method === "POST") {
+        const { user_id, creator_id } = body;
+        if (!user_id || !creator_id) return err("Missing fields");
+        // Find the active subscription
+        const sub = await env.DB.prepare(
+          `SELECT * FROM subscriptions WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1`
+        ).bind(user_id, creator_id).first();
+        if (!sub) return err("No active subscription found");
+        // Cancel in Stripe at period end (fan keeps access until end of billing period)
+        if (sub.stripe_sub_id) {
+          try {
+            await stripeReq(env, `/subscriptions/${sub.stripe_sub_id}`, "POST", {
+              cancel_at_period_end: "true"
+            });
+          } catch(e) {
+            console.warn("Stripe cancel failed:", e.message);
+          }
+        }
+        // Mark as cancelling in D1
+        await env.DB.prepare(
+          `UPDATE subscriptions SET status='cancelling' WHERE id=?`
+        ).bind(sub.id).run();
+        return json({ ok: true, message: "Subscription cancelled. You keep access until end of billing period." });
+      }
+
       if (path === "/api/balance" && method === "GET") {
         const userId = url.searchParams.get("user_id");
         if (!userId) return err("Missing user_id");
@@ -716,7 +793,7 @@ var worker_default = {
       }
       if (path === "/api/kyc" && method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT * FROM kyc_requests ORDER BY submitted_at DESC`
+          `SELECT * FROM kyc_requests ORDER BY COALESCE(submitted_at, created_at) DESC`
         ).all();
         return json(results || []);
       }
