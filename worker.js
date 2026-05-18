@@ -255,10 +255,25 @@ var worker_default = {
     }
     // ── END PAYOUT ROUTES ────────────────────────────────────────────────
 
-    if (path === "/" || path === "/index.html") {
+    if (path === "/" || path === "/index.html" || path === "/privacy" || path === "/terms") {
       const obj = await env.MEDIA.get("index.html");
       if (obj) {
-        return new Response(obj.body, { headers: { "Content-Type": "text/html", "Cache-Control": "no-cache", ...CORS } });
+        let html = await obj.text();
+        // For /privacy and /terms inject a script to auto-open the right page
+        if (path === "/privacy" || path === "/terms") {
+          const page = path.slice(1); // 'privacy' or 'terms'
+          html = html.replace('</body>', `<script>
+(function(){
+  var open=function(){
+    document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+    var t=document.getElementById('page-${page}');
+    if(t){t.classList.add('active');window.scrollTo({top:0});}
+  };
+  open();setTimeout(open,200);
+})();
+</script></body>`);
+        }
+        return new Response(html, { headers: { "Content-Type": "text/html", "Cache-Control": "no-cache", ...CORS } });
       }
     }
     let body = {};
@@ -459,6 +474,47 @@ var worker_default = {
         });
         return json({ url: url2, publicUrl: "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key });
       }
+      // ── Google OAuth ──────────────────────────────────────────────────────
+      if (path === "/api/auth/google" && method === "POST") {
+        const { id_token, ref_code } = body;
+        if (!id_token) return err("Missing id_token");
+
+        // Verify Google ID token via Google's tokeninfo endpoint
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
+        const payload = await verifyRes.json();
+
+        if (!verifyRes.ok || payload.error) return err("Invalid Google token");
+        if (payload.aud !== "402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googleusercontent.com") {
+          return err("Token audience mismatch");
+        }
+
+        const email = payload.email;
+        const name = payload.name || email.split('@')[0];
+        const avatar = payload.picture || '';
+        const googleId = payload.sub;
+
+        // Check if user exists
+        let user = await env.DB.prepare("SELECT * FROM users WHERE email=?").bind(email).first();
+
+        if (!user) {
+          // Create new user
+          const id = "user_" + Date.now();
+          const role = email === "dabarey24@gmail.com" ? "admin" : "user";
+          await env.DB.prepare(
+            `INSERT INTO users (id, email, name, avatar, role, category, google_id, ref_code, created_at)
+             VALUES (?, ?, ?, ?, ?, 'Other', ?, ?, datetime('now'))`
+          ).bind(id, email, name, avatar, role, googleId, ref_code||null).run();
+          user = await env.DB.prepare("SELECT * FROM users WHERE id=?").bind(id).first();
+        } else if (!user.google_id) {
+          // Link Google to existing account
+          await env.DB.prepare("UPDATE users SET google_id=?, avatar=COALESCE(NULLIF(avatar,''),?) WHERE id=?")
+            .bind(googleId, avatar, user.id).run();
+        }
+
+        const { password_hash, ...safe } = user;
+        return json({ ...safe, avatar: avatar || safe.avatar });
+      }
+
       if (path === "/api/users/register" && method === "POST") {
         const { email, password, name, category, ref_code } = body;
         if (!email || !password || !name) return err("Missing fields");
