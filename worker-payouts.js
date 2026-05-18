@@ -475,20 +475,29 @@ var worker_default = {
       }
       if (path === "/api/products" && method === "GET") {
         const creatorId = url.searchParams.get("creator_id");
+        const normalize = rows => (rows||[]).map(p => ({
+          ...p,
+          creatorId:    p.creator_id,
+          creatorName:  p.creator_name  || '',
+          creatorAvatar:p.creator_avatar || '',
+          desc:         p.desc || p.description || '',
+          sales:        p.sales || p.sales_count || 0,
+          includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
+        }));
         if (creatorId) {
           const { results } = await env.DB.prepare(
             `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
              FROM products p LEFT JOIN users u ON p.creator_id = u.id
              WHERE p.creator_id=? ORDER BY p.created_at DESC`
           ).bind(creatorId).all();
-          return json(results || []);
+          return json(normalize(results));
         }
         const { results } = await env.DB.prepare(
           `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
            FROM products p LEFT JOIN users u ON p.creator_id = u.id
            ORDER BY p.created_at DESC`
         ).all();
-        return json(results || []);
+        return json(normalize(results));
       }
       if (path === "/api/products" && method === "POST") {
         const { creator_id, title, desc, type, price, emoji, deliverables } = body;
@@ -757,7 +766,7 @@ var worker_default = {
       }
       if (path === "/api/kyc" && method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT * FROM kyc_requests ORDER BY submitted_at DESC`
+          `SELECT * FROM kyc_requests ORDER BY COALESCE(submitted_at, created_at) DESC`
         ).all();
         return json(results || []);
       }
