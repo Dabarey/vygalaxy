@@ -370,98 +370,27 @@ var worker_default = {
         return json({ success: true });
       }
       if (path === "/api/upload" && method === "POST") {
-        const formData = await request.formData();
-        const file = formData.get("file");
-        const folder = formData.get("folder") || "misc";
-        if (!file) return err("No file provided");
-        // Safe filename — strip any path separators
-        const originalName = (file.name || "file").replace(/[/\\]/g, "_");
-        const ext = originalName.split(".").pop() || "bin";
-        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
-        const key = folder + "/" + safeName;
-        const mimeType = file.type || "application/octet-stream";
-        // Convert to ArrayBuffer for reliable R2 upload
-        const arrayBuffer = await file.arrayBuffer();
-        await env.MEDIA.put(key, arrayBuffer, {
-          httpMetadata: { contentType: mimeType }
-        });
-        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
-        return json({ url: publicUrl, key });
-      }
-      // ── Stripe Connect onboarding ──────────────────────────────────────
-      if (path === "/api/stripe/connect" && method === "POST") {
-        const { creator_id, email, country } = body;
-        const supported = ['US','GB','DE','FR','IT','ES','NL','BE','AT','PT','PL','SE','DK','FI','NO','CH','IE','CZ','HU','SK','SI','BG','HR','CY','EE','LV','LT','LU','MT','RO','CA','MX','BR','AU','NZ','SG','HK','JP','MY','TH','PH','AE','ZA','IL'];
-        if (!supported.includes((country||'').toUpperCase())) {
-          return err("Bank transfer not available in your country. Please use PayPal.");
-        }
         try {
-          // Create Express account
-          const account = await stripeReq(env, "/accounts", "POST", {
-            type: "express",
-            country: country.toUpperCase(),
-            email,
-            "capabilities[transfers][requested]": "true",
-            "metadata[creator_id]": creator_id
-          });
-          // Save account ID
-          await env.DB.prepare(`
-            INSERT INTO payout_settings (creator_id, stripe_account_id, country, updated_at)
-            VALUES (?, ?, ?, datetime('now'))
-            ON CONFLICT(creator_id) DO UPDATE SET
-              stripe_account_id=excluded.stripe_account_id,
-              country=excluded.country,
-              updated_at=excluded.updated_at
-          `).bind(creator_id, account.id, country.toUpperCase()).run();
-          // Generate onboarding link
-          const link = await stripeReq(env, "/account_links", "POST", {
-            account: account.id,
-            refresh_url: "https://vygalaxy.dabarey24.workers.dev/?stripe_connect=refresh&creator_id=" + creator_id,
-            return_url: "https://vygalaxy.dabarey24.workers.dev/?stripe_connect=complete&creator_id=" + creator_id,
-            type: "account_onboarding"
-          });
-          return json({ url: link.url });
+          const formData = await request.formData();
+          const file = formData.get("file");
+          const folder = (formData.get("folder") || "misc").replace(/[^a-zA-Z0-9_-]/g, "");
+          if (!file) return err("No file in form data");
+          if (typeof file === "string") return err("File field is a string not a file");
+          const originalName = (file.name || "file").replace(/[/\\]/g, "_");
+          const ext = (originalName.split(".").pop() || "bin").toLowerCase().slice(0, 10);
+          const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+          const key = folder + "/" + safeName;
+          const mimeType = file.type || "application/octet-stream";
+          const arrayBuffer = await file.arrayBuffer();
+          if (!arrayBuffer || arrayBuffer.byteLength === 0) return err("Empty file received");
+          await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
+          const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+          return json({ url: publicUrl, key, size: arrayBuffer.byteLength });
         } catch(e) {
-          return err(e.message || "Stripe Connect failed");
+          return err("Upload failed: " + (e.message || String(e)), 500);
         }
       }
-
-      // ── Stripe Connect callback ─────────────────────────────────────────
-      if (path === "/api/stripe/connect/callback" && method === "GET") {
-        const status = url.searchParams.get("status");
-        const creatorId = url.searchParams.get("creator_id");
-        if (status === "complete" && creatorId) {
-          await env.DB.prepare(
-            "UPDATE payout_settings SET stripe_onboarded=1, method='stripe' WHERE creator_id=?"
-          ).bind(creatorId).run();
-        }
-        return Response.redirect("https://vygalaxy.dabarey24.workers.dev/?stripe_connect=" + status, 302);
-      }
-
-      // ── Stories ──────────────────────────────────────────────────────────
-      if (path === "/api/stories" && method === "GET") {
-        const { results } = await env.DB.prepare(`
-          SELECT s.*, u.name as creator_name, u.avatar as creator_avatar
-          FROM stories s LEFT JOIN users u ON s.creator_id = u.id
-          WHERE s.expires_at > datetime('now')
-          ORDER BY s.created_at DESC LIMIT 200
-        `).all();
-        return json(results || []);
-      }
-
-      if (path === "/api/stories" && method === "POST") {
-        const { creator_id, creator_name, creator_avatar, media_url, media_type, caption } = body;
-        if (!creator_id || !media_url) return err("Missing fields");
-        const id = "story_" + Date.now();
-        await env.DB.prepare(`
-          INSERT INTO stories (id, creator_id, creator_name, creator_avatar, media_url, media_type, caption, created_at, expires_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now', '+24 hours'))
-        `).bind(id, creator_id, creator_name||'', creator_avatar||'', media_url, media_type||'image', caption||'').run();
-        return json({ id, success: true });
-      }
-
-      // ── Referral: register saves ref_code, credit on first sub ──────────
-
+      
       if (path === "/api/upload/sign" && method === "POST") {
         const { key, mimeType } = body;
         if (!key || !mimeType) return err("Missing key or mimeType");
