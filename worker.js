@@ -276,6 +276,27 @@ var worker_default = {
         return new Response(html, { headers: { "Content-Type": "text/html", "Cache-Control": "no-cache", ...CORS } });
       }
     }
+    // ── File upload — handle before body parsing to preserve multipart stream
+    if (path === "/api/upload" && method === "POST") {
+      try {
+        const formData = await request.formData();
+        const file = formData.get("file");
+        const folder = (formData.get("folder") || "misc");
+        if (!file) return err("No file provided");
+        const originalName = (file.name || "file").replace(/[/\\/]/g, "_");
+        const ext = (originalName.split(".").pop() || "bin").toLowerCase();
+        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        const key = folder + "/" + safeName;
+        const mimeType = file.type || "application/octet-stream";
+        const arrayBuffer = await file.arrayBuffer();
+        await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+        return json({ url: publicUrl, key });
+      } catch(e) {
+        return err("Upload error: " + e.message, 500);
+      }
+    }
+
     let body = {};
     if (method === "POST" || method === "PUT") {
       const ct = request.headers.get("Content-Type") || "";
@@ -368,23 +389,6 @@ var worker_default = {
         const postId = path.split("/").pop();
         await env.DB.prepare(`DELETE FROM posts WHERE id=?`).bind(postId).run();
         return json({ success: true });
-      }
-      if (path === "/api/upload" && method === "POST") {
-        const formData = await request.formData();
-        const file = formData.get("file");
-        const folder = formData.get("folder") || "misc";
-        if (!file) return err("No file provided");
-        const originalName = (file.name || "file").replace(/[/\\]/g, "_");
-        const ext = originalName.split(".").pop() || "bin";
-        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
-        const key = folder + "/" + safeName;
-        const mimeType = file.type || "application/octet-stream";
-        const arrayBuffer = await file.arrayBuffer();
-        await env.MEDIA.put(key, arrayBuffer, {
-          httpMetadata: { contentType: mimeType }
-        });
-        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
-        return json({ url: publicUrl, key });
       }
       
       // ── Presigned upload URL for direct R2 upload ──────────────────────
@@ -557,6 +561,12 @@ var worker_default = {
         ).bind(id, creator_id, title, desc || "", type || "digital", price, emoji || "📦", JSON.stringify(deliverables || {})).run();
         return json({ id, success: true });
       }
+      if (path.startsWith("/api/products/") && method === "DELETE") {
+        const productId = path.split("/").pop();
+        await env.DB.prepare("DELETE FROM products WHERE id=?").bind(productId).run();
+        return json({ success: true });
+      }
+
       if (path === "/api/subscriptions" && method === "GET") {
         const userId = url.searchParams.get("user_id");
         if (!userId) return err("Missing user_id");
@@ -1015,6 +1025,28 @@ var worker_default = {
         headers["Cache-Control"] = "public, max-age=31536000";
         return new Response(obj.body, { headers });
       }
+      // ── Stories ──────────────────────────────────────────────────────────
+      if (path === "/api/stories" && method === "GET") {
+        const { results } = await env.DB.prepare(`
+          SELECT s.*, u.name as creator_name, u.avatar as creator_avatar
+          FROM stories s LEFT JOIN users u ON s.creator_id = u.id
+          WHERE s.expires_at > datetime('now')
+          ORDER BY s.created_at DESC LIMIT 200
+        `).all();
+        return json(results || []);
+      }
+
+      if (path === "/api/stories" && method === "POST") {
+        const { creator_id, creator_name, creator_avatar, media_url, media_type, caption } = body;
+        if (!creator_id || !media_url) return err("Missing fields");
+        const id = "story_" + Date.now();
+        await env.DB.prepare(`
+          INSERT INTO stories (id, creator_id, creator_name, creator_avatar, media_url, media_type, caption, created_at, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now', '+24 hours'))
+        `).bind(id, creator_id, creator_name||'', creator_avatar||'', media_url, media_type||'image', caption||'').run();
+        return json({ id, success: true });
+      }
+
       if (path === "/api/comments" && method === "GET") {
         const postId = url.searchParams.get("post_id");
         if (!postId) return err("Missing post_id");
