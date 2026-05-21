@@ -370,25 +370,21 @@ var worker_default = {
         return json({ success: true });
       }
       if (path === "/api/upload" && method === "POST") {
-        try {
-          const formData = await request.formData();
-          const file = formData.get("file");
-          const folder = (formData.get("folder") || "misc").replace(/[^a-zA-Z0-9_-]/g, "");
-          if (!file) return err("No file in form data");
-          if (typeof file === "string") return err("File field is a string not a file");
-          const originalName = (file.name || "file").replace(/[/\\]/g, "_");
-          const ext = (originalName.split(".").pop() || "bin").toLowerCase().slice(0, 10);
-          const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
-          const key = folder + "/" + safeName;
-          const mimeType = file.type || "application/octet-stream";
-          const arrayBuffer = await file.arrayBuffer();
-          if (!arrayBuffer || arrayBuffer.byteLength === 0) return err("Empty file received");
-          await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
-          const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
-          return json({ url: publicUrl, key, size: arrayBuffer.byteLength });
-        } catch(e) {
-          return err("Upload failed: " + (e.message || String(e)), 500);
-        }
+        const formData = await request.formData();
+        const file = formData.get("file");
+        const folder = formData.get("folder") || "misc";
+        if (!file) return err("No file provided");
+        const originalName = (file.name || "file").replace(/[/\\]/g, "_");
+        const ext = originalName.split(".").pop() || "bin";
+        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        const key = folder + "/" + safeName;
+        const mimeType = file.type || "application/octet-stream";
+        const arrayBuffer = await file.arrayBuffer();
+        await env.MEDIA.put(key, arrayBuffer, {
+          httpMetadata: { contentType: mimeType }
+        });
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+        return json({ url: publicUrl, key });
       }
       
       if (path === "/api/upload/sign" && method === "POST") {
