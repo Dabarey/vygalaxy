@@ -1000,6 +1000,18 @@ var worker_default = {
         return json({ ok: true });
       }
 
+      // ── Admin: verify/unverify user ─────────────────────────────────────
+      if (path === "/api/admin/users/verify" && method === "POST") {
+        const { user_id, verified } = body;
+        if (!user_id) return err("Missing user_id");
+        await env.DB.prepare("UPDATE users SET verified=? WHERE id=?").bind(verified?1:0, user_id).run();
+        if (verified) {
+          await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+            .bind("notif_"+Date.now(), user_id, "✅", "Your account has been verified!", "just now").run();
+        }
+        return json({ ok: true });
+      }
+
       if (path === "/api/admin/users" && method === "GET") {
         const { results } = await env.DB.prepare(
           `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
