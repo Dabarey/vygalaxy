@@ -387,6 +387,49 @@ var worker_default = {
         return json({ url: publicUrl, key });
       }
       
+      // ── Presigned upload URL for direct R2 upload ──────────────────────
+      // ── Base64 upload endpoint (JSON, no multipart) ────────────────────
+      if (path === "/api/upload/b64" && method === "POST") {
+        const { key, mimeType, data } = body;
+        if (!key || !mimeType || !data) return err("Missing key, mimeType or data");
+        // Decode base64
+        const binaryStr = atob(data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        await env.MEDIA.put(key, bytes.buffer, {
+          httpMetadata: { contentType: mimeType }
+        });
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+        return json({ url: publicUrl, key });
+      }
+
+      if (path === "/api/upload/presign" && method === "POST") {
+        const { key, mimeType } = body;
+        if (!key || !mimeType) return err("Missing key or mimeType");
+        const allowed = ["image/jpeg","image/jpg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime","video/mov"];
+        if (!allowed.includes(mimeType)) return err("File type not allowed: " + mimeType);
+        if (key.includes("..") || key.startsWith("/")) return err("Invalid key");
+        try {
+          const signedUrl = await env.MEDIA.createMultipartUpload ? null : null; // fallback below
+          // Generate presigned URL via R2 binding
+          const url = await env.MEDIA.createPresignedUrl("PUT", key, {
+            expiresIn: 300,
+            httpMetadata: { contentType: mimeType }
+          }).catch(async () => {
+            // If createPresignedUrl not available, use Workers R2 presigned URL
+            return null;
+          });
+          if (url) {
+            const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+            return json({ url, publicUrl, key });
+          }
+          // Fallback: direct upload through Worker
+          return json({ url: null, publicUrl: null, key, fallback: true });
+        } catch(e) {
+          return err("Presign failed: " + e.message);
+        }
+      }
+
       if (path === "/api/upload/sign" && method === "POST") {
         const { key, mimeType } = body;
         if (!key || !mimeType) return err("Missing key or mimeType");
