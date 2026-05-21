@@ -82,6 +82,31 @@ async function verifyPassword(password, stored) {
 __name(verifyPassword, "verifyPassword");
 
 // ── Balance helper ───────────────────────────────────────────────────────
+// Credit referrer: 1% on subs, 2% on video tips — for 12 months from signup
+async function creditReferrer(env, referredUserId, amount, type) {
+  try {
+    const referredUser = await env.DB.prepare("SELECT ref_code, created_at FROM users WHERE id=?").bind(referredUserId).first();
+    if (!referredUser?.ref_code) return;
+    const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
+    if (monthsOld > 12) return;
+    const referrer = await env.DB.prepare(
+      "SELECT id FROM users WHERE handle=? OR LOWER(REPLACE(name,' ','_'))=LOWER(?)"
+    ).bind(referredUser.ref_code, referredUser.ref_code).first();
+    if (!referrer) return;
+    // Check if referrer has verified video (2% rate) or default 1%
+    const referrerUser = await env.DB.prepare("SELECT ref_rate FROM users WHERE id=?").bind(referrer.id).first();
+    const pct = (referrerUser?.ref_rate === 2) ? 0.02 : 0.01;
+    const bonus = Math.round(amount * pct * 100) / 100;
+    if (bonus < 0.01) return;
+    await env.DB.prepare(
+      "INSERT INTO balances (creator_id,balance,lifetime) VALUES (?,?,?) ON CONFLICT(creator_id) DO UPDATE SET balance=balance+?,lifetime=lifetime+?"
+    ).bind(referrer.id, bonus, bonus, bonus, bonus).run();
+    await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+      .bind("notif_ref_"+Date.now(), referrer.id, "🎉",
+        "Referral bonus: $"+bonus.toFixed(2)+" ("+(pct*100)+"% "+(type==='video'?'video tip':'subscription')+")", "just now").run();
+  } catch(e) { console.warn("creditReferrer failed:", e.message); }
+}
+
 async function creditBalance(env, creatorId, amountUsd) {
   const creatorEarns = Math.round(amountUsd * 0.71 * 100) / 100;
   if (!creatorId || creatorEarns <= 0) return;
@@ -664,22 +689,8 @@ var worker_default = {
           ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
           if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
           // Do NOT credit here — webhook invoice.payment_succeeded handles first + recurring payments
-          // Credit referrer 1% if user was referred and within 12 months
-          try {
-            const referredUser = await env.DB.prepare("SELECT ref_code, created_at FROM users WHERE id=?").bind(user_id).first();
-            if (referredUser?.ref_code) {
-              const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
-              if (monthsOld <= 12) {
-                const referrer = await env.DB.prepare("SELECT id FROM users WHERE handle=? OR name=?").bind(referredUser.ref_code, referredUser.ref_code).first();
-                if (referrer) {
-                  const refBonus = Math.round(originalPrice * 0.01 * 100) / 100;
-                  await creditBalance(env, referrer.id, refBonus / 0.71); // gross so creditBalance gives them the right 71%
-                  await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
-                    .bind("notif_"+Date.now(), referrer.id, "🎉", "Referral bonus: $"+refBonus.toFixed(2)+" from a new subscriber!", "just now").run();
-                }
-              }
-            }
-          } catch(e) { console.warn("referral credit failed:", e.message); }
+          // Credit referrer 1% of subscription price for 12 months
+          try { await creditReferrer(env, user_id, price_usd, 'sub'); } catch(e) { console.warn("referral credit failed:", e.message); }
           return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
         }
       }
@@ -855,13 +866,22 @@ var worker_default = {
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
-        const { user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details } = body;
+        const { user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url } = body;
         if (!user_id) return err("Missing user_id");
         const id = "kyc_" + Date.now();
-        await env.DB.prepare(
-          `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
-        ).bind(id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details).run();
+        // Check if columns exist, if not use basic insert
+        try {
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url, status, submitted_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', datetime('now'))`
+          ).bind(id, user_id, user_name||'', user_email||'', legal_name||'', dob||'', country||'', payout_method||'bank', payout_details||'', id_front_url||'', id_back_url||'', selfie_url||'').run();
+        } catch(e) {
+          // Fallback without doc columns if they don't exist yet
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
+          ).bind(id, user_id, user_name||'', user_email||'', legal_name||'', dob||'', country||'', payout_method||'bank', payout_details||'').run();
+        }
         await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
         return json({ id, success: true });
       }
@@ -1025,6 +1045,43 @@ var worker_default = {
         headers["Cache-Control"] = "public, max-age=31536000";
         return new Response(obj.body, { headers });
       }
+      // ── Referral video submissions ──────────────────────────────────────
+      if (path === "/api/ref/video" && method === "POST") {
+        const { user_id, user_name, url } = body;
+        if (!user_id || !url) return err("Missing fields");
+        const id = "refvid_" + Date.now();
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO ref_videos (id, user_id, user_name, url, status, submitted_at)
+           VALUES (?, ?, ?, ?, 'pending', datetime('now'))`
+        ).bind(id, user_id, user_name||'', url).run();
+        return json({ id, success: true });
+      }
+
+      if (path === "/api/ref/video" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (userId) {
+          const row = await env.DB.prepare("SELECT * FROM ref_videos WHERE user_id=? ORDER BY submitted_at DESC LIMIT 1").bind(userId).first();
+          return json(row || { status: null });
+        }
+        // Admin — get all
+        const { results } = await env.DB.prepare("SELECT * FROM ref_videos ORDER BY submitted_at DESC").all();
+        return json(results || []);
+      }
+
+      if (path === "/api/ref/video/review" && method === "POST") {
+        const { id, user_id, action } = body;
+        if (!id || !action) return err("Missing fields");
+        await env.DB.prepare("UPDATE ref_videos SET status=? WHERE id=?").bind(action, id).run();
+        if (action === "approved" && user_id) {
+          // Set ref_rate to 2% on user
+          await env.DB.prepare("UPDATE users SET ref_rate=2 WHERE id=?").bind(user_id).run();
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_refvid_"+Date.now(), user_id, "🎉",
+              "Your promotional video was verified! You now earn 2% referral commission.", "just now").run();
+        }
+        return json({ success: true });
+      }
+
       // ── Stories ──────────────────────────────────────────────────────────
       if (path === "/api/stories" && method === "GET") {
         const { results } = await env.DB.prepare(`
