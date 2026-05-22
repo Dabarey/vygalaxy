@@ -88,7 +88,7 @@ async function creditReferrer(env, referredUserId, amount, type) {
     const referredUser = await env.DB.prepare("SELECT ref_code, created_at FROM users WHERE id=?").bind(referredUserId).first();
     if (!referredUser?.ref_code) return;
     const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
-    if (monthsOld > 12) return;
+    if (monthsOld > 24) return;
     const referrer = await env.DB.prepare(
       "SELECT id FROM users WHERE handle=? OR LOWER(REPLACE(name,' ','_'))=LOWER(?)"
     ).bind(referredUser.ref_code, referredUser.ref_code).first();
@@ -1046,6 +1046,30 @@ var worker_default = {
         return new Response(obj.body, { headers });
       }
       // ── Referral video submissions ──────────────────────────────────────
+      // ── Referral stats ───────────────────────────────────────────────────
+      if (path === "/api/ref/stats" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const user = await env.DB.prepare("SELECT name, handle FROM users WHERE id=?").bind(userId).first();
+        const handle = (user?.handle || user?.name || '').toLowerCase().replace(/\s+/g, '_');
+        // Find all users who were referred by this user
+        const { results: referred } = await env.DB.prepare(
+          `SELECT id, name, avatar, created_at FROM users WHERE LOWER(ref_code)=LOWER(?)`
+        ).bind(handle).all();
+        // Get notifications to calculate earned amount
+        const { results: notifs } = await env.DB.prepare(
+          `SELECT text FROM notifications WHERE user_id=? AND icon='🎉' AND text LIKE 'Referral bonus%'`
+        ).bind(userId).all();
+        let totalEarned = 0;
+        notifs.forEach(n => {
+          const m = (n.text||'').match(/\$([0-9.]+)/);
+          if (m) totalEarned += parseFloat(m[1]) || 0;
+        });
+        // Build user list with earned per user (approximate from notifications)
+        const users = (referred||[]).map(u => ({ ...u, earned: 0 }));
+        return json({ count: users.length, earned: totalEarned, users });
+      }
+
       if (path === "/api/ref/video" && method === "POST") {
         const { user_id, user_name, url } = body;
         if (!user_id || !url) return err("Missing fields");
