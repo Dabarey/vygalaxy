@@ -89,9 +89,10 @@ async function creditReferrer(env, referredUserId, amount, type) {
     if (!referredUser?.ref_code) return;
     const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
     if (monthsOld > 24) return;
+    // ref_code is now user ID — simple lookup
     const referrer = await env.DB.prepare(
-      "SELECT id FROM users WHERE handle=? OR LOWER(REPLACE(name,' ','_'))=LOWER(?)"
-    ).bind(referredUser.ref_code, referredUser.ref_code).first();
+      "SELECT id FROM users WHERE id=?"
+    ).bind(referredUser.ref_code).first();
     if (!referrer) return;
     // Check if referrer has verified video (2% rate) or default 1%
     const referrerUser = await env.DB.prepare("SELECT ref_rate FROM users WHERE id=?").bind(referrer.id).first();
@@ -1108,8 +1109,8 @@ var worker_default = {
         const handle = (user?.handle || user?.name || '').toLowerCase().replace(/\s+/g, '_');
         // Find all users who were referred by this user
         const { results: referred } = await env.DB.prepare(
-          `SELECT id, name, avatar, created_at FROM users WHERE LOWER(ref_code)=LOWER(?)`
-        ).bind(handle).all();
+          `SELECT id, name, avatar, created_at FROM users WHERE ref_code=?`
+        ).bind(userId).all(); // ref_code stores referrer's user ID
         // Get notifications to calculate earned amount
         const { results: notifs } = await env.DB.prepare(
           `SELECT text FROM notifications WHERE user_id=? AND icon='🎉' AND text LIKE 'Referral bonus%'`
