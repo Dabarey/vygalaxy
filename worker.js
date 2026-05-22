@@ -512,6 +512,60 @@ var worker_default = {
         return json({ ...safe, avatar: avatar || safe.avatar });
       }
 
+      // ── Forgot password ───────────────────────────────────────────────
+      if (path === "/api/auth/forgot-password" && method === "POST") {
+        const { email } = body;
+        if (!email) return err("Missing email");
+        const user = await env.DB.prepare("SELECT id, name FROM users WHERE email=?").bind(email).first();
+        if (!user) return json({ success: true }); // Don't reveal if email exists
+        // Generate reset token
+        const token = crypto.randomUUID().replace(/-/g,'');
+        const expires = new Date(Date.now() + 60*60*1000).toISOString(); // 1 hour
+        await env.DB.prepare("UPDATE users SET reset_token=?, reset_expires=? WHERE id=?")
+          .bind(token, expires, user.id).run().catch(async ()=>{
+            // Add columns if missing
+            await env.DB.prepare("ALTER TABLE users ADD COLUMN reset_token TEXT").run().catch(()=>{});
+            await env.DB.prepare("ALTER TABLE users ADD COLUMN reset_expires TEXT").run().catch(()=>{});
+            await env.DB.prepare("UPDATE users SET reset_token=?, reset_expires=? WHERE id=?")
+              .bind(token, expires, user.id).run();
+          });
+        const resetUrl = "https://galaxyvy.com/?reset=" + token;
+        // Send email via Resend
+        if (env.RESEND_API_KEY) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + env.RESEND_API_KEY },
+            body: JSON.stringify({
+              from: "GALAXY <vino@galaxyvy.com>",
+              to: email,
+              subject: "Reset your GALAXY password",
+              html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0000;color:#fff;border-radius:16px">
+                <h2 style="font-family:Georgia,serif;font-weight:400;margin-bottom:8px">Password Reset</h2>
+                <p style="color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px">Hi ${user.name}, click the button below to set a new password. This link expires in 1 hour.</p>
+                <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#d4a843,#b8902e);color:#0a0000;text-decoration:none;padding:14px 28px;border-radius:100px;font-weight:700;font-size:15px">Reset password →</a>
+                <p style="color:rgba(255,255,255,.3);font-size:12px;margin-top:24px">If you didn't request this, ignore this email. Your password won't change.</p>
+              </div>`
+            })
+          });
+        }
+        return json({ success: true });
+      }
+
+      // ── Reset password (verify token + set new password) ─────────────
+      if (path === "/api/auth/reset-password" && method === "POST") {
+        const { token, password } = body;
+        if (!token || !password) return err("Missing fields");
+        if (password.length < 6) return err("Password too short");
+        const user = await env.DB.prepare(
+          "SELECT id FROM users WHERE reset_token=? AND reset_expires > datetime('now')"
+        ).bind(token).first();
+        if (!user) return err("Invalid or expired reset link");
+        const hash = await hashPassword(password);
+        await env.DB.prepare("UPDATE users SET password_hash=?, reset_token=NULL, reset_expires=NULL WHERE id=?")
+          .bind(hash, user.id).run();
+        return json({ success: true });
+      }
+
       if (path === "/api/users/register" && method === "POST") {
         const { email, password, name, category, ref_code } = body;
         if (!email || !password || !name) return err("Missing fields");
