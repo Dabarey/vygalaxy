@@ -567,6 +567,23 @@ var worker_default = {
         return json({ success: true });
       }
 
+      if (path === "/api/db/migrate" && method === "POST") {
+        // Run migrations
+        const migrations = [
+          "ALTER TABLE users ADD COLUMN cert_status TEXT DEFAULT 'unsubmitted'",
+          "ALTER TABLE users ADD COLUMN reset_token TEXT",
+          "ALTER TABLE users ADD COLUMN reset_expires TEXT",
+          "ALTER TABLE users ADD COLUMN ref_rate INTEGER DEFAULT 1",
+          `CREATE TABLE IF NOT EXISTS cert_requests (id TEXT PRIMARY KEY, user_id TEXT, user_name TEXT, user_email TEXT, category TEXT, cert_url TEXT, status TEXT DEFAULT 'pending', submitted_at TEXT)`
+        ];
+        const results = [];
+        for (const sql of migrations) {
+          try { await env.DB.prepare(sql).run(); results.push({sql:'ok'}); }
+          catch(e) { results.push({sql:'skip:'+e.message.slice(0,50)}); }
+        }
+        return json({ results });
+      }
+
       if (path === "/api/users/register" && method === "POST") {
         const { email, password, name, category, ref_code } = body;
         if (!email || !password || !name) return err("Missing fields");
@@ -1100,6 +1117,71 @@ var worker_default = {
         headers["Cache-Control"] = "public, max-age=31536000";
         return new Response(obj.body, { headers });
       }
+      // ── Professional certification ──────────────────────────────────────
+      // Debug: check cert table
+      if (path === "/api/cert/check" && method === "GET") {
+        try {
+          const {results} = await env.DB.prepare("SELECT COUNT(*) as cnt FROM cert_requests").all();
+          return json({ table_exists: true, count: results?.[0]?.cnt||0 });
+        } catch(e) {
+          return json({ table_exists: false, error: e.message });
+        }
+      }
+
+      if (path === "/api/cert" && method === "POST") {
+        const { user_id, user_name, user_email, category, cert_url } = body;
+        if (!user_id || !cert_url) return err("Missing fields");
+        // Ensure table exists
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS cert_requests (
+          id TEXT PRIMARY KEY, user_id TEXT, user_name TEXT, user_email TEXT,
+          category TEXT, cert_url TEXT, status TEXT DEFAULT 'pending', submitted_at TEXT
+        )`).run().catch(()=>{});
+        const id = "cert_" + Date.now();
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO cert_requests (id,user_id,user_name,user_email,category,cert_url,status,submitted_at)
+           VALUES (?,?,?,?,?,?,'pending',datetime('now'))`
+        ).bind(id, user_id, user_name||'', user_email||'', category||'', cert_url).run();
+        // Update user cert status
+        try {
+          await env.DB.prepare("ALTER TABLE users ADD COLUMN cert_status TEXT DEFAULT 'unsubmitted'").run();
+        } catch(e) {} // column may already exist
+        await env.DB.prepare("UPDATE users SET cert_status='pending' WHERE id=?").bind(user_id).run();
+        // Notify admin
+        const admin = await env.DB.prepare("SELECT id FROM users WHERE role='admin' LIMIT 1").first();
+        if (admin) {
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_cert_req_"+Date.now(), admin.id, "📋",
+              (user_name||'A user')+" submitted a "+( category||'professional')+" certificate for verification", "just now").run().catch(()=>{});
+        }
+        return json({ id, success: true });
+      }
+
+      if (path === "/api/cert" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (userId) {
+          const row = await env.DB.prepare("SELECT * FROM cert_requests WHERE user_id=? ORDER BY submitted_at DESC LIMIT 1").bind(userId).first();
+          return json(row || { status: null });
+        }
+        const { results } = await env.DB.prepare("SELECT * FROM cert_requests ORDER BY submitted_at DESC").all().catch(()=>({results:[]}));
+        return json(results || []);
+      }
+
+      if (path === "/api/cert/review" && method === "POST") {
+        const { id, user_id, action } = body;
+        if (!id || !action) return err("Missing fields");
+        await env.DB.prepare("UPDATE cert_requests SET status=? WHERE id=?").bind(action, id).run();
+        if (user_id) {
+          await env.DB.prepare("UPDATE users SET cert_status=?, verified=? WHERE id=?")
+            .bind(action, action==='approved'?1:0, user_id).run().catch(()=>{});
+          const msg = action === 'approved'
+            ? "Your professional certificate is verified! Your badge is now active on your profile. ✅"
+            : "Your certificate was rejected. Please resubmit with a clearer document.";
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_cert_"+Date.now(), user_id, action==='approved'?"🏅":"❌", msg, "just now").run();
+        }
+        return json({ success: true });
+      }
+
       // ── Referral video submissions ──────────────────────────────────────
       // ── Referral stats ───────────────────────────────────────────────────
       if (path === "/api/ref/stats" && method === "GET") {
