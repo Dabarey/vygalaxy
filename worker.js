@@ -808,31 +808,35 @@ var worker_default = {
           return json({ success: true, payment_intent_id: pi.id });
         } else {
           // Subscription
-          const priceObj = await stripeReq(env, "/prices", "POST", {
-            unit_amount: String(amountCents),
-            currency: "usd",
-            "recurring[interval]": "month",
-            "product_data[name]": `Galaxy - ${creator_name} (${plan})`
-          });
-          const sub = await stripeReq(env, "/subscriptions", "POST", {
-            customer: customerId,
-            "items[0][price]": priceObj.id,
-            default_payment_method: payment_method_id,
-            "metadata[creator_id]": creator_id || "",
-            "metadata[user_id]": user_id || "",
-            "expand[0]": "latest_invoice.payment_intent"
-          });
-          const pi = sub.latest_invoice?.payment_intent;
-          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1e3).toISOString() : null;
-          await env.DB.prepare(
-            `INSERT OR REPLACE INTO subscriptions (id, user_id, creator_id, creator_name, plan, price, status, stripe_sub_id, stripe_customer_id, period_end, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-          ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
-          if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
-          // Do NOT credit here — webhook invoice.payment_succeeded handles first + recurring payments
-          // Credit referrer 1% of subscription price for 12 months
-          try { await creditReferrer(env, user_id, price_usd, 'sub'); } catch(e) { console.warn("referral credit failed:", e.message); }
-          return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
+          try {
+            const priceObj = await stripeReq(env, "/prices", "POST", {
+              unit_amount: String(amountCents),
+              currency: "usd",
+              "recurring[interval]": "month",
+              "product_data[name]": `Galaxy - ${creator_name||'Creator'}`
+            });
+            if (!priceObj?.id) return err("Stripe price creation failed: " + JSON.stringify(priceObj));
+            const sub = await stripeReq(env, "/subscriptions", "POST", {
+              customer: customerId,
+              "items[0][price]": priceObj.id,
+              default_payment_method: payment_method_id,
+              "metadata[creator_id]": creator_id || "",
+              "metadata[user_id]": user_id || "",
+              "expand[0]": "latest_invoice.payment_intent"
+            });
+            if (!sub?.id) return err("Stripe subscription creation failed: " + JSON.stringify(sub));
+            const pi = sub.latest_invoice?.payment_intent;
+            const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1e3).toISOString() : null;
+            await env.DB.prepare(
+              `INSERT OR REPLACE INTO subscriptions (id, user_id, creator_id, creator_name, plan, price, status, stripe_sub_id, stripe_customer_id, period_end, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+            ).bind("sub_" + Date.now(), user_id||'', creator_id||'', creator_name||'Creator', plan||'subscription', Number(price_usd)||0, sub.status||'active', sub.id||'', customerId||'', periodEnd||null).run();
+            if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
+            try { await creditReferrer(env, user_id, price_usd, 'sub'); } catch(e) {}
+            return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
+          } catch(subErr) {
+            return err("Subscription failed: " + (subErr.message || String(subErr)), 500);
+          }
         }
       }
       if (path === "/api/webhook/stripe" && method === "POST") {
