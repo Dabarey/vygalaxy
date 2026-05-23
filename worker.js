@@ -1295,6 +1295,16 @@ var worker_default = {
         return json({ id, success: true });
       }
 
+      // ── Post view count ────────────────────────────────────────────────
+      if (path.match(/^\/api\/posts\/[^/]+\/view$/) && method === "POST") {
+        const postId = path.split("/")[3];
+        try {
+          await env.DB.prepare("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0").run();
+        } catch(e) {}
+        await env.DB.prepare("UPDATE posts SET views=COALESCE(views,0)+1 WHERE id=?").bind(postId).run().catch(()=>{});
+        return json({ ok: true });
+      }
+
       if (path === "/api/comments" && method === "GET") {
         const postId = url.searchParams.get("post_id");
         if (!postId) return err("Missing post_id");
