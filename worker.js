@@ -1,4 +1,4 @@
- var __defProp = Object.defineProperty;
+var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // worker.js
@@ -1213,6 +1213,39 @@ var worker_default = {
       }
 
       // ── Referral video submissions ──────────────────────────────────────
+      // ── Boost ────────────────────────────────────────────────────────────
+      if (path === "/api/boost" && method === "POST") {
+        const { user_id, type, target_id, amount } = body; // type: profile|product
+        if (!user_id || !type || !target_id || !amount) return err("Missing fields");
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS boosts (
+          id TEXT PRIMARY KEY, user_id TEXT, type TEXT, target_id TEXT,
+          amount REAL, created_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1
+        )`).run().catch(()=>{});
+        const id = "boost_" + Date.now();
+        const expires = new Date(Date.now() + 7*24*60*60*1000).toISOString();
+        await env.DB.prepare(
+          `INSERT INTO boosts (id,user_id,type,target_id,amount,created_at,expires_at,active)
+           VALUES (?,?,?,?,?,datetime('now'),?,1)`
+        ).bind(id, user_id, type, target_id, amount, expires).run();
+        // Credit platform (dabarey24) — boost payment goes to platform
+        return json({ id, success: true, expires_at: expires });
+      }
+
+      if (path === "/api/boost/active" && method === "GET") {
+        const type = url.searchParams.get("type") || "profile";
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS boosts (
+          id TEXT PRIMARY KEY, user_id TEXT, type TEXT, target_id TEXT,
+          amount REAL, created_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1
+        )`).run().catch(()=>{});
+        const { results } = await env.DB.prepare(
+          `SELECT b.*, u.name as user_name, u.avatar as user_avatar, u.category as user_category
+           FROM boosts b LEFT JOIN users u ON b.user_id=u.user_id
+           WHERE b.type=? AND b.active=1 AND b.expires_at > datetime('now')
+           ORDER BY b.amount DESC`
+        ).bind(type).all().catch(()=>({results:[]}));
+        return json(results || []);
+      }
+
       // ── Referral stats ───────────────────────────────────────────────────
       if (path === "/api/ref/stats" && method === "GET") {
         const userId = url.searchParams.get("user_id");
