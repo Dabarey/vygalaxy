@@ -13,3 +13,5 @@ bucket_name = "galaxy-media"
 
 [triggers]
 crons = ["0 6 1 * *"]
+[triggers]
+crons = ["0 6 1 * *", "0 3 * * *"]
