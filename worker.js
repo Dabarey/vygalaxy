@@ -617,7 +617,7 @@ var worker_default = {
           return json(results || []);
         }
         if (!id) return err("Missing id");
-        const user = await env.DB.prepare("SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE id=?").bind(id).first();
+        const user = await env.DB.prepare("SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,cert_status,ref_rate,subs_count,created_at FROM users WHERE id=?").bind(id).first();
         if (!user) return err("User not found", 404);
         return json(user);
       }
@@ -648,16 +648,46 @@ var worker_default = {
         return json(normalize(results));
       }
       if (path === "/api/products" && method === "POST") {
-        const { creator_id, title, desc, type, price, emoji, deliverables } = body;
+        const { id: clientId, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview } = body;
         if (!creator_id || !title || !price) return err("Missing fields");
         if (Number(price) < 5) return err("Minimum product price is $5.");
-        const id = "prod_" + Date.now();
+        const id = clientId || ("prod_" + Date.now());
+        const finalDesc = description || desc || "";
+        // Add columns if missing
+        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT"]) {
+          await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
+        }
         await env.DB.prepare(
-          `INSERT INTO products (id, creator_id, title, desc, type, price, emoji, deliverables, sales, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
-        ).bind(id, creator_id, title, desc || "", type || "digital", price, emoji || "📦", JSON.stringify(deliverables || {})).run();
+          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category, sales, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
+        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'').run();
         return json({ id, success: true });
       }
+      if (path.match(/^\/api\/products\/[^\/]+\/analytics$/) && method === "GET") {
+        const productId = path.split("/")[3];
+        const { results } = await env.DB.prepare(
+          `SELECT pu.created_at, u.name as buyer_name, pu.amount
+           FROM purchases pu LEFT JOIN users u ON pu.user_id = u.id
+           WHERE pu.product_id=? ORDER BY pu.created_at DESC LIMIT 20`
+        ).bind(productId).all().catch(()=>({results:[]}));
+        const prod = await env.DB.prepare("SELECT sales, price FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+        return json({ recent: results||[], sales: prod?.sales||0, price: prod?.price||0 });
+      }
+
+      // ── Product analytics ─────────────────────────────────────────────
+      if (path.match(/^\/api\/products\/[^/]+\/analytics$/) && method === "GET") {
+        const productId = path.split("/")[3];
+        // Get recent purchases for this product
+        const { results: recent } = await env.DB.prepare(
+          `SELECT p.buyer_name, p.amount, p.created_at
+           FROM purchases p WHERE p.product_id=?
+           ORDER BY p.created_at DESC LIMIT 20`
+        ).bind(productId).all().catch(()=>({results:[]}));
+        // Get total sales from product record
+        const prod = await env.DB.prepare("SELECT sales, price FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+        return json({ recent: recent||[], sales: prod?.sales||0, price: prod?.price||0 });
+      }
+
       if (path.startsWith("/api/products/") && method === "DELETE") {
         const productId = path.split("/").pop();
         await env.DB.prepare("DELETE FROM products WHERE id=?").bind(productId).run();
