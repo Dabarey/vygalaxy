@@ -760,10 +760,9 @@ var worker_default = {
         if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
         const amountUsd = Number(price_usd); // gross charge including Stripe fee passthrough
         const originalPrice = Number(body.original_price || price_usd); // original price before fee
-        // Enforce minimum $1 for all — Stripe fee added on top by client
-        if (originalPrice < 1) return err("Minimum payment is $1.");
-        if (plan === "purchase" && originalPrice < 5) return err("Minimum product price is $5.");
-        const amountCents = Math.round(amountUsd * 100);
+        // Enforce minimum $0.50 — Stripe minimum charge
+        if (amountUsd < 0.5) return err("Minimum payment is $0.50.");
+        const amountCents = Math.round(Number(amountUsd) * 100); // gross charge incl. Stripe fee
         // Creator earns 71% of original price (not gross charge)
         const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
         const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
