@@ -1004,17 +1004,14 @@ var worker_default = {
         return json(results || []);
       }
       if (path === "/api/messages" && method === "POST") {
-        const { from_id, to_id, text } = body;
+        const { from_id, to_id, text, from_name } = body;
         if (!from_id || !to_id || !text) return err("Missing fields");
         const id = "msg_" + Date.now();
-        await env.DB.prepare(
-          `INSERT INTO messages (id, from_id, to_id, text) VALUES (?, ?, ?, ?)`
-        ).bind(id, from_id, to_id, text).run();
         const sender = await env.DB.prepare("SELECT name FROM users WHERE id=?").bind(from_id).first();
-        const notifId = "notif_" + Date.now();
         await env.DB.prepare(
-          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
-        ).bind(notifId, to_id, "💬", (sender?.name || "Someone") + ": " + text.slice(0, 50), "just now").run();
+          `INSERT INTO messages (id, from_id, to_id, from_name, text, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+        ).bind(id, from_id, to_id, sender?.name||from_name||'', text).run();
+        // Messages go to Messages tab only — not notifications
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
