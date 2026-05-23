@@ -1,5287 +1,1522 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- build: 20260513-190001 -->
-<title>GALAXY — Creator Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0000;--bg2:#110000;--bg3:#1a0000;
-  --card:#120000;--card2:#1e0000;
-  --border:rgba(180,0,0,.2);--border2:rgba(180,0,0,.3);
-  --text:#f0f0f2;--muted:#8a7070;--muted2:#5a4040;
-  --accent:#f5d0d0;--accent2:#e0a0a0;
-  --gold:#d4a843;--gold2:#b8902e;
-  --red:#c0392b;--red2:#a03020;
-  --rose:#e86c6c;--green:#4ade80;--blue:#60a5fa;--purple:#a78bfa;
-  --r:14px;--r2:10px;--shadow:0 4px 24px rgba(0,0,0,.6);
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// worker.js
+var CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization"
+};
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-button,a{-webkit-tap-highlight-color:transparent}
-input,textarea,select{font-size:16px!important} /* prevent iOS zoom on focus */
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,0,0,.94);backdrop-filter:blur(18px);border-bottom:1px solid rgba(180,0,0,.2);z-index:1000}
-.nav-logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:400;color:var(--accent);cursor:pointer}.nav-logo span{color:var(--gold)}
-.nav-tabs{display:flex;gap:2px}
-.nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 12px;border-radius:100px;cursor:pointer;transition:all .2s;position:relative}
-.nav-tab:hover{color:var(--text);background:var(--bg3)}.nav-tab.active{color:var(--text);background:var(--card2)}
-.nav-badge{position:absolute;top:2px;right:5px;min-width:16px;height:16px;background:var(--rose);border-radius:100px;font-size:.6rem;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 3px}.nav-badge.show{display:flex}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 15px;border-radius:100px;cursor:pointer;transition:all .2s}
-.nav-btn:hover{border-color:var(--accent);color:var(--accent)}.nav-btn.primary{background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600}.nav-btn.primary:hover{background:#a03020}
-.nav-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.9rem;border:2px solid var(--border2);cursor:pointer;transition:border-color .2s}.nav-av:hover{border-color:var(--gold)}
-.page{display:none;padding-top:58px;min-height:100vh}.page.active{display:block}
-#page-landing{background:#0a0000}
-.hero{text-align:center;padding:90px 24px 50px;max-width:700px;margin:0 auto}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}
-.hero h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:400;line-height:1.15;letter-spacing:-.03em;margin-bottom:18px}
-.hero h1 em{font-style:italic;color:var(--gold)}
-.hero p{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto}
-.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all .22s;text-decoration:none}
-.btn-gold{background:var(--gold);color:#0a0a0b}.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
-.btn-ghost{background:none;border:1px solid var(--border2);color:var(--muted)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.btn-sm{padding:8px 16px;font-size:.8rem}
-.stats{display:flex;justify-content:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:16px 0 52px}
-.stat{flex:1;max-width:200px;text-align:center;padding:26px 16px;border-right:1px solid var(--border)}.stat:last-child{border-right:none}
-.stat-n{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:600;color:var(--gold);letter-spacing:-.03em}.stat-l{font-size:.76rem;color:var(--muted);margin-top:2px}
-.section{padding:40px 24px;max-width:1100px;margin:0 auto}
-.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px}
-.section-title{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:400;color:var(--text);letter-spacing:-.02em}
-.section-link{font-size:.8rem;color:var(--muted);cursor:pointer;border-bottom:1px solid var(--border2);padding-bottom:1px;transition:color .2s}.section-link:hover{color:var(--accent)}
-.creators-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:14px}
-.creator-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .22s,transform .22s,box-shadow .22s}
-.creator-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
-.creator-card-cover{height:88px;position:relative;overflow:hidden}
-.creator-card-cover img{width:100%;height:100%;object-fit:cover;filter:brightness(.72)}
-.creator-avatar-thumb{width:54px;height:54px;border-radius:50%;border:3px solid var(--bg);position:absolute;bottom:-18px;left:14px;object-fit:cover;background:var(--card2)}
-.creator-card-body{padding:26px 14px 14px}
-.creator-name{font-weight:600;font-size:.93rem;display:flex;align-items:center;gap:5px}
-.creator-handle{font-size:.76rem;color:var(--muted);margin-bottom:5px}
-.creator-bio{font-size:.78rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
-.creator-meta{display:flex;align-items:center;justify-content:space-between}
-.creator-subs{font-size:.73rem;color:var(--muted2)}.creator-price{font-size:.78rem;font-weight:700;color:var(--gold);background:rgba(212,168,67,.1);padding:3px 9px;border-radius:100px}
-.verified{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;margin-left:4px}
-#page-explore .expl-header{padding:24px 24px 0;max-width:1100px;margin:0 auto}
-.expl-title{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:400;letter-spacing:-.02em;margin-bottom:16px}
-.cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
-.cat{background:transparent;border:1px solid var(--border);border-radius:100px;padding:4px 11px;font-size:.72rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s}
-.cat:hover,.cat.active{background:var(--gold);border-color:var(--gold);color:#0a0a0b}
-#page-feed{max-width:600px;margin:0 auto}.feed-wrap{padding:20px}
-
-
-/* ── STORIES ── */
-.stories-strip{display:flex;gap:14px;padding:14px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
-.stories-strip::-webkit-scrollbar{display:none}
-.story-item{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
-.story-ring{width:64px;height:64px;border-radius:50%;padding:2px;background:conic-gradient(#d4a843,#f0c84a,#c0392b,#d4a843)}
-.story-ring.seen{background:#333}
-.story-ring .story-inner{width:100%;height:100%;border-radius:50%;border:2.5px solid var(--bg);background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.story-ring .story-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.story-name{font-size:.62rem;color:var(--muted);max-width:64px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.story-viewer{position:fixed;inset:0;z-index:3000;background:#000;display:flex;flex-direction:column}
-.story-progress{display:flex;gap:3px;padding:12px 12px 6px;position:absolute;top:0;left:0;right:0;z-index:2}
-.story-bar{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.3);overflow:hidden}
-.story-bar-fill{height:100%;background:#fff;width:0}
-.story-bar.done .story-bar-fill{width:100%}
-.story-bar.active .story-bar-fill{animation:story-fill var(--dur,5s) linear forwards}
-@keyframes story-fill{from{width:0}to{width:100%}}
-.story-head{display:flex;align-items:center;gap:10px;padding:44px 14px 8px;position:absolute;top:0;left:0;right:0;z-index:2;background:linear-gradient(to bottom,rgba(0,0,0,.5),transparent)}
-.story-content{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.story-content img,.story-content video{width:100%;height:100%;object-fit:cover}
-.story-text-overlay{position:absolute;bottom:80px;left:0;right:0;text-align:center;padding:0 24px;color:#fff;font-size:1rem;font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.8);z-index:2}
-.story-tap-left{position:absolute;left:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer}
-.story-tap-right{position:absolute;right:0;top:0;width:35%;height:100%;z-index:3;cursor:pointer}
-
-/* ── MENTIONS ── */
-.mention-dropdown{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:1000;min-width:220px;max-height:200px;overflow-y:auto;padding:4px}
-.mention-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
-.mention-item:hover{background:var(--bg3)}
-.mention-item img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--card2)}
-.mention-item-name{font-size:.82rem;font-weight:600;color:var(--text)}
-.mention-item-handle{font-size:.72rem;color:var(--muted)}
-.mention-tag{color:var(--gold);font-weight:600;cursor:pointer}
-.mention-tag:hover{text-decoration:underline}
-
-.post-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .2s}.post-card:hover{border-color:var(--border2)}
-.post-head{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
-.post-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--card2);flex-shrink:0}
-.post-creator-name{font-weight:600;font-size:.87rem}.post-time{font-size:.72rem;color:var(--muted)}
-.post-tier-badge{margin-left:auto;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
-.tb-free{background:rgba(74,222,128,.12);color:var(--green)}.tb-paid{background:rgba(212,168,67,.12);color:var(--gold)}
-.post-body{padding:0 14px 12px}.post-title{font-weight:600;font-size:.93rem;margin-bottom:5px}.post-text{font-size:.83rem;color:var(--muted);line-height:1.6}
-.post-lock-box{padding:18px 14px;text-align:center}.post-lock-text{font-size:.8rem;color:var(--muted);margin-bottom:10px}
-.post-actions{display:flex;align-items:center;gap:2px;padding:9px 14px 11px;border-top:1px solid var(--border)}
-.post-action{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;padding:5px 9px;border-radius:8px;transition:all .2s}
-.post-action:hover{background:var(--bg3);color:var(--text)}
-#page-profile{padding-top:0!important}.profile-cover-wrap{height:260px;overflow:hidden;margin-top:58px}.profile-cover-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(.68)}
-.profile-body{max-width:840px;margin:0 auto;padding:0 22px}
-.profile-head{display:flex;align-items:flex-end;gap:14px;margin-top:-46px;margin-bottom:18px;flex-wrap:wrap;position:relative;z-index:2}
-.profile-pic{width:92px;height:92px;border-radius:50%;border:4px solid var(--bg);object-fit:cover;flex-shrink:0;background:var(--card2)}
-.profile-info{padding-bottom:4px;flex:1}
-.profile-name-row{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.profile-handle{font-size:.83rem;color:var(--muted)}.profile-bio{font-size:.86rem;color:var(--muted);line-height:1.6;margin:10px 0 14px}
-.profile-stats-row{display:flex;gap:22px;margin-bottom:20px}
-.p-stat-n{font-weight:700;font-size:.98rem}.p-stat-l{font-size:.73rem;color:var(--muted)}
-.sub-card{background:var(--card);border:1px solid var(--gold);border-radius:var(--r);padding:22px;margin-bottom:28px;max-width:420px}
-.sub-feat{font-size:.78rem;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:6px}.sub-feat::before{content:'check';font-family:monospace;color:var(--green);font-weight:700;font-size:.7rem}
-#page-messages{max-width:860px;margin:0 auto}
-.msg-layout{display:flex;height:calc(100vh - 58px)}
-.msg-sidebar{width:260px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
-.msg-sidebar-title{padding:16px 14px 10px;font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
-.msg-thread{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
-.msg-thread:hover,.msg-thread.act{background:var(--bg3)}
-.msg-thread-av{width:36px;height:36px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
-.msg-thread-name{font-weight:600;font-size:.84rem}.msg-thread-prev{font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
-.msg-unread-dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
-.msg-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.msg-main-head{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.msg-main-name{font-weight:600;font-size:.93rem}
-.msg-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
-.msg-bubble{max-width:70%;padding:9px 13px;border-radius:14px;font-size:.84rem;line-height:1.5}
-.msg-bubble.mine{background:var(--gold);color:#0a0a0b;align-self:flex-end;border-radius:14px 14px 4px 14px}
-.msg-bubble.theirs{background:var(--card2);color:var(--text);align-self:flex-start;border-radius:14px 14px 14px 4px}
-.msg-input-row{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:8px}
-.msg-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:8px 15px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s}.msg-input:focus{border-color:var(--gold)}
-.msg-send-btn{background:var(--gold);border:none;border-radius:100px;padding:8px 16px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s}.msg-send-btn:hover{background:var(--gold2)}
-.msg-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.88rem;flex-direction:column;gap:8px}
-#page-notifs{max-width:620px;margin:0 auto;padding:24px}
-.notif-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;margin-bottom:18px;letter-spacing:-.02em}
-.notif-item{display:flex;align-items:flex-start;gap:11px;padding:13px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:9px;transition:border-color .2s}
-.notif-item:hover{border-color:var(--border2)}.notif-item.unread{border-left:3px solid var(--gold)}
-.notif-icon{font-size:1.1rem;flex-shrink:0;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:50%}
-.notif-text{font-size:.84rem;line-height:1.5}.notif-time{font-size:.72rem;color:var(--muted);margin-top:3px}
-.dash-wrap{max-width:960px;margin:0 auto;padding:24px}
-.dash-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:400;margin-bottom:20px;letter-spacing:-.02em}
-.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:22px}
-.dash-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px}
-.dash-card-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.dash-card-val{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:400;letter-spacing:-.03em}
-.dash-card-sub{font-size:.72rem;color:var(--green);margin-top:2px}
-.ds-title{font-weight:600;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px}
-.kyc-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
-.kyc-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:.74rem;font-weight:700;letter-spacing:.04em}
-.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:9px}.upload-zone:hover{border-color:var(--gold)}.upload-zone input{display:none}
-#page-admin .admin-wrap{max-width:1020px;margin:0 auto;padding:24px}
-.admin-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:400;margin-bottom:6px;letter-spacing:-.02em}
-.admin-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--border)}
-.admin-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:500;padding:8px 16px 12px;cursor:pointer;transition:all .2s;margin-bottom:-1px}
-.admin-tab:hover{color:var(--text)}.admin-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-.admin-panel{display:none}.admin-panel.active{display:block}
-.admin-table{width:100%;border-collapse:collapse}
-.admin-table th{font-size:.71rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:9px 11px;text-align:left;border-bottom:1px solid var(--border)}
-.admin-table td{padding:11px 11px;border-bottom:1px solid var(--border);font-size:.84rem;vertical-align:middle}
-.admin-table tr:hover td{background:var(--bg3)}
-.action-btn{background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 11px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;color:var(--muted)}
-.action-btn:hover{border-color:var(--accent);color:var(--text)}
-.action-btn.approve{border-color:rgba(74,222,128,.4);color:var(--green)}.action-btn.approve:hover{background:rgba(74,222,128,.1)}
-.action-btn.reject{border-color:rgba(232,108,108,.4);color:var(--rose)}.action-btn.reject:hover{background:rgba(232,108,108,.1)}
-.action-btn.payout{border-color:rgba(212,168,67,.4);color:var(--gold)}.action-btn.payout:hover{background:rgba(212,168,67,.1)}
-.admin-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-bottom:22px}
-.admin-stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}.overlay.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:28px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.7);max-height:92vh;overflow-y:auto}
-.modal.wide{max-width:520px}
-.modal h2{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:400;margin-bottom:5px;letter-spacing:-.02em}
-.modal p{font-size:.83rem;color:var(--muted);margin-bottom:20px}
-.fg{margin-bottom:12px}.fg label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:500}
-.fg input,.fg select,.fg textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold)}
-.modal-btn{width:100%;padding:12px;background:var(--gold);border:none;border-radius:100px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}.modal-btn:hover{background:var(--gold2)}
-.modal-switch{text-align:center;font-size:.78rem;color:var(--muted);margin-top:14px}.modal-switch a{color:var(--accent);cursor:pointer;text-decoration:underline}
-.err-msg{font-size:.76rem;color:var(--rose);margin-bottom:7px;min-height:15px}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card2);border:1px solid var(--border2);border-radius:100px;padding:9px 18px;font-size:.83rem;font-weight:500;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow);z-index:3000;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap}.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:.88rem}.empty-icon{font-size:1.8rem;margin-bottom:7px}
-.tag{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
-.divider{height:1px;background:var(--border);margin:28px 0}
-.badge-gold{background:rgba(212,168,67,.15);color:var(--gold);border:1px solid rgba(212,168,67,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
-.badge-blue{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
-.badge-rose{background:rgba(232,108,108,.15);color:var(--rose);border:1px solid rgba(232,108,108,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
-.badge-green{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
-
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
-.shop-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .22s,transform .22s,box-shadow .22s;display:flex;flex-direction:column}
-.shop-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.55)}
-.shop-card-img{height:160px;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden;flex-shrink:0}
-.shop-card-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.55);transition:transform .4s}
-.shop-card:hover .shop-card-img img{transform:scale(1.04)}
-.shop-card-emoji{position:relative;z-index:1;font-size:2.6rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))}
-.shop-type-badge{position:absolute;top:10px;left:10px;font-size:.64rem;font-weight:700;padding:4px 10px;border-radius:100px;letter-spacing:.05em;text-transform:uppercase;z-index:2}
-.shop-momentum{position:absolute;top:10px;right:10px;font-size:.62rem;font-weight:700;padding:4px 9px;border-radius:100px;background:rgba(232,108,108,.9);color:#fff;letter-spacing:.04em;z-index:2}
-.shop-instant{position:absolute;bottom:10px;left:10px;font-size:.62rem;font-weight:600;padding:3px 8px;border-radius:100px;background:rgba(0,0,0,.6);color:var(--green);border:1px solid rgba(74,222,128,.3);z-index:2}
-.shop-card-body{padding:14px 16px;flex:1;display:flex;flex-direction:column}
-.shop-card-title{font-weight:700;font-size:.95rem;margin-bottom:6px;line-height:1.35}
-.shop-card-creator{font-size:.75rem;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.shop-card-creator img{width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid var(--border2)}
-.shop-rating{display:flex;align-items:center;gap:5px;margin-bottom:8px}
-.shop-stars{color:var(--gold);font-size:.8rem;letter-spacing:1px}
-.shop-rating-count{font-size:.72rem;color:var(--muted)}
-.shop-includes{margin-bottom:12px}
-.shop-includes-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.shop-include-item{font-size:.76rem;color:var(--muted);margin-bottom:3px;display:flex;align-items:flex-start;gap:5px;line-height:1.4}
-.shop-include-item::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
-.shop-card-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.shop-price{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:400;color:var(--gold);letter-spacing:-.02em}
-.shop-sales-count{font-size:.7rem;color:var(--muted2)}
-.shop-buy-btn{background:var(--gold);border:none;border-radius:100px;padding:9px 18px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}.shop-buy-btn:hover{background:var(--gold2);transform:scale(1.04)}
-.shop-preview-btn{background:none;border:1px solid var(--border2);border-radius:100px;padding:7px 12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s}.shop-preview-btn:hover{border-color:var(--accent);color:var(--accent)}
-.shop-cats{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
-.shop-header{padding:24px 24px 0;max-width:1100px;margin:0 auto}
-.shop-title{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:400;letter-spacing:-.02em;margin-bottom:6px}
-.shop-subtitle{font-size:.88rem;color:var(--muted);margin-bottom:16px}
-.shop-sort{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.shop-sort-label{font-size:.76rem;color:var(--muted)}
-.shop-sort select{background:transparent;border:1px solid var(--border);border-radius:100px;padding:3px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.72rem;outline:none;cursor:pointer}
-/* review modal */
-.review-list{max-height:260px;overflow-y:auto;margin-bottom:14px}
-.review-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem}
-.review-item:last-child{border-bottom:none}
-.review-author{font-weight:600;font-size:.8rem;margin-bottom:3px}
-.review-stars{color:var(--gold);font-size:.76rem;margin-bottom:4px}
-.review-text{color:var(--muted);line-height:1.5}
-
-
-/* ══════════════════════════════════════════
-   MOBILE — bottom nav + full responsive
-   ══════════════════════════════════════════ */
-
-/* Bottom nav bar (mobile only) */
-.bottom-nav{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;
-  height:62px;
-  background:rgba(10,10,11,.96);
-  backdrop-filter:blur(18px);
-  border-top:1px solid var(--border);
-  z-index:1000;
-  align-items:center;justify-content:space-around;
-  padding:0 4px;
-  padding-bottom:env(safe-area-inset-bottom);
+__name(json, "json");
+function err(msg, status = 400) {
+  return new Response(JSON.stringify({ error: msg }), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
-.bnav-btn{
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  background:none;border:none;
-  color:var(--muted);font-family:'DM Sans',sans-serif;
-  font-size:.58rem;font-weight:500;
-  padding:8px 12px;border-radius:12px;
-  cursor:pointer;transition:all .2s;
-  flex:1;position:relative;
-  -webkit-tap-highlight-color:transparent;
+__name(err, "err");
+async function stripeReq(env, path, method = "GET", params = null) {
+  const key = env.STRIPE_SK;
+  if (!key) throw new Error("STRIPE_SK not set");
+  const res = await fetch(`https://api.stripe.com/v1${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: params ? new URLSearchParams(params).toString() : void 0
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `Stripe ${res.status}`);
+  return data;
 }
-.bnav-btn:active{background:var(--bg3)}
-.bnav-btn.active{color:var(--gold)}
-.bnav-btn svg,.bnav-icon{font-size:1.25rem;line-height:1}
-.bnav-badge{
-  position:absolute;top:4px;right:calc(50% - 16px);
-  min-width:16px;height:16px;
-  background:var(--rose);border-radius:100px;
-  font-size:.58rem;font-weight:700;color:#fff;
-  display:none;align-items:center;justify-content:center;
-  padding:0 4px;
+__name(stripeReq, "stripeReq");
+async function getPayPalToken(env) {
+  const clientId = env.PAYPAL_CLIENT_ID || "AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO";
+  const secret = env.PAYPAL_SK || "EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa";
+  if (!clientId || !secret) throw new Error("PayPal credentials not set");
+  const creds = btoa(clientId + ":" + secret);
+  const res = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
+    method: "POST",
+    headers: { "Authorization": "Basic " + creds, "Content-Type": "application/x-www-form-urlencoded" },
+    body: "grant_type=client_credentials"
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error("PayPal auth failed: " + JSON.stringify(data));
+  return data.access_token;
 }
-.bnav-badge.show{display:flex}
-.bnav-fab{
-  display:flex;align-items:center;justify-content:center;
-  width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(145deg,#c0392b,#a03020);
-  border:none;
-  color:#0a0a0b;
-  cursor:pointer;
-  flex:0 0 auto;
-  position:relative;
-  top:-14px;
-  box-shadow:0 4px 20px rgba(192,57,43,.5),0 2px 6px rgba(0,0,0,.4);
-  transition:transform .15s ease,box-shadow .15s ease;
-  -webkit-tap-highlight-color:transparent;
-  outline:none;
+__name(getPayPalToken, "getPayPalToken");
+async function paypalReq(env, path, method = "GET", body = null) {
+  const token = await getPayPalToken(env);
+  const res = await fetch("https://api-m.paypal.com" + path, {
+    method,
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : void 0
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+  return data;
 }
-.bnav-fab:active{transform:scale(.9);box-shadow:0 2px 10px rgba(212,168,67,.4)}
-.bnav-fab-icon{font-size:1.6rem;font-weight:400;line-height:1;color:#0a0a0b;pointer-events:none}
+__name(paypalReq, "paypalReq");
+async function hashPassword(password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 1e5, hash: "SHA-256" }, key, 256);
+  const hashArr = Array.from(new Uint8Array(bits));
+  const saltArr = Array.from(salt);
+  return saltArr.map((b) => b.toString(16).padStart(2, "0")).join("") + ":" + hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(hashPassword, "hashPassword");
+async function verifyPassword(password, stored) {
+  try {
+    const [saltHex, hashHex] = stored.split(":");
+    const salt = new Uint8Array(saltHex.match(/.{2}/g).map((b) => parseInt(b, 16)));
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 1e5, hash: "SHA-256" }, key, 256);
+    const hashArr = Array.from(new Uint8Array(bits));
+    const computed = hashArr.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return computed === hashHex;
+  } catch {
+    return false;
+  }
+}
+__name(verifyPassword, "verifyPassword");
 
-@media(max-width:700px){
-  /* Show bottom nav, hide top tabs + right btns */
-  .bottom-nav{display:flex}
-  nav{padding:0 14px}
-  .nav-tabs{display:none!important}
-  /* Keep logo + sign-in/avatar only */
-  .nav-btn.primary{padding:7px 12px;font-size:.78rem}
-  #navUser .nav-btn{display:none} /* hide sign-out on mobile — in profile */
-
-  /* Pages get bottom-nav clearance */
-  .page{padding-bottom:70px}
-  #page-profile{padding-bottom:70px}
-
-  /* Hero */
-  .hero{padding:52px 16px 32px}
-  .hero h1{font-size:2rem}
-  .hero p{font-size:.9rem}
-  .hero-btns{flex-direction:column;align-items:center}
-  .hero-btns .btn{width:100%;max-width:280px;justify-content:center}
-
-  /* Stats */
-  .stats{flex-wrap:wrap}
-  .stat{min-width:50%;flex:1;border-right:none;border-bottom:1px solid var(--border)}
-  .stat:nth-child(odd){border-right:1px solid var(--border)}
-  .stat:nth-last-child(-n+2){border-bottom:none}
-  .stat-n{font-size:1.5rem}
-
-  /* Sections */
-  .section{padding:24px 14px}
-  .section-head{margin-bottom:16px}
-  .section-title{font-size:1.2rem}
-
-  /* Grids → single column or 2-col */
-  .creators-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-  .shop-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .dash-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-  .admin-stat-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-
-  /* Creator card — horizontal on mobile */
-  .creator-card{display:flex;flex-direction:row;height:auto}
-  .creator-card-cover{width:90px;height:90px;flex-shrink:0;border-radius:0}
-  .creator-avatar-thumb{width:44px;height:44px;bottom:-14px;left:10px}
-  .creator-card-body{padding:12px 12px 12px 14px;flex:1}
-  .creator-name{font-size:.86rem}
-  .creator-bio{-webkit-line-clamp:1;margin-bottom:6px}
-
-  /* Profile */
-  .profile-cover-wrap{height:180px}
-  .profile-pic{width:72px;height:72px}
-  .profile-head{margin-top:-36px;gap:10px}
-  .profile-name-row{font-size:1.2rem}
-  .profile-head > div:last-child{flex-direction:column;gap:6px;margin-left:auto}
-  .profile-head .btn-sm{padding:7px 13px;font-size:.76rem}
-  .profile-stats-row{gap:16px}
-  .sub-card{max-width:100%}
-
-  /* Feed */
-  #page-feed{max-width:100%}
-  .feed-wrap{padding:14px}
-  .post-card{border-radius:10px}
-
-  /* Messages — stack sidebar above chat */
-  #page-messages{max-width:100%}
-  .msg-layout{flex-direction:column;height:auto;min-height:calc(100vh - 128px)}
-  .msg-sidebar{width:100%;height:auto;max-height:220px;border-right:none;border-bottom:1px solid var(--border)}
-  .msg-main{height:calc(100vh - 360px);min-height:300px}
-  .msg-messages{padding:10px 12px}
-  .msg-bubble{max-width:85%}
-
-  /* Notifications */
-  #page-notifs{padding:16px}
-
-  /* Dashboard */
-  .dash-wrap{padding:16px}
-  .dash-card{padding:14px}
-  .dash-card-val{font-size:1.5rem}
-
-  /* Shop card — full width horizontal on mobile */
-  .shop-card{flex-direction:column;height:auto}
-  .shop-card-title{font-size:.8rem}
-  .shop-card-creator{font-size:.68rem}
-  .shop-price{font-size:1rem}
-  .shop-buy-btn{padding:7px 10px;font-size:.72rem}
-  .shop-preview-btn{font-size:.68rem}
-  .shop-card-emoji{font-size:1.8rem}
-  .shop-stars{font-size:.7rem}
-  .shop-card-img{width:110px;height:auto;min-height:130px;flex-shrink:0;border-radius:0}
-  .shop-card-emoji{font-size:1.8rem}
-  .shop-card-body{padding:12px}
-  .shop-card-title{font-size:.86rem;margin-bottom:4px}
-  .shop-includes{display:none} /* hide includes on mobile card, shown in detail */
-  .shop-card-footer{padding-top:8px}
-  .shop-price{font-size:1rem}
-  .shop-buy-btn{padding:7px 12px;font-size:.74rem}
-  .shop-preview-btn{padding:6px 10px;font-size:.72rem}
-  .shop-momentum{font-size:.58rem;padding:3px 7px}
-  .shop-instant{font-size:.58rem;padding:3px 6px}
-
-  /* Admin */
-  #page-admin .admin-wrap{padding:14px}
-  .admin-tabs{overflow-x:auto;gap:0}
-  .admin-tab{white-space:nowrap;padding:8px 12px 10px;font-size:.78rem}
-  .admin-table{font-size:.76rem}
-  .admin-table th,.admin-table td{padding:8px 8px}
-  /* Stack table on very small screens */
-  .admin-table thead{display:none}
-  .admin-table tr{display:block;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;padding:10px}
-  .admin-table td{display:flex;justify-content:space-between;border:none;padding:4px 0;font-size:.8rem}
-  .admin-table td::before{content:attr(data-label);color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:8px}
-
-  /* Explore header */
-  .expl-header,.shop-header{padding:16px 14px 0}
-  .expl-title,.shop-title{font-size:1.4rem}
-  .cats,.shop-cats{gap:6px}
-  .cat{padding:5px 11px;font-size:.74rem}
-  .shop-sort{flex-wrap:wrap;gap:6px}
-
-  /* Discover */
-  #page-discover > div{padding:16px 14px 0}
-
-  /* Toast — above bottom nav */
-  .toast{bottom:74px}
-
-  /* Modals — full-width on mobile */
-  .modal{padding:22px 18px;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;max-width:100%;margin:0;border-left:none;border-right:none;border-bottom:none}
-  .overlay{align-items:flex-end;padding:0}
-
-  /* KYC upload zones */
-  .upload-zone{padding:14px}
+// ── Balance helper ───────────────────────────────────────────────────────
+// Credit referrer: 1% on subs, 2% on video tips — for 12 months from signup
+async function creditReferrer(env, referredUserId, amount, type) {
+  try {
+    const referredUser = await env.DB.prepare("SELECT ref_code, created_at FROM users WHERE id=?").bind(referredUserId).first();
+    if (!referredUser?.ref_code) return;
+    const monthsOld = (Date.now() - new Date(referredUser.created_at).getTime()) / (1000*60*60*24*30);
+    if (monthsOld > 24) return;
+    // ref_code is now user ID — simple lookup
+    const referrer = await env.DB.prepare(
+      "SELECT id FROM users WHERE id=?"
+    ).bind(referredUser.ref_code).first();
+    if (!referrer) return;
+    // Check if referrer has verified video (2% rate) or default 1%
+    const referrerUser = await env.DB.prepare("SELECT ref_rate FROM users WHERE id=?").bind(referrer.id).first();
+    const pct = (referrerUser?.ref_rate === 2) ? 0.02 : 0.01;
+    const bonus = Math.round(amount * pct * 100) / 100;
+    if (bonus < 0.01) return;
+    await env.DB.prepare(
+      "INSERT INTO balances (creator_id,balance,lifetime) VALUES (?,?,?) ON CONFLICT(creator_id) DO UPDATE SET balance=balance+?,lifetime=lifetime+?"
+    ).bind(referrer.id, bonus, bonus, bonus, bonus).run();
+    await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+      .bind("notif_ref_"+Date.now(), referrer.id, "🎉",
+        "Referral bonus: $"+bonus.toFixed(2)+" ("+(pct*100)+"% "+(type==='video'?'video tip':'subscription')+")", "just now").run();
+  } catch(e) { console.warn("creditReferrer failed:", e.message); }
 }
 
-/* Extra small — very narrow phones */
-@media(max-width:380px){
-  .creators-grid{grid-template-columns:1fr}
-  .creator-card{flex-direction:column}
-  .creator-card-cover{width:100%;height:80px}
-  .creator-avatar-thumb{bottom:-16px}
-  .creator-card-body{padding:24px 12px 12px}
-  .hero h1{font-size:1.75rem}
-  .dash-grid{grid-template-columns:repeat(2,1fr)}
+async function creditBalance(env, creatorId, amountUsd) {
+  const creatorEarns = Math.round(amountUsd * 0.71 * 100) / 100;
+  if (!creatorId || creatorEarns <= 0) return;
+  await env.DB.prepare(`
+    INSERT INTO balances (creator_id, balance, lifetime, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(creator_id) DO UPDATE SET
+      balance  = balance + excluded.balance,
+      lifetime = lifetime + excluded.lifetime,
+      updated_at = excluded.updated_at
+  `).bind(creatorId, creatorEarns, creatorEarns).run();
 }
-.cover-up{
-  width:100%;min-height:140px;
-  border:2px dashed rgba(99,179,237,.5);
-  border-radius:12px;
-  background:linear-gradient(135deg,rgba(99,179,237,.1) 0%,rgba(212,168,67,.1) 100%);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;overflow:hidden;position:relative;
-  transition:border-color .25s,box-shadow .25s;
-}
-.cover-up:hover{
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(212,168,67,.12);
-}
-.cover-up-empty{
-  text-align:center;color:var(--text);
-  font-size:.85rem;padding:24px 16px;line-height:1.6;
-}
-.cover-up-empty .cup-icon{font-size:2rem;margin-bottom:8px;display:block}
-.cover-up img{width:100%;height:100%;min-height:140px;max-height:220px;object-fit:cover;display:block}
-.cover-up .cover-rm{
-  position:absolute;top:8px;right:8px;
-  background:rgba(0,0,0,.75);border:1.5px solid rgba(255,255,255,.2);
-  color:#fff;width:28px;height:28px;border-radius:50%;
-  cursor:pointer;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .15s;
-}
-.cover-up .cover-rm:hover{background:var(--rose)}
-</style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://js.stripe.com/v3/"></script>
-</head>
-<body>
+__name(creditBalance, "creditBalance");
 
-<nav>
-  <div class="nav-logo" onclick="showPage('landing')">G<span>ALAXY</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('landing',this)" id="tab-landing">Home</button>
-    <button class="nav-tab" onclick="requireAuth('explore',this)" id="tab-explore">Explore</button>
-    <button class="nav-tab" onclick="showPage('shop',this)" id="tab-shop">🛒 Shop</button>
-    <button class="nav-tab" onclick="requireAuth('feed',this)" id="tab-feed">Feed</button>
-    <button class="nav-tab" onclick="requireAuth('messages',this)" id="tab-messages" style="display:none">
-      💬 Messages<span class="nav-badge" id="msgBadge">0</span>
-    </button>
-    <button class="nav-tab" onclick="requireAuth('notifs',this)" id="tab-notifs" style="display:none">
-      🔔 Alerts<span class="nav-badge" id="notifBadge">0</span>
-    </button>
-    <button class="nav-tab" onclick="requireAuth('library',this)" id="tab-library" style="display:none">📚 Library</button>
-    <button class="nav-tab" onclick="requireAuth('dashboard',this)" id="tab-dash" style="display:none">Dashboard</button>
-    <button class="nav-tab" onclick="openOwnProfile(this)" id="tab-profile" style="display:none">👤 Profile</button>
-    <button class="nav-tab" onclick="goAdmin(this)" id="tab-admin" style="display:none">⚙️ Admin</button>
-  </div>
-  <div class="nav-right" id="navGuest">
-    <button class="nav-btn" onclick="openModal('login')">Sign in</button>
-    <button class="nav-btn primary" onclick="openModal('signup')">Start creating</button>
-  </div>
-  <div class="nav-right" id="navUser" style="display:none">
-    <div class="nav-av" id="navAvatar" onclick="currentUser?openOwnProfile(null):openModal('login')" style="cursor:pointer">👤</div>
-    <button class="nav-btn" onclick="logout()">Sign out</button>
-  </div>
-</nav>
-
-<div class="toast" id="toast"></div>
-<div class="overlay" id="authOverlay"><div class="modal" id="modalContent"></div></div>
-
-<!-- LANDING -->
-<div class="page active" id="page-landing">
-
-  <!-- HERO — dark red + gold -->
-  <div style="position:relative;width:100%;min-height:88vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0000">
-    <!-- Red orbs -->
-    <div style="position:absolute;top:-15%;left:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(192,57,43,.18) 0%,transparent 65%);pointer-events:none"></div>
-    <div style="position:absolute;bottom:-20%;right:-10%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(120,0,0,.2) 0%,transparent 65%);pointer-events:none"></div>
-    <div style="position:absolute;top:30%;right:15%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.06) 0%,transparent 65%);pointer-events:none"></div>
-    <!-- Grid -->
-    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(180,0,0,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(180,0,0,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none"></div>
-    <!-- Content -->
-    <div style="position:relative;z-index:2;text-align:center;padding:100px 24px 80px;max-width:720px;margin:0 auto">
-      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.3);border-radius:100px;padding:6px 16px;font-size:.72rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px">✦ 200,000+ creators worldwide</div>
-      <h1 style="font-family:'Fraunces',serif;font-size:clamp(2.6rem,7vw,4.8rem);font-weight:400;line-height:1.1;letter-spacing:-.03em;margin-bottom:20px;color:#fff">Your audience.<br>Your <em style="font-style:italic;color:#c0392b">terms.</em></h1>
-      <p style="font-size:1.05rem;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:36px;max-width:500px;margin-left:auto;margin-right:auto">Subscribe, connect, and unlock exclusive content from the creators who inspire you.</p>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <button style="padding:14px 28px;font-size:.95rem;border-radius:100px;background:#c0392b;color:#fff;border:none;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer" onclick="openModal('signup')">Start creating free →</button>
-        <button style="padding:14px 28px;font-size:.95rem;border-radius:100px;background:transparent;color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.15);font-family:'DM Sans',sans-serif;cursor:pointer" onclick="currentUser?showPage('explore',null):(openModal('login'),toast('Sign in to browse creators','🔐'))">Browse creators</button>
-      </div>
-      <!-- Stats -->
-      <div style="display:flex;gap:0;justify-content:center;flex-wrap:wrap;margin-top:52px;border-top:1px solid rgba(180,0,0,.25);padding-top:36px">
-        <div style="flex:1;min-width:110px;padding:0 20px;border-right:1px solid rgba(180,0,0,.2)">
-          <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:#fff">200K+</div>
-          <div style="font-size:.68rem;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:4px">Creators</div>
-        </div>
-        <div style="flex:1;min-width:110px;padding:0 20px;border-right:1px solid rgba(180,0,0,.2)">
-          <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:var(--gold)">85%</div>
-          <div style="font-size:.68rem;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:4px">Revenue share</div>
-        </div>
-        <div style="flex:1;min-width:110px;padding:0 20px">
-          <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:#fff">$100M+</div>
-          <div style="font-size:.68rem;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:4px">Paid out</div>
-        </div>
-      </div>
-    </div>
-    <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,transparent,var(--bg))"></div>
-  </div>
-
-  <!-- TRENDING CREATORS -->
-  <div class="section" style="margin-top:0;padding-top:0">
-    <div class="section-head">
-      <div class="section-title">Trending creators</div>
-      <a class="section-link" onclick="currentUser?showPage('explore',null):(openModal('login'),toast('Sign in to see all creators','🔐'))">See all →</a>
-    </div>
-    <div class="creators-grid" id="landingCreators"></div>
-  </div>
-  <div class="divider" style="max-width:1100px;margin:0 auto"></div>
-  <div class="section" style="text-align:center">
-    <div class="section-title" style="font-size:1.7rem;margin-bottom:10px">Everything to monetise</div>
-    <p style="color:var(--muted);max-width:440px;margin:0 auto 32px;font-size:.88rem">Subscriptions, messaging, verification, and analytics — built for creators from day one.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;max-width:840px;margin:0 auto">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">💳</div><div style="font-weight:600;margin-bottom:5px;color:var(--gold)">Subscriptions</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Set your own price. Fans pay monthly for exclusive access.</div></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">💬</div><div style="font-weight:600;margin-bottom:5px;color:var(--gold)">Messaging</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Direct private conversations with your subscribers.</div></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">✅</div><div style="font-weight:600;margin-bottom:5px;color:var(--gold)">Verified badge</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Complete KYC to get verified and unlock payouts.</div></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 16px;text-align:left"><div style="font-size:1.4rem;margin-bottom:8px">📊</div><div style="font-weight:600;margin-bottom:5px;color:var(--gold)">Analytics</div><div style="font-size:.79rem;color:var(--muted);line-height:1.5">Understand earnings and subscriber growth.</div></div>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
-  <div style="border-top:1px solid var(--border);padding:28px 24px;text-align:center;margin-top:20px">
-    <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:400;color:var(--text);margin-bottom:12px">G<span style="color:#c0392b">ALAXY</span></div>
-    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
-      <a href="/privacy" target="_blank" style="font-size:.78rem;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
-      <a href="/terms" target="_blank" style="font-size:.78rem;color:var(--muted);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
-      <span style="font-size:.78rem;color:var(--muted)">©2025 GALAXY</span>
-    </div>
-  </div>
-</div>
-
-<!-- REFERRALS PAGE -->
-<div class="page" id="page-referrals">
-  <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button onclick="history.back()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:0">←</button>
-      <h2 style="font-family:'Fraunces',serif;font-weight:400;font-size:1.4rem;margin:0">Your Referrals</h2>
-    </div>
-
-    <!-- Link card -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
-      <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your referral link</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div id="refPageLink" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.76rem;color:var(--muted);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Loading…</div>
-        <button onclick="_copyRefPageLink()" style="background:linear-gradient(135deg,#d4a843,#b8902e);border:none;border-radius:8px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;padding:9px 14px;white-space:nowrap">Copy</button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
-        <div id="refStatCount" style="font-family:'Fraunces',serif;font-size:2rem;color:var(--gold)">—</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Referred users</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
-        <div id="refStatEarned" style="font-family:'Fraunces',serif;font-size:2rem;color:var(--gold)">—</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Total earned</div>
-      </div>
-    </div>
-
-    <!-- Video promo boost -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
-      <div style="font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:4px">🎬 Boost your earnings</div>
-      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Create a video about GALAXY on YouTube, TikTok or Instagram. Submit the URL below and after we verify it, your commission rate increases.</div>
-      <div id="refVideoStatusPage" style="margin-bottom:10px"></div>
-      <div style="display:flex;gap:8px">
-        <input id="refVideoUrlPage" placeholder="https://youtube.com/..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.78rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
-        <button onclick="submitRefVideoPage()" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;padding:9px 14px;white-space:nowrap">Submit</button>
-      </div>
-    </div>
-
-    <!-- Referred users list -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px">
-      <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Referred users</div>
-      <div id="refUsersList"><div style="color:var(--muted);font-size:.82rem">Loading…</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- PRIVACY POLICY PAGE -->
-<div class="page" id="page-privacy">
-  <div style="max-width:720px;margin:0 auto;padding:40px 24px 80px">
-    <button onclick="history.back()||showPage('landing',null)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;margin-bottom:24px;padding:0;font-family:'DM Sans',sans-serif">← Back</button>
-    <h1 style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;margin-bottom:8px">Privacy Policy</h1>
-    <p style="font-size:.78rem;color:var(--muted);margin-bottom:32px">Last updated: January 2025</p>
-
-    <div style="display:flex;flex-direction:column;gap:28px;font-size:.88rem;line-height:1.8;color:var(--muted)">
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">1. Information We Collect</div>
-      We collect information you provide directly: name, email address, profile photo, and payment information. We also collect usage data including pages visited, content viewed, and device information. Payment processing is handled by Stripe and PayPal — we do not store card details.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">2. How We Use Your Information</div>
-      We use your information to operate the platform, process payments, send you notifications, improve our services, and comply with legal obligations. We do not sell your personal data to third parties.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">3. Content & Uploads</div>
-      Media you upload (photos, videos) is stored securely on our servers and served through our content delivery network. You retain ownership of your content. By uploading, you grant GALAXY a license to display it on the platform. Content is automatically deleted after 90 days for posts and 24 hours for stories.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">4. Payments & Payouts</div>
-      Subscriptions and purchases are processed via secure third-party payment processors. Creator payouts are subject to a 29% platform fee. Bank details provided for payouts are stored securely and used solely for processing withdrawals.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">5. Cookies & Storage</div>
-      We use browser storage to save your session and preferences locally on your device. No advertising cookies are used. We do not use third-party tracking or analytics services that share your data.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">6. Data Retention</div>
-      Your account data is retained while your account is active. You may request deletion of your account and data by contacting us. Posts older than 90 days are automatically deleted.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">7. Your Rights (GDPR)</div>
-      If you are in the European Economic Area, you have the right to access, correct, or delete your personal data. You may also object to processing or request data portability. Contact us at the email below to exercise these rights.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">8. Contact</div>
-      For privacy questions: <span style="color:var(--gold)">vino@galaxyvy.com</span></div>
-
-    </div>
-  </div>
-</div>
-
-<!-- TERMS OF SERVICE PAGE -->
-<div class="page" id="page-terms">
-  <div style="max-width:720px;margin:0 auto;padding:40px 24px 80px">
-    <button onclick="history.back()||showPage('landing',null)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;margin-bottom:24px;padding:0;font-family:'DM Sans',sans-serif">← Back</button>
-    <h1 style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;margin-bottom:8px">Terms of Service</h1>
-    <p style="font-size:.78rem;color:var(--muted);margin-bottom:32px">Last updated: January 2025</p>
-
-    <div style="display:flex;flex-direction:column;gap:28px;font-size:.88rem;line-height:1.8;color:var(--muted)">
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">1. Acceptance</div>
-      By using GALAXY you agree to these terms. If you do not agree, do not use the platform.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">2. Eligibility</div>
-      You must be at least 18 years old to create an account. By registering you confirm you meet this requirement.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">3. Creator Accounts</div>
-      Creators are independent individuals, not employees of GALAXY. You are solely responsible for your content, pricing, and relationship with your subscribers. GALAXY takes a 29% platform fee on all transactions.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">4. Prohibited Content</div>
-      You may not post: illegal content, content involving minors, non-consensual intimate images, hate speech, spam, or content that violates third-party intellectual property. Violations result in immediate account termination.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">5. Subscriptions & Refunds</div>
-      Subscriptions renew automatically each month until cancelled. All sales are final and refunds are at GALAXY's sole discretion. Fans retain access until the end of the current billing period after cancellation. GALAXY reserves the right to modify pricing with reasonable notice.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">6. Payouts</div>
-      Creator payouts are processed on the 1st of each month for bank transfers, or within 24 hours for PayPal. Minimum payout is $100 (PayPal) or $500 (bank transfer). GALAXY reserves the right to withhold payouts pending investigation of policy violations.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">7. Termination</div>
-      GALAXY may terminate or suspend any account for violation of these terms at any time without notice. You may delete your account at any time.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">8. Limitation of Liability</div>
-      GALAXY is not liable for any indirect, incidental, or consequential damages. Our total liability is limited to the fees you paid in the 3 months preceding any claim.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">9. Governing Law</div>
-      These terms are governed by applicable law. Any disputes shall be resolved through binding arbitration where permitted, or in the courts of competent jurisdiction.</div>
-
-      <div><div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">10. Contact</div>
-      Questions: <span style="color:var(--gold)">vino@galaxyvy.com</span></div>
-
-    </div>
-  </div>
-</div>
-
-<!-- EXPLORE -->
-<div class="page" id="page-explore">
-  <div class="expl-header">
-    <div class="expl-title">Explore</div>
-    <div style="padding:0 24px 12px;max-width:1100px;margin:0 auto">
-      <input id="exploreSearch" type="search" placeholder="🔍 Search creators..." 
-        oninput="filterExplore()"
-        style="width:100%;padding:11px 16px;border-radius:100px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-    </div>
-    <div class="cats" id="catTabs">
-      <div class="cat active" onclick="filterCat('all',this)">All</div>
-      <div class="cat" onclick="filterCat('Photography',this)">📷 Photo</div>
-      <div class="cat" onclick="filterCat('Writing',this)">✍️ Writing</div>
-      <div class="cat" onclick="filterCat('Music',this)">🎵 Music</div>
-      <div class="cat" onclick="filterCat('Fitness',this)">🏋️ Fitness</div>
-      <div class="cat" onclick="filterCat('Art',this)">🎨 Art</div>
-      <div class="cat" onclick="filterCat('Gaming',this)">🎮 Gaming</div>
-      <div class="cat" onclick="filterCat('Cooking',this)">🍳 Cooking</div>
-    </div>
-  </div>
-  <div class="section" style="padding-top:8px">
-    <div class="creators-grid" id="exploreCreators"></div>
-  </div>
-  <div style="max-width:1100px;margin:0 auto;padding:0 24px 28px">
-    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">🔥 Trending this week</div>
-    <div class="creators-grid" id="discoverTrending" style="margin-bottom:36px"></div>
-    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">✨ New creators</div>
-    <div class="creators-grid" id="discoverNew" style="margin-bottom:36px"></div>
-    <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;margin-bottom:14px;color:var(--accent)">🎯 Curated picks</div>
-    <div class="creators-grid" id="discoverCurated"></div>
-  </div>
-</div>
-
-<!-- DISCOVER redirects to explore -->
-<div class="page" id="page-discover" style="display:none"></div>
-
-<!-- FEED -->
-<div class="page" id="page-feed">
-  <div id="storiesStrip" class="stories-strip" style="display:none"></div>
-  <div id="feedComposerWrap" style="display:none;max-width:600px;margin:0 auto;padding:12px 16px 0">
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px">
-      <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px">
-        <div id="feedComposerAvatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c0392b,#d4a843);flex-shrink:0;overflow:hidden"></div>
-        <textarea id="postContent" placeholder="Share something..." rows="2" style="flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;resize:none;min-height:52px;line-height:1.6;padding:0"></textarea>
-      </div>
-      <input id="postMediaFile" type="file" accept="image/*,video/*" style="display:none" onchange="_handlePostMedia(event)">
-      <div id="postMediaPreview" style="display:none"></div>
-      <div style="padding:8px 14px 10px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border)">
-        <button onclick="document.getElementById('postMediaFile').click()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 6px;border-radius:8px" title="Add photo/video">📸</button>
-        <select id="postTier" onchange="_togglePostPrice(this.value)" style="background:transparent;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.75rem;outline:none;cursor:pointer">
-          <option value="free">🌍 Everyone</option>
-          <option value="paid">⭐ Subscribers</option>
-          <option value="ppv">💰 Pay to view</option>
-        </select>
-        <div id="postPriceWrap" style="display:none;align-items:center;gap:4px">
-          <span style="font-size:.75rem;color:var(--muted)">$</span>
-          <input id="postPrice" type="number" min="0.5" step="0.5" placeholder="2" style="width:48px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;padding:2px 4px;text-align:center">
-        </div>
-        <button onclick="publishPost()" style="margin-left:auto;background:#c0392b;border:none;border-radius:100px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;padding:7px 16px">Post →</button>
-      </div>
-    </div>
-  </div>
-  <div class="feed-wrap" id="feedContent"></div>
-</div>
-
-<!-- MESSAGES -->
-<div class="page" id="page-messages">
-  <div class="msg-layout">
-    <div class="msg-sidebar">
-      <div class="msg-sidebar-title">Messages</div>
-      <div id="msgThreads"></div>
-    </div>
-    <div class="msg-main" id="msgMain">
-      <div class="msg-empty"><div style="font-size:2rem">💬</div>Select a conversation</div>
-    </div>
-  </div>
-</div>
-
-<!-- NOTIFICATIONS -->
-<div class="page" id="page-notifs">
-  <div class="notif-title">Notifications</div>
-  <div id="notifList"></div>
-</div>
-
-<!-- PROFILE -->
-<div class="page" id="page-profile">
-  <div class="profile-cover-wrap">
-    <img id="profileCoverImg" src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80" alt="">
-  </div>
-  <div class="profile-body">
-    <div class="profile-head">
-      <img class="profile-pic" id="profilePic" src="" alt="">
-      <div class="profile-info">
-        <div class="profile-name-row" id="profileName">—</div>
-        <div class="profile-handle" id="profileHandle">—</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" id="profileMsgBtn" onclick="openMsgWith(_profileContext)">💬 Message</button>
-        <button class="btn btn-ghost btn-sm" id="profileFollowBtn" onclick="toggleFollow()" style="display:none">Follow</button>
-    <button class="btn btn-sm" id="profileBoostBtn" onclick="openBoostModal('profile',_profileContext?.id,_profileContext?.name)" style="display:none;background:linear-gradient(135deg,#d4a843,#b8902e);border:none;color:#0a0000;font-weight:700">⚡ Boost</button>
-        <button class="btn btn-ghost btn-sm" id="profileShopBtn" style="display:none" onclick="_openCreatorShop(_profileContext)">🛒 Shop</button>
-        <button class="btn btn-gold btn-sm" id="profileSubBtn" onclick="profileSubscribe()">Subscribe</button>
-        <button class="btn btn-ghost btn-sm" id="profileEditBtn" style="display:none" onclick="openEditProfile()">✏️ Edit</button>
-        <button class="btn btn-gold btn-sm" id="profileNewPostBtn" style="display:none" onclick="showPage('dashboard',null);setTimeout(()=>{const t=document.getElementById('postTitle');if(t)t.focus();},200)">✏️ New post</button>
-      </div>
-    </div>
-    <div class="profile-bio" id="profileBio"></div>
-    <div class="profile-stats-row">
-      <div><div class="p-stat-n" id="profileSubsCount" style="font-size:1.6rem;font-weight:800;color:var(--text)">0</div><div class="p-stat-l" style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Subscribers</div></div>
-      <div><div class="p-stat-n" id="profilePostsCount">0</div><div class="p-stat-l">posts</div></div>
-    </div>
-    <div id="profileSubCard"></div>
-    <div class="divider"></div>
-    <div class="ds-title">Posts</div>
-    <div id="profilePostsArea" style="margin-bottom:40px"></div>
-
-  </div>
-</div>
-
-<!-- DASHBOARD -->
-<div class="page" id="page-dashboard">
-  <div class="dash-wrap">
-    <div class="dash-title" id="dashGreeting"></div>
-    <div class="dash-grid">
-      <div class="dash-card"><div class="dash-card-label">Earned</div><div class="dash-card-val" id="dEarned">$0</div><div class="dash-card-sub">lifetime</div></div>
-      <div class="dash-card"><div class="dash-card-label">Subscribers</div><div class="dash-card-val" id="dSubs">0</div><div class="dash-card-sub">active</div></div>
-      <div class="dash-card"><div class="dash-card-label">Balance</div><div class="dash-card-val" id="dBal">$0.00</div><div class="dash-card-sub" style="color:var(--muted)">withdrawable</div></div>
-      <div class="dash-card"><div class="dash-card-label">Posts</div><div class="dash-card-val" id="dPosts">0</div><div class="dash-card-sub" style="color:var(--muted)">published</div></div>
-    </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
-      <div class="ds-title">My subscription price</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="color:var(--muted);font-size:.9rem">$</span>
-        <input type="number" id="subPriceInput" min="1" max="999" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-        <span style="color:var(--muted);font-size:.82rem">/month</span>
-        <button class="btn btn-gold btn-sm" onclick="saveSubPrice()">Save</button>
-      </div>
-      <div style="font-size:.75rem;color:var(--muted)">Fans can subscribe to you at this price. You can change it anytime.</div>
-    </div>
-    <div id="kycBoxWrap"></div>
-    <div id="certBoxWrap"></div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div class="ds-title" style="margin:0">⚡ Boost your profile</div>
-        <button onclick="openBoostModal('profile',currentUser?.id,currentUser?.name)" style="background:linear-gradient(135deg,#d4a843,#b8902e);border:none;border-radius:100px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;padding:7px 16px">Boost now</button>
-      </div>
-      <div style="font-size:.78rem;color:var(--muted)">Appear at the top of Explore for 7 days. Highest bid gets the top spot.</div>
-    </div>
-
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
-      <div id="creatorProductsWrap"></div>
-    </div>
-    <div id="payoutZone" style="text-align:right;margin-top:6px"></div>
-  </div>
-</div>
-
-<!-- SHOP -->
-<div class="page" id="page-shop">
-  <div class="shop-header">
-    <div class="shop-title">Galaxy Shop</div>
-    <div class="shop-subtitle">Digital products, courses and presets from your favourite creators — instant download after purchase.</div>
-    <div style="margin-bottom:12px">
-      <input id="shopSearch" type="search" placeholder="🔍 Search products..."
-        oninput="renderShop()"
-        style="width:100%;padding:11px 16px;border-radius:100px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box">
-    </div>
-    <div class="shop-cats" id="shopCatTabs">
-      <div class="cat active" onclick="filterShop('all',this)">All</div>
-      <div class="cat" onclick="filterShop('course',this)">Courses</div>
-      <div class="cat" onclick="filterShop('ebook',this)">E-books</div>
-      <div class="cat" onclick="filterShop('preset',this)">Presets</div>
-      <div class="cat" onclick="filterShop('template',this)">Templates</div>
-      <div class="cat" onclick="filterShop('audio',this)">Audio</div>
-    </div>
-    <div class="shop-sort">
-      <span class="shop-sort-label">Sort by</span>
-      <select id="shopSort" onchange="renderShop()">
-        <option value="popular">Most popular</option>
-        <option value="newest">Newest</option>
-        <option value="price_asc">Price: low to high</option>
-        <option value="price_desc">Price: high to low</option>
-        <option value="rating">Highest rated</option>
-      </select>
-    </div>
-  </div>
-  <div class="section" style="padding-top:8px">
-    <div class="shop-grid" id="shopGrid"></div>
-  </div>
-</div>
-
-<!-- LIBRARY (buyer purchases) -->
-<div class="page" id="page-library">
-  <div class="section">
-    <h1 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.7rem;margin:0 0 4px">📚 Your Library</h1>
-    <div style="color:var(--muted);font-size:.9rem;margin-bottom:24px">Everything you've purchased — open anytime</div>
-    <div id="libraryList"></div>
-  </div>
-</div>
-
-<!-- ADMIN -->
-<div class="page" id="page-admin">
-  <div class="admin-wrap">
-    <div class="admin-title">⚙️ Admin Panel</div>
-    <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">Logged in as <strong>dabarey24@gmail.com</strong></div>
-    <div class="admin-tabs">
-      <button class="admin-tab active" onclick="adminTab('overview',this)">Overview</button>
-      <button class="admin-tab" onclick="adminTab('kyc',this)">KYC Requests <span id="kycBadge" class="badge-gold" style="margin-left:4px"></span></button>
-      <button class="admin-tab" onclick="adminTab('payouts',this)">Payouts</button>
-      <button class="admin-tab" onclick="adminTab('users',this)">Users</button>
-    <button class="admin-tab" onclick="adminTab('refvideos',this)">🎬 Videos</button>
-    <button class="admin-tab" onclick="adminTab('certs',this)">🏅 Certificates</button>
-    </div>
-    <div class="admin-panel active" id="ap-overview">
-      <div class="admin-stat-grid" id="adminStats"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
-          <div class="ds-title" style="margin-bottom:12px">Recent sign ups</div>
-          <div id="adminRecentUsers"></div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
-          <div class="ds-title" style="margin-bottom:12px">Pending verification</div>
-          <div id="adminKycPendingList"></div>
-        </div>
-      </div>
-    </div>
-    <div class="admin-panel" id="ap-kyc"><div class="ds-title" style="margin-bottom:12px">Verification Requests</div><div id="adminKycList"></div></div>
-    <div class="admin-panel" id="ap-payouts"><div class="ds-title" style="margin-bottom:12px">Payout Requests</div><div id="adminPayoutList"></div></div>
-    <div class="admin-panel" id="ap-certs">
-      <div class="ds-title" style="margin-bottom:12px">🏅 Professional Certificate Reviews</div>
-      <div id="adminCertList"></div>
-    </div>
-    <div class="admin-panel" id="ap-refvideos">
-      <div class="ds-title" style="margin-bottom:12px">🎬 Promotional Video Reviews</div>
-      <div id="adminRefVideoList"></div>
-    </div>
-    <div class="admin-panel" id="ap-users">
-      <div class="ds-title" style="margin-bottom:12px">All Users</div>
-      <table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>KYC</th><th>Balance</th><th>Joined</th><th>Action</th></tr></thead>
-      <tbody id="adminUserBody"></tbody></table>
-    </div>
-  </div>
-</div>
-
-<script>
-// Storage: localStorage primary, cookie stores only user ID as backup
-const DB={
-  get(k){
-    try{
-      let v=localStorage.getItem('ch_'+k);
-      if(v) return JSON.parse(v);
-      return null;
-    }catch{return null;}
-  },
-  set(k,v){
-    const s=JSON.stringify(v);
-    try{localStorage.setItem('ch_'+k,s);}catch(e){}
-    // Store only user ID in cookie as tiny backup
-    if(k==='user'&&v&&v.id){
-      try{
-        const exp=new Date(Date.now()+365*24*60*60*1000).toUTCString();
-        document.cookie='gx_uid='+encodeURIComponent(v.id)+';expires='+exp+';path=/;SameSite=Lax';
-      }catch(e){}
+var worker_default = {
+  async scheduled(event, env, ctx) {
+    if (event.cron === '0 6 1 * *') {
+      ctx.waitUntil(processMonthlyPayouts(env));
+    }
+    // Daily: clean up expired stories from R2
+    if (event.cron === '0 3 * * *') {
+      ctx.waitUntil((async () => {
+        const { results: expired } = await env.DB.prepare(
+          "SELECT media_url FROM stories WHERE expires_at < datetime('now')"
+        ).all().catch(()=>({results:[]}));
+        for (const s of (expired||[])) {
+          if (!s.media_url) continue;
+          try {
+            const key = s.media_url.replace(/^https?:\/\/[^/]+\//, '');
+            if (key) await env.MEDIA.delete(key);
+          } catch(e) {}
+        }
+        await env.DB.prepare("DELETE FROM stories WHERE expires_at < datetime('now')").run().catch(()=>{});
+      })());
     }
   },
-  del(k){
-    try{localStorage.removeItem('ch_'+k);}catch(e){}
-    if(k==='user') document.cookie='gx_uid=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
-  }
-};
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
 
-const WORKER_URL="https://galaxyvy.com";
-
-// Immediately apply session to prevent flash of guest UI
-(function(){
-  try{
-    const raw=localStorage.getItem('ch_user');
-    const u=raw?JSON.parse(raw):null;
-    if(u&&u.id){
-      const ng=document.getElementById('navGuest');
-      const nu=document.getElementById('navUser');
-      if(ng)ng.style.display='none';
-      if(nu)nu.style.display='flex';
+    // ── PAYOUT ROUTES ────────────────────────────────────────────────────
+    if (path === "/api/payout/balance" && method === "GET") {
+      const creatorId = url.searchParams.get("creator_id");
+      if (!creatorId) return err("Missing creator_id");
+      const bal = await env.DB.prepare("SELECT balance, lifetime FROM balances WHERE creator_id=?").bind(creatorId).first();
+      const history = await env.DB.prepare("SELECT * FROM payouts WHERE creator_id=? ORDER BY requested_at DESC LIMIT 20").bind(creatorId).all();
+      return json({ balance: bal?.balance||0, lifetime: bal?.lifetime||0, history: history.results||[] });
     }
-  }catch(e){}
-})();
-const GOOGLE_CLIENT_ID="402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googleusercontent.com";
+    if (path === "/api/payout/settings" && method === "GET") {
+      const creatorId = url.searchParams.get("creator_id");
+      if (!creatorId) return err("Missing creator_id");
+      const row = await env.DB.prepare("SELECT * FROM payout_settings WHERE creator_id=?").bind(creatorId).first();
+      return json(row || {});
+    }
+    if (path === "/api/payout/settings" && method === "POST") {
+      let body2 = {};
+      try { body2 = await request.json(); } catch {}
+      const { creator_id, method: m, paypal_email, country,
+        bank_name, bank_iban, bank_swift, bank_account, bank_routing,
+        bank_sortcode, bank_bsb, bank_transit, bank_institution,
+        bank_bankname, bank_country } = body2;
+      if (!creator_id) return err("Missing creator_id");
+      await env.DB.prepare(`
+        INSERT INTO payout_settings (creator_id, method, paypal_email, country,
+          bank_name, bank_iban, bank_swift, bank_account, bank_routing,
+          bank_sortcode, bank_bsb, bank_transit, bank_institution,
+          bank_bankname, bank_country, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(creator_id) DO UPDATE SET
+          method=excluded.method, paypal_email=excluded.paypal_email,
+          country=excluded.country, bank_name=excluded.bank_name,
+          bank_iban=excluded.bank_iban, bank_swift=excluded.bank_swift,
+          bank_account=excluded.bank_account, bank_routing=excluded.bank_routing,
+          bank_sortcode=excluded.bank_sortcode, bank_bsb=excluded.bank_bsb,
+          bank_transit=excluded.bank_transit, bank_institution=excluded.bank_institution,
+          bank_bankname=excluded.bank_bankname, bank_country=excluded.bank_country,
+          updated_at=excluded.updated_at
+      `).bind(
+        creator_id, m||"paypal", paypal_email||null, country||null,
+        bank_name||null, bank_iban||null, bank_swift||null, bank_account||null,
+        bank_routing||null, bank_sortcode||null, bank_bsb||null, bank_transit||null,
+        bank_institution||null, bank_bankname||null, bank_country||null
+      ).run();
+      return json({ ok: true });
+    }
+    if (path === "/api/payout/request" && method === "POST") {
+      let body2 = {};
+      try { body2 = await request.json(); } catch {}
+      const { creator_id, method: m } = body2;
+      if (!creator_id) return err("Missing creator_id");
+      const bal = await env.DB.prepare("SELECT balance FROM balances WHERE creator_id=?").bind(creator_id).first();
+      const balance = bal?.balance || 0;
+      const payoutMethod = m || "paypal";
+      const min = payoutMethod === "stripe" ? 500 : 100;
+      if (balance < min) return err(`Minimum for ${payoutMethod==="stripe"?"bank transfer":"PayPal"} is $${min}. Your balance is $${balance.toFixed(2)}.`);
+      const pending = await env.DB.prepare("SELECT id FROM payouts WHERE creator_id=? AND status IN ('pending','processing')").bind(creator_id).first();
+      if (pending) return err("You already have a payout in progress.");
+      const settings = await env.DB.prepare("SELECT * FROM payout_settings WHERE creator_id=?").bind(creator_id).first();
+      const id = "pay_" + Date.now();
+      const now = new Date().toISOString();
 
-// Handle PayPal return
-(function(){
-  const params=new URLSearchParams(window.location.search);
-  const token=params.get('token');
-  const pending=sessionStorage.getItem('pp_pending');
-  const orderId=sessionStorage.getItem('pp_order_id');
-  if(token&&pending&&orderId){
-    const p=JSON.parse(pending);
-    sessionStorage.removeItem('pp_pending');
-    sessionStorage.removeItem('pp_order_id');
-    history.replaceState({},'',window.location.pathname);
-    fetch(WORKER_URL+'/api/paypal/capture',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({order_id:orderId,user_id:p.userId,creator_id:p.creatorId,post_id:p.postId,product_id:p.productId,plan:p.type,amount:p.amt||p.price,user_name:p.userName})
-    }).then(r=>r.json()).then(res=>{
-      if(res.success){
-        if(p.type==='tip'){toast('Tipped $'+Number(p.amt).toFixed(2)+' via PayPal!','💰');}
-        if(p.type==='purchase'){
-          const prods=DB.get('products')||[];
-          const prod=prods.find(x=>x.id===p.productId);
-          const purs=DB.get('purchases')||[];
-          purs.push({id:'pur_'+Date.now(),productId:p.productId,userId:p.userId,productTitle:p.productTitle,price:p.price,boughtAt:new Date().toISOString()});
-          DB.set('purchases',purs);
-          if(prod){prod.sales=(prod.sales||0)+1;DB.set('products',prods);}
-          toast('Purchase complete!','✅');
-          setTimeout(()=>showPage('shop'),500);
+      // ── PayPal: fire immediately with email verification ────────────
+      if (payoutMethod === "paypal") {
+        if (!settings?.paypal_email) return err("No PayPal email saved. Please add it first.");
+        try {
+          const token = await getPayPalToken(env);
+          const batchId = "GALAXY_" + id;
+
+          // Send payout
+          const res = await fetch("https://api-m.paypal.com/v1/payments/payouts", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sender_batch_header: {
+                sender_batch_id: batchId,
+                email_subject: "Your GALAXY payout is here!",
+                email_message: `You have received a payout of $${balance.toFixed(2)} from GALAXY.`
+              },
+              items: [{
+                recipient_type: "EMAIL",
+                amount: { value: balance.toFixed(2), currency: "USD" },
+                receiver: settings.paypal_email,
+                note: "GALAXY creator payout",
+                sender_item_id: id
+              }]
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+
+          const batchId2 = data.batch_header?.payout_batch_id || batchId;
+
+          // Wait 3 seconds then check item status to catch invalid emails
+          await new Promise(r => setTimeout(r, 3000));
+          const checkRes = await fetch(`https://api-m.paypal.com/v1/payments/payouts/${batchId2}`, {
+            headers: { "Authorization": "Bearer " + token }
+          });
+          const checkData = await checkRes.json();
+          const item = checkData.items?.[0];
+          const itemStatus = item?.transaction_status || item?.errors?.[0]?.name || "PENDING";
+
+          // These statuses mean the email is invalid / not a PayPal account
+          const invalidStatuses = ["RECEIVER_UNREGISTERED", "RECEIVER_UNVERIFIED", "INVALID_EMAIL", "FAILED"];
+          if (invalidStatuses.includes(itemStatus)) {
+            // Record as failed — balance NOT deducted
+            await env.DB.prepare(`
+              INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, reference, requested_at, note)
+              VALUES (?, ?, ?, 0, 'paypal', 'failed', ?, ?, datetime('now'), ?)
+            `).bind(id, creator_id, balance, settings.paypal_email, batchId2,
+              `PayPal rejected: ${itemStatus} — email not registered with PayPal`).run();
+
+            // Notify creator — balance NOT touched
+            await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+              .bind("notif_"+Date.now(), creator_id, "❌",
+                `Payout failed — "${settings.paypal_email}" is not registered with PayPal. Please update your PayPal email and try again.`, "just now").run();
+
+            return err(`Payout failed: "${settings.paypal_email}" is not a registered PayPal account. Your balance has NOT been deducted. Please update your PayPal email.`);
+          }
+
+          // Success — record and zero balance
+          await env.DB.prepare(`
+            INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, reference, requested_at, paid_at)
+            VALUES (?, ?, ?, 0, 'paypal', 'paid', ?, ?, datetime('now'), datetime('now'))
+          `).bind(id, creator_id, balance, settings.paypal_email, batchId2).run();
+
+          await env.DB.prepare("UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?").bind(now, creator_id).run();
+
+          await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+            .bind("notif_"+Date.now(), creator_id, "💸",
+              `Your PayPal payout of $${balance.toFixed(2)} has been sent to ${settings.paypal_email}!`, "just now").run();
+
+          return json({ ok:true, message:`$${balance.toFixed(2)} sent to your PayPal (${settings.paypal_email}). Arrives within 24 hours.`, amount: balance });
+        } catch(e) {
+          // Network/API error — balance NOT deducted
+          return err("PayPal payout failed: " + (e.message || "Unknown error") + ". Your balance has not been changed.");
         }
       }
-    }).catch(()=>{});
-  }
-})();
 
-// Capture referral code from URL
-(function captureRef(){
-  const params=new URLSearchParams(window.location.search);
-  const ref=params.get('ref');
-  if(ref){
-    sessionStorage.setItem('ref_code',ref);
-    history.replaceState({},'',window.location.pathname);
-  }
-})();
-
-// Handle ?product=ID deep links — open shop + trigger buy (or prompt login first)
-(function handleProductDeepLink(){
-  const params=new URLSearchParams(window.location.search);
-  const productId=params.get('product');
-  if(!productId) return;
-  // Clean URL immediately so refresh doesn't re-trigger
-  history.replaceState({},'',window.location.pathname);
-  // Store for after login if user is not signed in yet
-  sessionStorage.setItem('pending_product',productId);
-  // We defer actual action to after the page is fully initialised (end of script)
-})();
-
-const ADMIN_EMAIL='dabarey24@gmail.com';
-let currentUser=DB.get('user'),currentPage='landing',_profileContext=null,_activeMsgThread=null,_pendingAvatarFile=null,_pendingCoverFile=null;
-
-function _silentRefreshUser(){
-  // If localStorage lost, try to restore from cookie user ID
-  if(!currentUser?.id){
-    try{
-      const m=document.cookie.match('(?:^|; )gx_uid=([^;]*)');
-      if(m){
-        const uid=decodeURIComponent(m[1]);
-        if(uid){
-          fetch(WORKER_URL+'/api/users?id='+uid)
-            .then(r=>r.ok?r.json():null)
-            .then(u=>{
-              if(u&&!u.error&&u.id){
-                currentUser=u;DB.set('user',u);_loginUser(u);
-                toast('Session restored','');
-              }
-            }).catch(()=>{});
-        }
-      }
-    }catch(e){}
-    return;
-  }
-  fetch(WORKER_URL+'/api/users?id='+currentUser.id)
-    .then(r=>r.ok?r.json():null)
-    .then(u=>{if(u&&!u.error&&u.id){const merged={...currentUser,...u};currentUser=merged;DB.set('user',merged);}})
-    .catch(()=>{});
-}
-
-// Keep session alive when tab becomes visible again
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'){
-    const saved=DB.get('user');
-    if(saved&&!currentUser){currentUser=saved;_loginUser(currentUser);}
-  }
-});
-
-// Seed creators
-if(!DB.get('creators')){DB.set('creators',[
-  {id:'c1',name:'Elena Vasquez',handle:'@elena.v',cat:'Photography',bio:'Documentary photographer exploring light across 60 countries. Exclusive shoots and photo walks.',cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',avatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',subs:3200,posts:47,verified:true,price:8},
-  {id:'c2',name:'Tom Hargreaves',handle:'@tomwrites',cat:'Writing',bio:'Long-form essays on culture, tech, and what it means to be human.',cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',avatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',subs:12400,posts:138,verified:true,price:6},
-  {id:'c3',name:'Yuki Tanaka',handle:'@yukisounds',cat:'Music',bio:'Ambient composer. Monthly albums, process videos and exclusive live sessions.',cover:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&q=80',avatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',subs:7800,posts:89,verified:true,price:10},
-  {id:'c4',name:'Adaeze Nwosu',handle:'@adaeze.art',cat:'Art',bio:'Bold narrative illustrations celebrating African mythology. Tutorials and WIP content.',cover:'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',avatar:'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80',subs:5100,posts:62,verified:true,price:7},
-  {id:'c5',name:'Marco Bellini',handle:'@marcofood',cat:'Cooking',bio:'Regional Italian recipes, sourcing guides, and weekly cooking videos.',cover:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80',avatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',subs:9300,posts:201,verified:true,price:9},
-  {id:'c6',name:'Priya Sharma',handle:'@priyafit',cat:'Fitness',bio:'Functional strength for busy people. Programs, nutrition guides, and daily check-ins.',cover:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',avatar:'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=200&q=80',subs:22000,posts:415,verified:true,price:12},
-]);}
-if(!DB.get('posts')){DB.set('posts',[
-  {id:'p1',creator:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',title:'Golden hour in Lisbon',content:'Spent three hours chasing this light through the Alfama district. The way the sun catches the tiles at 6pm is something else.',tier:'free',time:'2h ago',tips:12,comments:18},
-  {id:'p2',creator:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',title:'Why attention is the new currency',content:'We talk about the attention economy as if it is a passive resource. But that misses something important about how we choose to spend it...',tier:'paid',time:'5h ago',tips:34,comments:44},
-  {id:'p3',creator:'c3',creatorName:'Yuki Tanaka',creatorAvatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',title:'New album: Coastal Drift preview',content:'A 3-minute preview of my upcoming album. The full 47-minute version drops for subscribers on Friday.',tier:'free',time:'8h ago',tips:51,comments:62},
-  {id:'p4',creator:'c5',creatorName:'Marco Bellini',creatorAvatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',title:"Nonna Rosa's Sunday ragu",content:"This recipe took 14 visits to Calabria to get right. Full recipe for subscribers.",tier:'paid',time:'1d ago',tips:78,comments:89},
-]);}
-
-// NAV
-function showPage(page,tabEl){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const el=document.getElementById('page-'+page);if(el)el.classList.add('active');
-  currentPage=page;
-  if(tabEl){document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
-  _syncBnavActive(page);
-  if(page==='landing')renderLandingCreators();
-if(currentUser) _syncMobileNav();
-  if(page==='explore'){loadCreators();}
-  if(page==='feed')renderFeed();
-  if(page==='discover'){page='explore';renderExplore();}
-  if(page==='shop')renderShop();
-  if(page==='messages')renderMessages();
-  if(page==='notifs')renderNotifs();
-  if(page==='dashboard')renderDashboard();
-  if(page==='library')renderLibrary();
-  if(page==='admin')renderAdmin();
-  if(page==='referrals')renderReferrals();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function requireAuth(page,tabEl){if(currentUser)showPage(page,tabEl);else{openModal('login');toast('Please sign in first','🔐');}}
-function goAdmin(tabEl){if(currentUser&&currentUser.role==='admin')showPage('admin',tabEl);else toast('Admin access only','🔐');}
-
-// AUTH
-const _googleSvg='<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>';
-
-const _authStyles=`
-  <style>
-    .auth-wrap{background:#0a0000;padding:32px 28px 24px;font-family:'DM Sans',sans-serif}
-    .auth-logo{text-align:center;font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:6px}
-    .auth-logo span{background:linear-gradient(135deg,#d4a843,#f5d485,#b8902e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .auth-sub{text-align:center;font-size:.78rem;color:rgba(255,255,255,.35);margin-bottom:24px;letter-spacing:.02em}
-    .auth-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:100px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:16px;transition:background .2s}
-    .auth-google:hover{background:rgba(255,255,255,.11)}
-    .auth-divider{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .auth-divider div{flex:1;height:1px;background:rgba(255,255,255,.08)}
-    .auth-divider span{font-size:.7rem;color:rgba(255,255,255,.25);letter-spacing:.06em;text-transform:uppercase}
-    .auth-field{margin-bottom:12px}
-    .auth-field label{display:block;font-size:.7rem;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
-    .auth-field input,.auth-field select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;box-sizing:border-box}
-    .auth-field input:focus,.auth-field select:focus{border-color:rgba(212,168,67,.6)}
-    .auth-field select option{background:#1a0000;color:#fff}
-    .auth-btn{width:100%;padding:13px;border:none;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:6px;background:linear-gradient(135deg,#d4a843,#f0c84a,#b8902e);color:#0a0000;letter-spacing:.02em;transition:opacity .2s}
-    .auth-btn:hover{opacity:.9}
-    .auth-err{font-size:.76rem;color:#e86c6c;min-height:18px;margin-bottom:6px}
-    .auth-switch{text-align:center;font-size:.76rem;color:rgba(255,255,255,.3);margin-top:14px}
-    .auth-switch a{color:rgba(212,168,67,.8);cursor:pointer;text-decoration:none}
-    .auth-switch a:hover{color:#d4a843}
-    #google-signin-btn > *{display:none!important}
-  </style>`;
-
-const modalTemplates={
-  login:_authStyles+`<div class="auth-wrap">
-    <div class="auth-logo">G<span>ALAXY</span></div>
-    <div class="auth-sub">Sign in to your account</div>
-    <button class="auth-google" onclick="document.querySelector('#google-signin-btn iframe,#google-signin-btn div[role]')?.click?.();google?.accounts?.id?.prompt?.()">
-      ${_googleSvg} Continue with Google
-    </button>
-    <div id="google-signin-btn" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden"></div>
-    <div class="auth-divider"><div></div><span>or</span><div></div></div>
-    <div class="auth-field"><label>Email</label><input id="li-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div class="auth-field"><label>Password</label><input id="li-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div class="auth-err" id="li-err"></div>
-    <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign in →</button>
-    <div style="text-align:center;margin-top:8px"><a onclick="openModal('forgotpw')" style="font-size:.74rem;color:var(--muted);cursor:pointer">Forgot password?</a></div>
-    <div class="auth-switch">New here? <a onclick="openModal('signup')">Create an account</a></div>
-  </div>`,
-  forgotpw:_authStyles+`<div class="auth-wrap">
-    <div class="auth-logo">G<span>ALAXY</span></div>
-    <div class="auth-sub">Reset your password</div>
-    <div class="auth-field"><label>Email</label><input id="fp-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgotPw()"></div>
-    <div class="auth-err" id="fp-err"></div>
-    <button class="auth-btn" onclick="doForgotPw()">Send reset link →</button>
-    <div class="auth-switch"><a onclick="openModal('login')">← Back to sign in</a></div>
-  </div>`,
-  signup:_authStyles+`<div class="auth-wrap">
-    <div class="auth-logo">G<span>ALAXY</span></div>
-    <div class="auth-sub">Create your free account</div>
-    <button class="auth-google" onclick="document.querySelector('#google-signin-btn iframe,#google-signin-btn div[role]')?.click?.();google?.accounts?.id?.prompt?.()">
-      ${_googleSvg} Continue with Google
-    </button>
-    <div id="google-signin-btn" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;overflow:hidden"></div>
-    <div class="auth-divider"><div></div><span>or</span><div></div></div>
-    <div class="auth-field"><label>Full name</label><input id="su-name" placeholder="Your name"></div>
-    <div class="auth-field"><label>Email</label><input id="su-email" type="email" placeholder="you@example.com"></div>
-    <div class="auth-field"><label>Password</label><input id="su-pw" type="password" placeholder="Min. 6 characters"></div>
-    <div class="auth-field"><label>Category</label><select id="su-cat">
-      <option>Photography & Film</option><option>Visual Art & Design</option><option>Music & Audio</option><option>Writing & Blogging</option><option>Fashion & Style</option><option>Interior Design</option><option>Fitness & Training</option><option>Yoga & Meditation</option><option>Nutrition & Diet</option><option>Mental Health</option><option>Business & Entrepreneurship</option><option>Finance & Investing</option><option>Law & Legal</option><option>Real Estate</option><option>Marketing & Sales</option><option>Technology & Coding</option><option>Travel & Adventure</option><option>Cooking & Food</option><option>Parenting</option><option>Relationships</option><option>Spirituality</option><option>Beauty & Skincare</option><option>Language Learning</option><option>Science & Math</option><option>History & Culture</option><option>Online Courses</option><option>Comedy</option><option>Gaming</option><option>Podcasting</option><option>Sports & Athletics</option><option>Doctor</option><option>Personal Trainer</option><option>Therapist</option><option>Financial Advisor</option><option>Police</option><option>Other</option>
-    </select></div>
-    <div class="auth-err" id="su-err"></div>
-    <button class="auth-btn" id="su-btn" onclick="doSignup()">Create account →</button>
-    <div class="auth-switch">Already have one? <a onclick="openModal('login')">Sign in</a></div>
-  </div>`
-};
-function openModal(type,html){
-  const mc=document.getElementById('modalContent');
-  mc.innerHTML=html||modalTemplates[type]||modalTemplates.signup;
-  mc.classList.toggle('wide', type==='addProduct'||type==='purchase'||type==='tip'||type==='payout');
-  mc.classList.toggle('auth-modal', type==='login'||type==='signup');
-  document.getElementById('authOverlay').classList.add('open');document.body.style.overflow='hidden';
-  mc.scrollTop=0;
-  setTimeout(()=>{const f=document.querySelector('#modalContent input');if(f)f.focus();},80);
-  if(type==='login'||type==='signup')setTimeout(_initGoogleBtn,150);
-}
-function closeModal(){document.getElementById('authOverlay').classList.remove('open');document.body.style.overflow='';}
-
-// ── Google Sign-In ────────────────────────────────────────────────────
-function _initGoogleBtn(){
-  const container=document.getElementById('google-signin-btn');
-  if(!container||!window.google)return;
-  container.innerHTML='';
-  google.accounts.id.initialize({
-    client_id:GOOGLE_CLIENT_ID,
-    callback:_handleGoogleCredential,
-    auto_select:false,
-    cancel_on_tap_outside:true
-  });
-  google.accounts.id.renderButton(container,{
-    theme:'filled_black',
-    size:'large',
-    shape:'pill',
-    width:Math.min(container.offsetWidth||320,320),
-    text:'continue_with'
-  });
-}
-
-// Called when Google returns a credential
-async function _handleGoogleCredential(response){
-  const idToken=response.credential;
-  if(!idToken){toast('Google sign-in failed','⚠️');return;}
-  toast('Signing in with Google…','⏳');
-  try{
-    const res=await fetch(WORKER_URL+'/api/auth/google',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id_token:idToken,ref_code:sessionStorage.getItem('ref_code')||null})
-    });
-    const user=await res.json();
-    if(!res.ok){toast(user.error||'Google sign-in failed','⚠️');return;}
-    _loginUser(user);
-    closeModal();
-    toast('Welcome, '+user.name+'!','👋');
-    if(user.role==='admin')showPage('feed',null); // admin starts on feed to access post composer
-    else showPage('feed',null);
-  }catch(e){toast('Google sign-in error','⚠️');console.error(e);}
-}
-
-
-document.getElementById('authOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('authOverlay'))closeModal();});
-
-// ═══ AUTH ════════════════════════════════════════════════════════════
-// Sign in via Supabase Auth, then load (or create) the user's row in the
-// public.profiles table. The trigger handle_new_user() inserts a row on
-// signup automatically, so usually we just read it here.
-
-const DEFAULT_COVER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&q=80';
-function _defaultAvatar(name){return 'https://ui-avatars.com/api/?name='+encodeURIComponent(name||'U')+'&background=d4a843&color=0a0a0b&size=200';}
-
-
-async function doForgotPw(){
-  const email=(document.getElementById('fp-email')||{}).value?.trim();
-  const errEl=document.getElementById('fp-err');
-  if(!email){if(errEl)errEl.textContent='Enter your email';return;}
-  const btn=document.querySelector('#modalContent .auth-btn');
-  if(btn){btn.disabled=true;btn.textContent='Sending…';}
-  try{
-    const res=await fetch(WORKER_URL+'/api/auth/forgot-password',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email})
-    });
-    const data=await res.json();
-    if(!res.ok){if(errEl)errEl.textContent=data.error||'Error';if(btn){btn.disabled=false;btn.textContent='Send reset link →';}return;}
-    closeModal();
-    toast('Reset link sent to '+email,'📧');
-  }catch(e){
-    if(errEl)errEl.textContent='Error sending email';
-    if(btn){btn.disabled=false;btn.textContent='Send reset link →';}
-  }
-}
-
-async function doLogin(){
-  const email=(document.getElementById('li-email')||{}).value.trim().toLowerCase()||'',pw=(document.getElementById('li-pw')||{}).value||'';
-  const errEl=document.getElementById('li-err'),btn=document.getElementById('li-btn');
-  if(!email||!pw){errEl.textContent='Please fill in all fields.';return;}
-  btn.disabled=true;btn.textContent='Signing in...';
-  try{
-    const res=await fetch(WORKER_URL+'/api/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw})});
-    const u=await res.json();
-    if(!res.ok){errEl.textContent=u.error||'Sign-in failed.';btn.disabled=false;if(btn)btn.textContent='Sign in →';return;}
-    _loginUser(u);closeModal();toast('Welcome back, '+u.name+'!','👋');
-    showPage('feed',null); // always start on feed
-  }catch(e){
-    console.error(e);errEl.textContent='Sign-in failed.';btn.disabled=false;if(btn)btn.textContent='Sign in →';
-  }
-}
-
-async function doSignup(){
-  const name=(document.getElementById('su-name')||{}).value.trim(),email=((document.getElementById('su-email')||{}).value||'').trim().toLowerCase(),pw=(document.getElementById('su-pw')||{}).value,cat=(document.getElementById('su-cat')||{}).value||'Other';
-  const errEl=document.getElementById('su-err'),btn=document.getElementById('su-btn');
-  if(!name||!email||!pw){errEl.textContent='Please fill in all fields.';return;}
-  if(pw.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
-  btn.disabled=true;btn.textContent='Creating...';
-  try{
-    const refCode=sessionStorage.getItem('ref_code')||null;
-    const res=await fetch(WORKER_URL+'/api/users/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,name,category:cat,ref_code:refCode})});
-    const u=await res.json();
-    if(!res.ok){errEl.textContent=u.error||'Sign-up failed.';btn.disabled=false;btn.textContent='Create account →';return;}
-    _loginUser(u);closeModal();toast('Welcome! 🎉','✨');showPage('feed',null);
-  }catch(e){
-    console.error(e);errEl.textContent='Sign-up failed.';btn.disabled=false;btn.textContent='Create account →';
-  }
-}
-function _loginUser(u){
-  currentUser=u;DB.set('user',u);
-  // Re-trigger any product deep link that arrived before login
-  const pendingProduct=sessionStorage.getItem('pending_product');
-  if(pendingProduct){
-    sessionStorage.removeItem('pending_product');
-    setTimeout(()=>{showPage('shop',null);setTimeout(()=>buyProduct(pendingProduct),600);},300);
-  }
-  // Mirror into the local users map so admin panel + profile lookups keep working
-  // (this is transitional — these reads will move to Supabase in later migrations)
-  if(u.email){
-    const users=DB.get('users')||{};
-    users[u.email]={...users[u.email],...u};
-    DB.set('users',users);
-  }
-  document.getElementById('navGuest').style.display='none';
-  document.getElementById('navUser').style.display='flex';
-  document.getElementById('navAvatar').textContent=u.emoji||'👤';
-  const tlIn=document.getElementById('tab-landing');if(tlIn)tlIn.style.display='none';
-  ['tab-messages','tab-notifs','tab-library','tab-dash','tab-profile'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
-  if(u.role==='admin'){const a=document.getElementById('tab-admin');if(a)a.style.display='';}
-  _refreshBadges();
-}
-async function logout(){
-  if(!confirm('Sign out of GALAXY?'))return;
-  currentUser=null;DB.del('user');
-  document.getElementById('navGuest').style.display='flex';document.getElementById('navUser').style.display='none';
-  const tlOut=document.getElementById('tab-landing');if(tlOut)tlOut.style.display='';
-  ['tab-messages','tab-notifs','tab-library','tab-dash','tab-profile','tab-admin'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  showPage('landing',document.getElementById('tab-landing'));toast('Signed out','👋');
-}
-
-// session restore handled at bottom of script
-
-// Save profile to worker API
-async function _saveProfile(patch){
-  if(!currentUser?.id) return;
-  // Update local state immediately
-  currentUser={...currentUser,...patch};
-  DB.set('user',currentUser);
-  try{
-    const res=await fetch(WORKER_URL+'/api/users/profile',{method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id:currentUser.id,name:currentUser.name,bio:currentUser.bio||'',avatar:currentUser.avatar||'',cover:currentUser.cover||'',category:currentUser.category||'Other',price:currentUser.price||9,...patch})
-    });
-    const data=await res.json();
-    if(data?.user){currentUser={...currentUser,...data.user};DB.set('user',currentUser);}
-  }catch(e){console.warn('profile update failed',e);}
-}
-
-// BADGES
-function _refreshBadges(){
-  if(!currentUser)return;
-  fetch(WORKER_URL+'/api/notifications?user_id='+currentUser.id)
-    .then(r=>r.json()).then(list=>{
-      const unread=(list||[]).filter(n=>!n.read).length;
-      const nb=document.getElementById('notifBadge');if(nb){nb.textContent=unread;nb.classList.toggle('show',unread>0);}
-    }).catch(()=>{});
-}
-
-// CREATORS
-function creatorCard(c){
-  const hasCover=c.cover&&(c.cover.startsWith('http')||c.cover.startsWith('data:'));
-  const coverBg=hasCover?`url('${c.cover}') center/cover`:`linear-gradient(135deg,#0d0d20,#1a1a3e)`;
-  return `<div style="border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;background:var(--card);border:1px solid var(--border)" onclick="showProfile('${c.id}')" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 48px rgba(0,0,0,.6)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-    <!-- Cinematic cover -->
-    <div style="position:relative;height:160px;background:${coverBg};overflow:hidden">
-      ${!hasCover?`<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(212,168,67,.2),transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(99,179,237,.15),transparent 60%)"></div>`:''}
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.1) 60%,transparent 100%)"></div>
-      ${c.verified?`<div style="position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;background:rgba(29,155,240,.15);border:1px solid rgba(29,155,240,.4);padding:3px 8px;border-radius:100px"><svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1D9BF0"/><path d="M6 10.5L8.5 13L14 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:.65rem;font-weight:700;color:#1D9BF0">Verified</span></div>`:''}
-      <!-- Avatar + name overlay -->
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px;display:flex;align-items:center;gap:10px">
-        <img src="${c.avatar}" alt="" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.3);flex-shrink:0" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=d4a843&color=0a0a0b&size=200'">
-        <div style="min-width:0">
-          <div style="color:#fff;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
-          <div style="color:rgba(255,255,255,.5);font-size:.7rem">${c.handle}</div>
-        </div>
-      </div>
-    </div>
-    <!-- Body -->
-    <div style="padding:12px 14px 14px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
-        <span style="background:rgba(212,168,67,.12);color:var(--gold);border:1px solid rgba(212,168,67,.2);border-radius:100px;padding:2px 8px;font-size:.65rem;font-weight:700;letter-spacing:.04em">${c.cat}</span>
-        <span style="margin-left:auto;font-size:.78rem;font-weight:700;color:var(--text)">${fmtNum(c.subs||0)} <span style="font-weight:400;color:var(--muted)">subs</span></span>
-      </div>
-      <div style="font-size:.8rem;color:var(--muted);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${c.bio||'Creator on GALAXY'}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:.82rem;font-weight:700;color:var(--gold)">$${c.price||9}<span style="font-weight:400;color:var(--muted);font-size:.7rem">/mo</span></span>
-        <button style="background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:100px;padding:6px 14px;font-size:.72rem;font-weight:700;color:#0a0a0b;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="event.stopPropagation();showProfile('${c.id}')">View →</button>
-      </div>
-    </div>
-  </div>`;
-}
-function renderReferrals(){
-  if(!currentUser)return;
-  // Set link
-  const handle=currentUser.id; // use ID as ref code
-  const link='https://galaxyvy.com/?ref='+handle;
-  const lb=document.getElementById('refPageLink');if(lb)lb.textContent=link;
-
-  // Load stats from Worker
-  fetch(WORKER_URL+'/api/ref/stats?user_id='+currentUser.id)
-    .then(r=>r.json())
-    .then(d=>{
-      const sc=document.getElementById('refStatCount');
-      const se=document.getElementById('refStatEarned');
-      if(sc)sc.textContent=d.count||0;
-      if(se)se.textContent='$'+(d.earned||0).toFixed(2);
-
-      // Referred users list
-      const ul=document.getElementById('refUsersList');
-      if(ul){
-        const users=d.users||[];
-        if(!users.length){ul.innerHTML='<div style="color:var(--muted);font-size:.82rem">No referrals yet. Share your link!</div>';return;}
-        ul.innerHTML=users.map(u=>`
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:10px">
-              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c0392b,#d4a843);overflow:hidden;flex-shrink:0">
-                <img src="${u.avatar||''}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
-              </div>
-              <div>
-                <div style="font-size:.82rem;font-weight:600;color:var(--text)">${u.name||'—'}</div>
-                <div style="font-size:.7rem;color:var(--muted)">Joined ${(u.created_at||'').slice(0,10)}</div>
-              </div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-size:.82rem;font-weight:700;color:var(--gold)">$${(u.earned||0).toFixed(2)}</div>
-              <div style="font-size:.68rem;color:var(--muted)">earned</div>
-            </div>
-          </div>`).join('');
-      }
-    }).catch(()=>{
-      const ul=document.getElementById('refUsersList');
-      if(ul)ul.innerHTML='<div style="color:var(--muted);font-size:.82rem">Could not load referrals.</div>';
-    });
-
-  // Load video status
-  fetch(WORKER_URL+'/api/ref/video?user_id='+currentUser.id).then(r=>r.json()).then(d=>{
-    const s=document.getElementById('refVideoStatusPage');if(!s)return;
-    if(d.status==='approved') s.innerHTML='<span style="font-size:.74rem;color:var(--green);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:100px;padding:3px 10px">✅ Video verified — boosted rate active</span>';
-    else if(d.status==='pending') s.innerHTML='<span style="font-size:.74rem;color:var(--gold);background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:3px 10px">⏳ Video pending review</span>';
-  }).catch(()=>{});
-}
-
-function _copyRefPageLink(){
-  const link=document.getElementById('refPageLink')?.textContent||'';
-  navigator.clipboard.writeText(link).then(()=>toast('Link copied!','🔗')).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=link;ta.style.cssText='position:fixed;opacity:0';
-    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    toast('Link copied!','🔗');
-  });
-}
-
-async function submitRefVideoPage(){
-  if(!currentUser){toast('Sign in first','⚠️');return;}
-  const url=(document.getElementById('refVideoUrlPage')||{}).value?.trim();
-  if(!url){toast('Enter a video URL','⚠️');return;}
-  try{
-    await apiFetch('/api/ref/video','POST',{user_id:currentUser.id,user_name:currentUser.name,url});
-    toast('Video submitted for review!','🎬');
-    document.getElementById('refVideoUrlPage').value='';
-    const s=document.getElementById('refVideoStatusPage');
-    if(s)s.innerHTML='<span style="font-size:.74rem;color:var(--gold);background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:3px 10px">⏳ Pending review</span>';
-  }catch(e){toast('Failed: '+e.message,'⚠️');}
-}
-
-function openPage(page){
-  showPage(page, null);
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function renderLandingCreators(){document.getElementById('landingCreators').innerHTML=(DB.get('creators')||[]).slice(0,6).map(creatorCard).join('');}
-let _allCreators=[];
-let _currentExploreCat='all';
-
-function renderExplore(cat='all'){
-  // Load boosted profiles first
-  fetch(WORKER_URL+'/api/boost/active?type=profile')
-    .then(r=>r.json())
-    .then(boosts=>{
-      _boostedProfileIds=new Set((boosts||[]).map(b=>b.target_id));
-      _boostedProfiles=boosts||[];
-    }).catch(()=>{});
-  if(cat!=='all') _currentExploreCat=cat;
-  const q=(document.getElementById('exploreSearch')||{}).value?.toLowerCase()||'';
-  let all=[..._allCreators];
-  if(_currentExploreCat!=='all') all=all.filter(c=>(c.cat||c.category||'')===_currentExploreCat);
-  if(q) all=all.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.cat||c.category||'').toLowerCase().includes(q)||(c.bio||'').toLowerCase().includes(q));
-  document.getElementById('exploreCreators').innerHTML=all.length?all.map(creatorCard).join(''):`<div class="empty"><div class="empty-icon">🔍</div>No creators found.</div>`;
-}
-
-function filterExplore(){renderExplore(_currentExploreCat);}
-
-function filterCat(cat,el){
-  _currentExploreCat=cat;
-  document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderExplore(cat);
-}
-
-function loadCreators(){
-  // Load from D1 first, fallback to seeded data
-  fetch(WORKER_URL+'/api/users?role=creator')
-    .then(r=>r.json())
-    .then(users=>{
-      if(users&&users.length){
-        // Map D1 users to creator card format
-        const d1Creators=users.map(u=>({
-          id:u.id, name:u.name, handle:'@'+(u.name||'').toLowerCase().replace(/\s+/g,'_'),
-          cat:u.category||'Other', bio:u.bio||'', avatar:u.avatar||'',
-          cover:u.cover||'', price:u.price||9, verified:!!u.verified,
-          subs:u.subs_count||0
-        }));
-        // Merge with seeded creators
-        const seeded=DB.get('creators')||[];
-        const ids=new Set(d1Creators.map(c=>c.id));
-        const merged=[...d1Creators,...seeded.filter(c=>!ids.has(c.id))];
-        _allCreators=merged;
-      } else {
-        _allCreators=DB.get('creators')||[];
-      }
-      renderExplore(_currentExploreCat);
-      renderDiscover();
-    })
-    .catch(()=>{
-      _allCreators=DB.get('creators')||[];
-      renderExplore(_currentExploreCat);
-      renderDiscover();
-    });
-}
-
-// PROFILE
-function showProfile(id){
-  const creators=DB.get('creators')||[],users=DB.get('users')||{};
-  // Look in _allCreators (freshly loaded from Worker) first, then localStorage, then currentUser
-  let c=(_allCreators||[]).find(x=>x.id===id)||creators.find(x=>x.id===id)||Object.values(users).find(u=>u.id===id)||(currentUser&&currentUser.id===id?currentUser:null);
-  // If still not found fetch from Worker directly
-  if(!c){
-    fetch(WORKER_URL+'/api/users?id='+encodeURIComponent(id))
-      .then(r=>r.json())
-      .then(u=>{
-        if(!u||u.error)return;
-        const mapped={id:u.id,name:u.name,handle:'@'+(u.name||'').toLowerCase().replace(/\s+/g,'_'),
-          cat:u.category||'Other',bio:u.bio||'',avatar:u.avatar||'',cover:u.cover||'',
-          price:u.price||9,verified:!!u.verified,subs:u.subs_count||0,email:u.email};
-        _allCreators=(_allCreators||[]).filter(x=>x.id!==id).concat(mapped);
-        showProfile(id);
-      }).catch(()=>{});
-    return;
-  }
-  if(!c)return;_profileContext=c;
-  document.getElementById('profileCoverImg').src=(c.cover&&(c.cover.startsWith('http')||c.cover.startsWith('data:')))?c.cover:'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80';
-  document.getElementById('profilePic').src=c.avatar||''; document.getElementById('profilePic').onerror=function(){this.style.background='var(--card2)'};
-  const _profBadge={Doctor:'🩺',Law:'⚖️','Real Estate':'🏠','Personal Trainer':'🏋️',Therapist:'🧠','Financial Advisor':'💰',Police:'👮'};
-  const _certBadgeHtml=(c.certStatus==='approved'&&_profBadge[c.category])?`<span style="font-size:.8rem;background:rgba(212,168,67,.15);border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:2px 8px;font-weight:700;color:var(--gold);margin-left:4px">${_profBadge[c.category]} ${c.category}</span>`:'';
-  document.getElementById('profileName').innerHTML=c.name+(c.verified?'<svg class="verified" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#1D9BF0"/><path d="M6 10.5L8.5 13L14 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+_certBadgeHtml;
-  document.getElementById('profileHandle').textContent=(c.handle||'')+(c.cat?' · '+c.cat:'');
-  document.getElementById('profileBio').textContent=c.bio||'';
-  document.getElementById('profileSubsCount').textContent=fmtNum(c.subs||0);
-  document.getElementById('profilePostsCount').textContent=c.posts||0;
-  const subbed=isSubscribed(id);
-  const isOwn=currentUser&&currentUser.id===id;
-  const eBtn=document.getElementById('profileEditBtn');
-  const mBtn=document.getElementById('profileMsgBtn');
-  const sBtn=document.getElementById('profileSubBtn');
-  const npBtn=document.getElementById('profileNewPostBtn');
-  const shopBtn=document.getElementById('profileShopBtn');
-  const followBtn=document.getElementById('profileFollowBtn');
-  if(eBtn)eBtn.style.display=isOwn?'':'none';
-  if(mBtn)mBtn.style.display=isOwn?'none':'';
-  // Boost button on own profile
-  const boostBtn=document.getElementById('profileBoostBtn');
-  if(boostBtn) boostBtn.style.display=(isOwn||currentUser?.role==='admin')?'block':'none';
-  if(sBtn){
-    sBtn.style.display=isOwn?'none':'';
-    if(!isOwn){
-      const subs=DB.get('subscriptions')||[];
-      const existingSub=subs.find(s=>(s.creatorId===id||s.creator_id===id)&&s.status==='active');
-      const cancelSub=subs.find(s=>(s.creatorId===id||s.creator_id===id)&&s.status==='cancelling');
-      if(cancelSub) sBtn.textContent='Cancelled';
-      else if(existingSub) sBtn.textContent='Unsubscribe';
-      else sBtn.textContent='Subscribe for $'+(c.price||9)+'/mo';
+      // ── Bank transfer: save as pending, process manually on 1st ─────
+      await env.DB.prepare(`
+        INSERT INTO payouts (id, creator_id, amount, fee, method, status, paypal_email, stripe_account, requested_at)
+        VALUES (?, ?, ?, 0, ?, 'pending', ?, ?, datetime('now'))
+      `).bind(id, creator_id, balance, payoutMethod, settings?.paypal_email||null, settings?.stripe_account_id||null).run();
+      return json({ ok:true, message:`Bank transfer of $${balance.toFixed(2)} requested. We will process it within 3 business days.`, amount: balance });
     }
-  }
-  if(npBtn)npBtn.style.display=isOwn?'':'none';
-  if(shopBtn)shopBtn.style.display=isOwn?'none':'';
-  if(followBtn){
-    followBtn.style.display=isOwn?'none':'';
-    const follows=JSON.parse(localStorage.getItem('follows')||'[]');
-    const isFollowing=follows.includes(id);
-    followBtn.textContent=isFollowing?'Following':'Follow';
-  }
-  const btn=document.getElementById('profileSubBtn');btn.textContent=subbed?'Subscribed':'Subscribe';btn.style.opacity=subbed?'.6':'1';
-  const msgBtn=document.getElementById('profileMsgBtn');if(msgBtn)msgBtn.style.display=(currentUser&&currentUser.id===id)?'none':'';
-  const price=c.price||9;
-  // Build creator's products for the profile shop section
-  const allProds=DB.get('products')||[];
-  const creatorProds=allProds.filter(p=>p.creatorId===id);
-  const prodsHtml=creatorProds.length?`
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-weight:700;font-size:.85rem;margin-bottom:10px;color:var(--muted)">PRODUCTS</div>
-      ${creatorProds.map(p=>`
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:44px;height:44px;border-radius:8px;background:${p.cover?`url('${p.cover}') center/cover`:'var(--bg3)'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem">${p.cover?'':p.emoji||'📦'}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
-            <div style="font-size:.72rem;color:var(--muted)">$${p.price}</div>
-          </div>
-          <button class="btn btn-gold btn-sm" style="font-size:.72rem;padding:5px 12px;flex-shrink:0" onclick="buyProduct('${p.id}')">Buy</button>
-        </div>`).join('')}
-    </div>`:'';
-  document.getElementById('profileSubCard').innerHTML=`<div class="sub-card">
-    <div style="font-weight:700;font-size:1rem;margin-bottom:4px">Subscriber Access</div>
-    <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:var(--gold);letter-spacing:-.03em;margin-bottom:14px">$${price}<span style="font-size:.85rem;color:var(--muted);font-family:'DM Sans',sans-serif">/month</span></div>
-    <div class="sub-feat">All exclusive posts</div>
-    <div class="sub-feat">Direct messaging</div>
-    <div class="sub-feat">Early access to new content</div>
-    <button class="btn btn-gold" style="width:100%;margin-top:14px;justify-content:center" onclick="subscribeCreator('${id}','${c.name}',${price})">${subbed?'Subscribed':'Subscribe for $'+price+'/mo'}</button>
-    ${prodsHtml}
-  </div>`;
-  // Also fetch fresh products from Worker and refresh if needed
-  fetch(WORKER_URL+'/api/products?creator_id='+encodeURIComponent(id))
-    .then(r=>r.json()).then(prods=>{
-      if(!prods||!prods.length) return;
-      const all=DB.get('products')||[];
-      const ids=new Set(prods.map(p=>p.id));
-      DB.set('products',[...prods,...all.filter(p=>!ids.has(p.id))]);
-      // Refresh the sub card with fresh products
-      if(_profileContext&&_profileContext.id===id) showProfile(id);
-    }).catch(()=>{});
-  // Show cached posts immediately, then fetch fresh from Worker
-  const cached=_getPosts().filter(p=>p.creator===id);
-  const postsArea=document.getElementById('profilePostsArea');
-  postsArea.innerHTML=cached.length?cached.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📝</div><div>Loading posts…</div></div>`;
-  showPage('profile',null);
-  // Always fetch from Worker so own posts show up fresh (even just published)
-  fetch(WORKER_URL+'/api/posts?creator_id='+encodeURIComponent(id))
-    .then(r=>r.json())
-    .then(posts=>{
-      if(!posts||!posts.length){
-        postsArea.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>No posts yet.</div>`;
-        document.getElementById('profilePostsCount').textContent='0';
-        return;
-      }
-      // Normalise field names from Worker
-      const normalised=posts.map(p=>({
-        ...p,
-        creator:      p.creator      ?? p.creator_id ?? '',
-        creatorName:  p.creatorName  ?? p.creator_name ?? '',
-        creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
-        media:        p.media        ?? p.media_type ?? null,
-        mediaSrc:     p.mediaSrc     ?? p.media_url ?? null,
-        comments: p.comments ?? p.comments_count ?? p.comment_count ?? 0,
-        tips:     p.tips     ?? p.tips_count     ?? p.tip_count     ?? 0,
-      }));
-      // Merge into global posts cache
-      const allPosts=DB.get('posts')||[];
-      const ids=new Set(normalised.map(p=>p.id));
-      DB.set('posts',[...normalised,...allPosts.filter(p=>!ids.has(p.id))]);
-      const deletedIds=new Set(JSON.parse(localStorage.getItem('deleted_posts')||'[]'));
-      const visible=normalised.filter(p=>!deletedIds.has(String(p.id)));
-      postsArea.innerHTML=visible.length?visible.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📝</div>No posts yet.</div>`;
-      document.getElementById('profilePostsCount').textContent=visible.length;
-    }).catch(()=>{
-      if(!cached.length) postsArea.innerHTML=`<div class="empty"><div class="empty-icon">📝</div>No posts yet.</div>`;
-    });
-}
+    // ── END PAYOUT ROUTES ────────────────────────────────────────────────
 
-// Pending avatar/cover data URLs for edit profile
-let _epAvatar='', _epCover='';
-
-function openEditProfile(){
-  if(!currentUser)return;
-  const u=currentUser;
-  _epAvatar=u.avatar||''; _epCover=u.cover||'';
-  const cats=['Photography & Film','Visual Art & Design','Music & Audio','Writing & Blogging','Fashion & Style','Interior Design','Fitness & Training','Yoga & Meditation','Nutrition & Diet','Mental Health','Business & Entrepreneurship','Finance & Investing','Law & Legal','Real Estate','Marketing & Sales','Technology & Coding','Travel & Adventure','Cooking & Food','Parenting','Relationships','Spirituality','Beauty & Skincare','Language Learning','Science & Math','History & Culture','Online Courses','Comedy','Gaming','Podcasting','Sports & Athletics','Doctor','Personal Trainer','Therapist','Financial Advisor','Police','Other'];
-  const profCatsAll=['Doctor','Personal Trainer','Therapist','Financial Advisor','Police'];
-  const certLabels={Doctor:'Medical Licence','Personal Trainer':'PT Certification (NASM/ACE/REPS)',Therapist:'Psychology Licence / BACP Certificate','Financial Advisor':'FCA / SEC Registration',Police:'Police ID / Badge'};
-  const certBadges={Doctor:'🩺 Doctor','Personal Trainer':'🏋️ Personal Trainer',Therapist:'🧠 Therapist','Financial Advisor':'💰 Financial Advisor',Police:'👮 Police'};
-  const currentCat=u.category||u.cat||'';
-  const opts=cats.map(c=>`<option value="${c}"${currentCat===c?' selected':''}>${c}</option>`).join('');
-  const imgStyle='width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block';
-
-  // Cert section — load real status from D1, render after modal opens
-  const isProfCat=profCatsAll.includes(currentCat);
-  const certSection=isProfCat?`<div class="fg" id="epCertSection"><div style="color:var(--muted);font-size:.78rem">Loading verification status…</div></div>`:'';
-
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h2 style="font-family:Fraunces,serif;font-weight:300;font-size:1.4rem;margin:0">Edit Profile</h2>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <div class="fg"><label>Name</label><input id="ep-name" value="${_esc(u.name||'')}" placeholder="Your name"></div>
-    <div class="fg"><label>Bio</label><textarea id="ep-bio" rows="3" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-family:DM Sans,sans-serif;font-size:.9rem;resize:vertical;outline:none">${_esc(u.bio||'')}</textarea></div>
-    <div class="fg"><label>Avatar photo</label>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="ep-av-preview" onclick="document.getElementById('ep-av-file').click()" style="width:64px;height:64px;border-radius:50%;background:var(--card2);border:2px dashed var(--border2);cursor:pointer;overflow:hidden;flex-shrink:0">
-          ${u.avatar?`<img src="${_esc(u.avatar)}" style="${imgStyle}" onerror="this.style.display='none'">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.4rem">👤</div>'}
-        </div>
-        <div style="font-size:.78rem;color:var(--muted)">Tap to upload a photo<br><span style="font-size:.72rem">PNG, JPG — max 4 MB</span></div>
-      </div>
-      <input id="ep-av-file" type="file" accept="image/*" style="display:none" onchange="_epHandleFile(event,'avatar')">
-    </div>
-    <div class="fg"><label>Cover image</label>
-      <div id="ep-cov-preview" onclick="document.getElementById('ep-cov-file').click()" style="width:100%;height:90px;border-radius:10px;background:var(--card2);border:2px dashed var(--border2);cursor:pointer;overflow:hidden;position:relative">
-        ${u.cover?`<img src="${_esc(u.cover)}" style="${imgStyle};border-radius:10px" onerror="this.style.display='none'">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.83rem">📷 Tap to upload cover</div>'}
-      </div>
-      <input id="ep-cov-file" type="file" accept="image/*" style="display:none" onchange="_epHandleFile(event,'cover')">
-    </div>
-    <div class="fg"><label>Category</label>
-      <select id="ep-cat" onchange="_epCatChange(this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-family:DM Sans,sans-serif;font-size:.9rem;outline:none">${opts}</select>
-    </div>
-    ${certSection}
-    <div id="epCertDynamic"></div>
-    <div class="fg"><label>Subscription price ($/mo)</label><input id="ep-price" type="number" min="1" max="999" value="${u.price||9}"></div>
-    <button class="modal-btn" onclick="saveEditProfile()">Save changes</button>`;
-  openModal('editProfile',html);
-  // Fetch real cert status from D1 after modal opens
-  if(isProfCat){
-    fetch(WORKER_URL+'/api/cert?user_id='+u.id).then(r=>r.json()).then(d=>{
-      _renderEpCertSection(currentCat,d?.status||'unsubmitted',certLabels,certBadges);
-    }).catch(()=>_renderEpCertSection(currentCat,u.certStatus||'unsubmitted',certLabels,certBadges));
-  }
-}
-
-async function _epSubmitCert(cat){
-  if(!currentUser)return;
-  const f=(document.getElementById('epCertFile')||{}).files?.[0];
-  if(!f){toast('Pick a file first','⚠️');return;}
-  const btn=document.getElementById('epCertSubmitBtn');
-  if(btn){btn.disabled=true;btn.textContent='Uploading…';}
-  try{
-    const blob=f.type.startsWith('image/')?await _resizeToBlob(f,1200,800,0.88):f;
-    const certUrl=await _uploadToR2(blob,'certs',f.type||'image/jpeg');
-    await apiFetch('/api/cert','POST',{
-      user_id:currentUser.id,
-      user_name:currentUser.name,
-      user_email:currentUser.email||'',
-      category:cat,
-      cert_url:certUrl
-    });
-    currentUser.certStatus='pending';DB.set('user',currentUser);
-    // Refresh the cert section to show pending status
-    const certLabels={Doctor:'Medical Licence','Personal Trainer':'PT Certification (NASM/ACE/REPS)',Therapist:'Psychology Licence / BACP Certificate','Financial Advisor':'FCA / SEC Registration',Police:'Police ID / Badge'};
-    const certBadges={Doctor:'🩺 Doctor','Personal Trainer':'🏋️ Personal Trainer',Therapist:'🧠 Therapist','Financial Advisor':'💰 Financial Advisor',Police:'👮 Police'};
-    _renderEpCertSection(cat,'pending',certLabels,certBadges);
-    toast('Certificate submitted! Admin will review within 48h ✅','');
-  }catch(e){
-    toast('Failed: '+e.message,'⚠️');
-    if(btn){btn.disabled=false;btn.textContent='Submit for verification →';}
-  }
-}
-
-function _epCertFileSelected(input, cat){
-  const f=input.files?.[0];
-  if(!f)return;
-  const lbl=document.getElementById('epCertLbl');
-  if(lbl)lbl.textContent=f.name;
-  const btn=document.getElementById('epCertSubmitBtn');
-  if(btn)btn.style.display='block';
-}
-
-function _renderEpCertSection(cat,st,certLabels,certBadges){
-  const box=document.getElementById('epCertSection');if(!box)return;
-  if(st==='approved'){
-    box.innerHTML=`<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:12px 14px;font-size:.82rem;color:var(--green)">✅ <strong>${certBadges[cat]||''}</strong> badge is active on your profile</div>`;
-    return;
-  }
-  if(st==='pending'){
-    box.innerHTML=`<label style="display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Professional badge</label>
-      <div style="background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.3);border-radius:10px;padding:12px 14px;font-size:.82rem;color:var(--gold)">⏳ Your certificate is pending review. We will notify you within 48h.</div>`;
-    return;
-  }
-  // unsubmitted or rejected — show upload
-  const rejNote=st==='rejected'?`<div style="background:rgba(232,108,108,.1);border:1px solid rgba(232,108,108,.3);border-radius:10px;padding:10px 12px;font-size:.78rem;color:var(--rose);margin-bottom:10px">❌ Certificate rejected — please resubmit with a clearer document</div>`:'';
-  box.innerHTML=`<label style="display:block;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Get ${certBadges[cat]||'professional'} badge</label>
-    ${rejNote}
-    <div style="font-size:.76rem;color:var(--muted);margin-bottom:10px">Upload your <strong>${certLabels[cat]||'certificate'}</strong> to display the <strong style="color:var(--gold)">${certBadges[cat]||''}</strong> badge on your profile.</div>
-    <div class="upload-zone" id="epCertZone" onclick="document.getElementById('epCertFile').click()">
-      <input type="file" id="epCertFile" accept="image/*,.pdf" onchange="_epCertFileSelected(this,'${cat}')">
-      <div style="font-size:1.2rem;margin-bottom:4px">📋</div>
-      <div style="font-size:.78rem;color:var(--muted)">Tap to upload certificate</div>
-      <div style="font-size:.7rem;color:var(--muted2);margin-top:2px" id="epCertLbl">JPG, PNG or PDF</div>
-    </div>
-    <button id="epCertSubmitBtn" style="display:none;width:100%;margin-top:10px;padding:11px;background:linear-gradient(135deg,#d4a843,#b8902e);border:none;border-radius:100px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer" onclick="_epSubmitCert('${cat}')">Submit for verification →</button>`;
-}
-
-// Show/hide cert section when category changes
-function _epCatChange(cat){
-  const profCatsAll=['Doctor','Personal Trainer','Therapist','Financial Advisor','Police'];
-  const certLabels={Doctor:'Medical Licence','Personal Trainer':'PT Certification (NASM/ACE/REPS)',Therapist:'Psychology Licence / BACP Certificate','Financial Advisor':'FCA / SEC Registration',Police:'Police ID / Badge'};
-  const certBadges={Doctor:'🩺 Doctor','Personal Trainer':'🏋️ Personal Trainer',Therapist:'🧠 Therapist','Financial Advisor':'💰 Financial Advisor',Police:'👮 Police'};
-  const box=document.getElementById('epCertSection')||document.getElementById('epCertDynamic');
-  if(!profCatsAll.includes(cat)){if(box)box.innerHTML='';return;}
-  if(!box)return;
-  box.innerHTML='<div style="color:var(--muted);font-size:.78rem">Loading…</div>';
-  fetch(WORKER_URL+'/api/cert?user_id='+currentUser.id).then(r=>r.json()).then(d=>{
-    _renderEpCertSection(cat,d?.status||'unsubmitted',certLabels,certBadges);
-  }).catch(()=>_renderEpCertSection(cat,'unsubmitted',certLabels,certBadges));
-}
-
-const R2_PUBLIC='https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev';
-
-// Resize image → canvas → Blob (JPEG)
-function _resizeToBlob(file, maxW, maxH, quality){
-  return new Promise((resolve)=>{
-    const r=new FileReader();
-    r.onload=function(e){
-      const img=new Image();
-      img.onload=function(){
-        let w=img.width,h=img.height;
-        if(w>maxW||h>maxH){const ratio=Math.min(maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
-        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        canvas.toBlob(blob=>resolve(blob),'image/jpeg',quality||0.82);
-      };
-      img.src=e.target.result;
-    };
-    r.readAsDataURL(file);
-  });
-}
-
-// Also keep a data-URL version for instant preview
-function _resizeToDataURL(file, maxW, maxH, quality){
-  return new Promise((resolve)=>{
-    const r=new FileReader();
-    r.onload=function(e){
-      const img=new Image();
-      img.onload=function(){
-        let w=img.width,h=img.height;
-        if(w>maxW||h>maxH){const ratio=Math.min(maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
-        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(canvas.toDataURL('image/jpeg',quality||0.82));
-      };
-      img.src=e.target.result;
-    };
-    r.readAsDataURL(file);
-  });
-}
-
-// Daily image upload limit — max 2 per user per day (resets at midnight)
-
-
-// Upload a Blob/File to R2 via Worker. Returns the public URL.
-async function _uploadToR2(blob, folder, mimeType){
-  const mime=mimeType||(blob.type)||'image/jpeg';
-  const ext=mime.split('/')[1]
-    .replace('jpeg','jpg')
-    .replace('quicktime','mov')
-    .replace('x-matroska','mkv')
-    .split('+')[0];
-  const filename=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
-  const fd=new FormData();
-  // Always send as a File object with a simple flat filename (no slashes)
-  const file=blob instanceof File?blob:new File([blob],filename,{type:mime});
-  fd.append('file', file, filename);
-  fd.append('folder', folder||'misc');
-  const res=await fetch(WORKER_URL+'/api/upload',{method:'POST',body:fd});
-  if(!res.ok){
-    const txt=await res.text().catch(()=>'');
-    console.error('Upload failed:',res.status,txt);
-    throw new Error('Upload failed: '+res.status);
-  }
-  const data=await res.json();
-  if(!data.url) throw new Error('No URL returned');
-  return data.url;
-}
-
-// Profile image upload handler — preview immediately, upload to R2 in background
-function _epHandleFile(ev, field){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  if(f.size>20*1024*1024){toast('Image too large — max 20 MB','⚠️');return;}
-  const [maxW,maxH,qual]=field==='avatar'?[400,400,0.85]:[1200,450,0.82];
-  // Show preview instantly from data URL
-  _resizeToDataURL(f,maxW,maxH,qual).then(src=>{
-    if(field==='avatar'){
-      _epAvatar=src; // interim data URL
-      const prev=document.getElementById('ep-av-preview');
-      if(prev) prev.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">`;
-    } else {
-      _epCover=src;
-      const prev=document.getElementById('ep-cov-preview');
-      if(prev) prev.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block">`;
-    }
-  });
-  // Upload to R2 in background — replace data URL with permanent URL when done
-  _resizeToBlob(f,maxW,maxH,qual).then(blob=>{
-    const folder=field==='avatar'?'avatars':'covers';
-    return _uploadToR2(blob,folder,'image/jpeg');
-  }).then(url=>{
-    if(field==='avatar') _epAvatar=url;
-    else _epCover=url;
-    toast('Photo uploaded ✓','🖼️');
-  }).catch(e=>{
-    console.warn('R2 upload failed, using local preview:',e);
-    // _epAvatar/_epCover already set to data URL above — still works locally
-  });
-}
-
-async function saveEditProfile(){
-  const name=(document.getElementById('ep-name')||{}).value.trim();
-  const bio=(document.getElementById('ep-bio')||{}).value.trim();
-  const avatar=_epAvatar||currentUser.avatar||'';
-  const cover=_epCover||currentUser.cover||'';
-  const category=(document.getElementById('ep-cat')||{}).value||'Other';
-  const price=parseFloat((document.getElementById('ep-price')||{}).value)||9;
-  if(!name){toast('Name is required','⚠️');return;}
-
-  // Update currentUser and localStorage immediately — don't wait for Worker
-  currentUser=Object.assign({},currentUser,{name,bio,avatar,cover,category,price});
-  DB.set('user',currentUser);
-
-  // Also update users cache so showProfile reads the new values
-  const users=DB.get('users')||{};
-  if(currentUser.email) users[currentUser.email]={...(users[currentUser.email]||{}),...currentUser};
-  DB.set('users',users);
-
-  // Update _profileContext in-place so showProfile doesn't fall back to stale DB entry
-  _profileContext=Object.assign({},_profileContext,{name,bio,avatar,cover,cat:category,price});
-
-  // Update nav avatar text
-  const navAv=document.getElementById('navAvatar');if(navAv)navAv.textContent=currentUser.emoji||'👤';
-
-  closeModal();
-  toast('Saving…','⏳');
-
-  // Wait for any pending uploads before saving
-  if(avatar&&avatar.startsWith('data:')&&_pendingAvatarFile){
-    try{
-      toast('Uploading avatar…','⏳');
-      const blob=await _resizeToBlob(_pendingAvatarFile,400,400,0.85);
-      avatar=await _uploadToR2(blob,'avatars','image/jpeg');
-      currentUser.avatar=avatar;DB.set('user',currentUser);
-    }catch(e){console.warn('avatar upload failed',e);}
-  }
-  if(cover&&cover.startsWith('data:')&&_pendingCoverFile){
-    try{
-      toast('Uploading cover…','⏳');
-      const blob=await _resizeToBlob(_pendingCoverFile,1200,600,0.82);
-      cover=await _uploadToR2(blob,'covers','image/jpeg');
-      currentUser.cover=cover;DB.set('user',currentUser);
-    }catch(e){console.warn('cover upload failed',e);}
-  }
-
-  const workerPayload={id:currentUser.id,name,bio,category,price};
-  if(avatar&&avatar.startsWith('http')) workerPayload.avatar=avatar;
-  if(cover&&cover.startsWith('http')) workerPayload.cover=cover;
-
-  try{
-    await fetch(WORKER_URL+'/api/users/profile',{method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(workerPayload)});
-    toast('Profile updated! ✅','✅');
-    _pendingAvatarFile=null;_pendingCoverFile=null;
-  }catch(e){
-    toast('Saved locally (sync failed)','⚠️');
-  }
-
-  // Re-render profile with updated currentUser
-  showProfile(currentUser.id);
-  renderDashboard();
-}
-
-function openOwnProfile(tabEl){
-  if(!currentUser)return;
-  if(tabEl){document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));tabEl.classList.add('active');}
-  showProfile(currentUser.id);
-}
-function isSubscribed(id){if(!currentUser)return false;const u=DB.get('user');return !!(u&&(u.subscriptions||[]).includes(id));}
-function subscribeCreator(id,name,price){
-  if(!currentUser){openModal('login');return;}
-  if(isSubscribed(id)){toast('Already subscribed to '+name,'ℹ️');return;}
-  const amt=parseFloat(price)||9;
-  openStripeModal(
-    'Subscribe to '+name,
-    '$'+amt.toFixed(2)+'/month — recurring, cancel anytime',
-    amt,
-    {plan:'subscription',creator_id:id,creator_name:name,price_usd:amt}
-  );
-}
-function toggleFollow(){
-  if(!currentUser){openModal('login');return;}
-  const id=_profileContext?.id;if(!id)return;
-  const follows=JSON.parse(localStorage.getItem('follows')||'[]');
-  const idx=follows.indexOf(id);
-  const btn=document.getElementById('profileFollowBtn');
-  if(idx>-1){
-    follows.splice(idx,1);
-    localStorage.setItem('follows',JSON.stringify(follows));
-    if(btn){btn.textContent='Follow';btn.style.background='transparent';}
-    toast('Unfollowed','');
-  } else {
-    follows.push(id);
-    localStorage.setItem('follows',JSON.stringify(follows));
-    if(btn){btn.textContent='Following';btn.style.background='var(--bg3)';}
-    toast('Following '+(_profileContext?.name||'creator')+'!','');
-  }
-}
-
-function profileSubscribe(){
-  const id=_profileContext?.id;
-  if(!id)return;
-  if(isSubscribed(id)){
-    if(!confirm('Cancel subscription? You keep access until end of billing period.'))return;
-    _cancelSubscription(id);
-    return;
-  }
-  subscribeCreator(id,_profileContext.name,_profileContext.price||9);
-}
-
-async function _cancelSubscription(creatorId){
-  if(!currentUser)return;
-  try{
-    const res=await fetch(WORKER_URL+'/api/subscriptions/cancel',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({user_id:currentUser.id,creator_id:creatorId})
-    });
-    const data=await res.json();
-    if(!res.ok){toast(data.error||'Could not cancel','⚠️');return;}
-    // Update local cache
-    const subs=DB.get('subscriptions')||[];
-    const idx=subs.findIndex(s=>s.creatorId===creatorId||s.creator_id===creatorId);
-    if(idx>-1){subs[idx].status='cancelling';DB.set('subscriptions',subs);}
-    toast('Subscription cancelled — access continues until billing period ends','ℹ️');
-    // Refresh profile sub button
-    const sBtn=document.getElementById('profileSubBtn');
-    if(sBtn)sBtn.textContent='Cancelled';
-    if(_profileContext&&_profileContext.id===creatorId)showProfile(creatorId);
-  }catch(e){toast('Error: '+e.message,'⚠️');}
-}
-
-// Generic Worker fetch helper
-async function apiFetch(path, method='GET', body){
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(body) opts.body=JSON.stringify(body);
-  const res=await fetch(WORKER_URL+path,opts);
-  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||res.statusText);}
-  return res.json();
-}
-
-// FEED — Instagram style
-// ── Post text helpers ────────────────────────────────────────────────
-function _formatPostText(text){
-  // Preserve line breaks, render mentions
-  return _renderMentions((text||'').replace(/\n/g,'<br>'));
-}
-
-function _truncatePost(text, pid){
-  const words=text.trim().split(/\s+/);
-  if(words.length<=200) return _formatPostText(text);
-  const preview=words.slice(0,200).join(' ');
-  return `<span id="post-preview-${pid}">${_formatPostText(preview)}… <button onclick="document.getElementById('post-preview-${pid}').style.display='none';document.getElementById('post-full-${pid}').style.display='inline'" style="background:none;border:none;color:var(--gold);font-size:.82rem;font-weight:700;cursor:pointer;padding:0">See more</button></span><span id="post-full-${pid}" style="display:none">${_formatPostText(text)}</span>`;
-}
-
-function _trackView(pid){
-  if(!pid)return;
-  const key='viewed_'+pid;
-  if(sessionStorage.getItem(key))return;
-  sessionStorage.setItem(key,'1');
-  fetch(WORKER_URL+'/api/posts/'+pid+'/view',{method:'POST'}).catch(()=>{});
-}
-
-function postCard(p){
-  const subbed=isSubscribed(p.creator),locked=p.tier==='paid'&&!subbed;
-  const isOwn=currentUser&&(currentUser.id===p.creator||currentUser.role==='admin');
-
-  // ── PPV (pay to view) ────────────────────────────────────────────────
-  const ppvPrice=parseFloat(p.ppv_price||p.ppvPrice||0);
-  const ppvUnlocked=(DB.get('purchases')||[]).some(b=>b.productId===p.id&&b.userId===currentUser?.id);
-  if(p.tier==='ppv'&&!ppvUnlocked&&!isOwn){
-    const preview=(p.content||'').split(/\s+/).slice(0,40).join(' ');
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1px">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
-        <img src="${p.creatorAvatar||''}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#d4a843,#63b3ed) border-box" onerror="this.style.opacity=0">
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${p.creatorName}</div><div style="font-size:11px;color:var(--muted)">${p.time||''}</div></div>
-        <span style="background:rgba(212,168,67,.15);color:var(--gold);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;border:1px solid rgba(212,168,67,.3)">💰 PAY</span>
-      </div>
-      ${p.mediaSrc?`<div style="position:relative;overflow:hidden"><img src="${p.mediaSrc}" style="width:100%;aspect-ratio:1/1;object-fit:cover;filter:blur(18px) brightness(.4);display:block"><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><div style="font-size:1.8rem">🔒</div><div style="font-size:12px;color:rgba(255,255,255,.7)">Pay to unlock</div></div></div>`:''}
-      <div style="padding:12px 14px">
-        ${preview?`<div style="font-size:13px;color:var(--text);line-height:1.7;opacity:.7;white-space:pre-line">${preview}…</div>`:''}
-        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-family:'Fraunces',serif;font-size:1.3rem;color:var(--gold)">$${ppvPrice.toFixed(2)}</div>
-            <div style="font-size:.72rem;color:var(--muted)">One-time unlock</div>
-          </div>
-          <button onclick="unlockPost('${p.id}','${p.creator}','${(p.creatorName||'').replace(/'/g,"&#39;")}',${ppvPrice})" style="background:linear-gradient(135deg,#d4a843,#b8902e);border:none;border-radius:100px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;padding:9px 20px">Unlock post →</button>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  // ── LOCKED (subscribers) ─────────────────────────────────────────────
-  if(locked){
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1px">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
-        <img src="${p.creatorAvatar||''}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#d4a843,#63b3ed) border-box" onerror="this.style.opacity=0">
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${p.creatorName}</div><div style="font-size:11px;color:var(--muted)">${p.time}</div></div>
-        <span style="background:rgba(212,168,67,.15);color:var(--gold);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;border:1px solid rgba(212,168,67,.3)">★ SUBS</span>
-      </div>
-      <div style="position:relative;width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#0d0d1a,#1a1a3e);display:flex;align-items:center;justify-content:center">
-        <div style="font-size:2rem;opacity:.2">🔒</div>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,.4)">
-          <div style="font-size:13px;font-weight:700;color:#fff">${p.title}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6)">Subscribers only</div>
-          <button class="btn btn-gold btn-sm" onclick="showProfile('${p.creator}')">Subscribe to unlock</button>
-        </div>
-      </div>
-      <div style="padding:10px 14px 12px;display:flex;gap:14px;align-items:center;border-top:1px solid var(--border)">
-        <span style="font-size:12px;color:var(--muted)">♥ ${p.tips||0}</span>
-        <span style="font-size:12px;color:var(--muted)">💬 ${p.comments||0}</span>
-        <span style="font-size:12px;color:var(--muted);margin-left:auto;cursor:pointer" onclick="sharePost('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">↗</span>
-      </div>
-    </div>`;
-  }
-
-  // ── WITH IMAGE ───────────────────────────────────────────────────────
-  if(p.media==='image'&&p.mediaSrc){
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1px">
-      <!-- Header -->
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
-        <img src="${p.creatorAvatar||''}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#d4a843,#63b3ed) border-box" onerror="this.style.opacity=0">
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${p.creatorName}</div><div style="font-size:11px;color:var(--muted)">${p.time||''}</div></div>
-        ${p.tier==='paid'?'<span style="background:rgba(212,168,67,.15);color:var(--gold);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;border:1px solid rgba(212,168,67,.3)">★ SUBS</span>':''}
-        ${isOwn?`<button style="background:none;border:none;color:var(--rose);font-size:.72rem;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3)" onclick="deletePost('${p.id}',this)">Delete</button>`:''}
-      </div>
-      <!-- Square image -->
-      <div style="width:100%;aspect-ratio:1/1;overflow:hidden;background:#000">
-        <img src="${p.mediaSrc}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
-      </div>
-      <!-- Actions -->
-      <div style="padding:10px 14px 4px;display:flex;align-items:center;gap:4px">
-        <button class="post-action tip-btn" style="padding:5px 10px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;color:var(--gold);font-weight:600;font-size:.75rem" onclick="openTipModal('${p.id}','${p.creator}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">💰 Tip <span id="tcount-${p.id}">${p.tips||0}</span></button>
-        <button class="post-action" style="padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="openComments('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}')">💬 <span id="ccount-${p.id}">${p.comments||0}</span></button>
-        <button class="post-action" style="margin-left:auto;padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="sharePost('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">↗</button>
-      </div>
-      <!-- Caption -->
-      <div style="padding:2px 14px 12px">
-        ${p.title?`<div style="font-size:13px;color:var(--text);line-height:1.5"><span style="font-weight:700">${p.creatorName}</span> ${p.title}</div>`:''}
-        ${p.content?`<div style="font-size:13px;color:var(--text);line-height:1.75;margin-top:4px;white-space:pre-line">${_formatPostText(p.content)}</div>`:''}
-        <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-          <span style="font-size:11px;color:var(--muted);opacity:.6;text-transform:uppercase;letter-spacing:.04em">${p.time||''}</span>
-          <span style="font-size:.72rem;color:var(--muted)">👁 ${fmtNum(p.views||0)}</span>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  // ── WITH VIDEO ───────────────────────────────────────────────────────
-  if(p.media==='video'&&p.mediaSrc){
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1px">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
-        <img src="${p.creatorAvatar||''}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#d4a843,#63b3ed) border-box" onerror="this.style.opacity=0">
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${p.creatorName}</div><div style="font-size:11px;color:var(--muted)">${p.time||''}</div></div>
-        ${isOwn?`<button style="background:none;border:none;color:var(--rose);font-size:.72rem;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3)" onclick="deletePost('${p.id}',this)">Delete</button>`:''}
-      </div>
-      <div style="width:100%;aspect-ratio:1/1;background:#000;overflow:hidden">
-        <video src="${p.mediaSrc}" controls playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>
-      </div>
-      <div style="padding:10px 14px 4px;display:flex;align-items:center;gap:4px">
-        <button class="post-action tip-btn" style="padding:5px 10px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;color:var(--gold);font-weight:600;font-size:.75rem" onclick="openTipModal('${p.id}','${p.creator}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">💰 Tip <span id="tcount-${p.id}">${p.tips||0}</span></button>
-        <button class="post-action" style="padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="openComments('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}')">💬 <span id="ccount-${p.id}">${p.comments||0}</span></button>
-        <button class="post-action" style="margin-left:auto;padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="sharePost('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">↗</button>
-      </div>
-      <div style="padding:2px 14px 12px">
-        ${p.title?`<div style="font-size:13px;color:var(--text)"><span style="font-weight:700">${p.creatorName}</span> ${p.title}</div>`:''}
-        ${p.content?`<div style="font-size:13px;color:var(--text);line-height:1.75;margin-top:4px;white-space:pre-line">${_formatPostText(p.content)}</div>`:''}
-        <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
-          <span style="font-size:11px;color:var(--muted);opacity:.6;text-transform:uppercase;letter-spacing:.04em">${p.time||''}</span>
-          <span style="font-size:.72rem;color:var(--muted)">👁 ${fmtNum(p.views||0)}</span>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  // ── TEXT ONLY ────────────────────────────────────────────────────────
-  setTimeout(()=>_trackView(p.id),800);
-  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1px">
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
-      <img src="${p.creatorAvatar||''}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#d4a843,#63b3ed) border-box" onerror="this.style.opacity=0">
-      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text)">${p.creatorName}</div><div style="font-size:11px;color:var(--muted)">${p.time||''}</div></div>
-      ${p.tier==='paid'?'<span style="background:rgba(212,168,67,.15);color:var(--gold);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;border:1px solid rgba(212,168,67,.3)">★ SUBS</span>':''}
-      ${isOwn?`<button style="background:none;border:none;color:var(--rose);font-size:.72rem;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3)" onclick="deletePost('${p.id}',this)">Delete</button>`:''}
-    </div>
-    <div style="padding:4px 14px 14px">
-      ${p.title?`<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4">${p.title}</div>`:''}
-      ${p.content?`<div style="font-size:14px;color:var(--text);line-height:1.85;opacity:.9;white-space:pre-line">${_truncatePost(p.content,p.id)}</div>`:''}
-    </div>
-    <div style="padding:6px 14px 10px;display:flex;align-items:center;gap:4px;border-top:1px solid var(--border)">
-      <button class="post-action tip-btn" style="padding:5px 10px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;color:var(--gold);font-weight:600;font-size:.75rem" onclick="openTipModal('${p.id}','${p.creator}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">💰 Tip <span id="tcount-${p.id}">${p.tips||0}</span></button>
-      <button class="post-action" style="padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="openComments('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}')">💬 <span id="ccount-${p.id}">${p.comments||0}</span></button>
-      <span style="font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:3px">👁 ${fmtNum(p.views||0)}</span>
-      <button class="post-action" style="margin-left:auto;padding:5px 10px;border-radius:100px;font-size:.75rem" onclick="sharePost('${p.id}','${(p.title||'').replace(/'/g,"&#39;")}','${(p.creatorName||'').replace(/'/g,"&#39;")}')">↗</button>
-    </div>
-  </div>`;
-}
-function unlockPost(postId, creatorId, creatorName, price){
-  if(!currentUser){openModal('login');return;}
-  // Use Stripe payment flow
-  const grossCharge=Math.round(((price+0.25)/(1-0.015))*100)/100;
-  openStripeModal({
-    type:'ppv',
-    amount:grossCharge,
-    creatorId,
-    postId,
-    description:'Unlock post by '+creatorName,
-    label:'Unlock post — $'+price.toFixed(2)
-  });
-}
-
-async function deletePost(id, btn){
-  if(!confirm('Delete this post?')) return;
-  if(btn){btn.disabled=true;btn.textContent='…';}
-  // Store in permanent deleted-IDs blocklist so re-fetches never bring it back
-  const deleted=JSON.parse(localStorage.getItem('deleted_posts')||'[]');
-  const sid=String(id);
-  if(!deleted.includes(sid)){deleted.push(sid);localStorage.setItem('deleted_posts',JSON.stringify(deleted));}
-  // Remove from local cache
-  const posts=DB.get('posts')||[];
-  DB.set('posts',posts.filter(p=>p.id!==id));
-  // Fade and remove card from DOM
-  const card=btn&&btn.closest('.post-card');
-  if(card){card.style.transition='opacity .25s';card.style.opacity='0';setTimeout(()=>card.remove(),260);}
-  // Tell Worker — fire and forget but log result
-  try{await apiFetch('/api/posts/'+id,'DELETE');}catch(e){console.warn('Worker delete failed:',e);}
-  toast('Post deleted','🗑️');
-}
-// Always call this instead of DB.get('posts') when rendering
-function _getPosts(){
-  const deletedIds=new Set(JSON.parse(localStorage.getItem('deleted_posts')||'[]'));
-  return (DB.get('posts')||[]).filter(p=>!deletedIds.has(String(p.id)));
-}
-
-function renderFeed(){
-  renderStories();
-  // Show composer for logged-in users
-  const cw=document.getElementById('feedComposerWrap');
-  if(cw){
-    cw.style.display=currentUser?'block':'none';
-    if(currentUser){
-      setTimeout(()=>_initMentions(document.getElementById('postContent')),100);
-      const av=document.getElementById('feedComposerAvatar');
-      if(av) av.innerHTML=currentUser.avatar?`<img src="${currentUser.avatar}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:'';}
-  }
-  const cached=_getPosts();
-  if(cached.length) document.getElementById('feedContent').innerHTML=cached.map(postCard).join('');
-  fetch(WORKER_URL+'/api/posts')
-    .then(r=>r.json())
-    .then(posts=>{
-      if(posts&&posts.length){
-        // Normalise field names — Worker may return snake_case variants
-        const normalised=posts.map(p=>({
-          ...p,
-          creator:      p.creator      ?? p.creator_id ?? '',
-          creatorName:  p.creatorName  ?? p.creator_name ?? '',
-          creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
-          media:        p.media        ?? p.media_type ?? null,
-          mediaSrc:     p.mediaSrc     ?? p.media_url ?? null,
-          comments: p.comments ?? p.comments_count ?? p.comment_count ?? 0,
-          tips:     p.tips     ?? p.tips_count     ?? p.tip_count     ?? 0,
-        }));
-        // Filter out deleted posts and posts older than 90 days
-        const deletedIds=new Set(JSON.parse(localStorage.getItem('deleted_posts')||'[]'));
-        const cutoff=Date.now()-90*24*60*60*1000;
-        const fresh=normalised.filter(p=>
-          !deletedIds.has(String(p.id))&&
-          (!p.created_at||new Date(p.created_at).getTime()>cutoff)
-        );
-        DB.set('posts',fresh);
-        document.getElementById('feedContent').innerHTML=fresh.map(postCard).join('');
-      } else if(!cached.length){
-        document.getElementById('feedContent').innerHTML=`<div class="empty"><div class="empty-icon">📭</div>No posts yet.</div>`;
-      }
-    }).catch(()=>{
-      if(!cached.length) document.getElementById('feedContent').innerHTML=`<div class="empty"><div class="empty-icon">📭</div>No posts yet.</div>`;
-    });
-}
-// ═══ STORIES ════════════════════════════════════════════════════════
-let _boostedProfileIds=new Set(),_boostedProfiles=[];
-let _storyTimer=null,_storyIdx=0,_storyCreators=[],_storyDur=5000,_currentCreatorIdx=0;
-let _pendingStoryFile=null,_pendingStoryUrl='';
-
-function renderStories(){
-  const strip=document.getElementById('storiesStrip');
-  if(!strip)return;
-  if(!currentUser){strip.style.display='none';return;} // guests never see stories
-
-  const addBtn=`<div class="story-item" onclick="openAddStory()">
-    <div class="story-ring" style="background:conic-gradient(#d4a843,#f0c84a,#c0392b,#d4a843)">
-      <div class="story-inner" style="position:relative">
-        <img src="${currentUser.avatar||''}" alt="" onerror="this.style.display='none'">
-        <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;background:linear-gradient(135deg,#d4a843,#c0392b);border-radius:50%;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff">+</div>
-      </div>
-    </div>
-    <div class="story-name" style="color:var(--gold)">Add story</div>
-  </div>`;
-
-  strip.style.display='flex';
-  strip.innerHTML=addBtn;
-
-  fetch(WORKER_URL+'/api/stories').then(r=>r.json()).then(stories=>{
-    if(!stories||!stories.length)return;
-    const map={};
-    stories.forEach(s=>{
-      if(!map[s.creator_id])map[s.creator_id]={creator_id:s.creator_id,name:s.creator_name||'',avatar:s.creator_avatar||'',stories:[]};
-      map[s.creator_id].stories.push(s);
-    });
-    const subs=DB.get('subscriptions')||[];
-    const subIds=new Set(subs.filter(s=>s.status==='active').map(s=>s.creatorId||s.creator_id));
-    const follows=new Set(JSON.parse(localStorage.getItem('follows')||'[]'));
-    const visible=Object.values(map).filter(c=>subIds.has(c.creator_id)||follows.has(c.creator_id)||c.creator_id===currentUser.id);
-    _storyCreators=visible;
-    if(!visible.length)return;
-    const seenList=JSON.parse(localStorage.getItem('seen_stories')||'[]');
-    let html=addBtn;
-    visible.forEach(c=>{
-      const seen=seenList.includes(c.creator_id);
-      html+=`<div class="story-item" onclick="_openStoryById('${c.creator_id}')">
-        <div class="story-ring${seen?' seen':''}">
-          <div class="story-inner"><img src="${c.avatar||''}" alt="" onerror="this.style.background='var(--card2)'"></div>
-        </div>
-        <div class="story-name">${c.name||''}</div>
-      </div>`;
-    });
-    strip.innerHTML=html;
-  }).catch(()=>{});
-}
-
-function _openStoryById(creatorId){
-  const idx=(_storyCreators||[]).findIndex(c=>c.creator_id===creatorId);
-  if(idx>-1)openStory(idx);
-}
-
-function openStory(creatorIdx){
-  const c=_storyCreators[creatorIdx];if(!c)return;
-  _currentCreatorIdx=creatorIdx;_storyIdx=0;
-  document.getElementById('storyViewer').style.display='flex';
-  document.body.style.overflow='hidden';
-  _playStory(c,0);
-  const seen=JSON.parse(localStorage.getItem('seen_stories')||'[]');
-  if(!seen.includes(c.creator_id)){seen.push(c.creator_id);localStorage.setItem('seen_stories',JSON.stringify(seen));}
-  const tipBar=document.getElementById('storyTipBar');
-  if(tipBar){const isOwn=currentUser&&c.creator_id===currentUser.id;tipBar.style.display=isOwn?'none':'flex';}
-}
-
-function _playStory(creator,idx){
-  clearTimeout(_storyTimer);
-  const s=creator.stories[idx];if(!s)return closeStoryViewer();
-  _storyIdx=idx;
-  const bars=creator.stories.map((_,i)=>`<div class="story-bar${i<idx?' done':i===idx?' active':''}"><div class="story-bar-fill"></div></div>`).join('');
-  document.getElementById('storyProgress').innerHTML=bars;
-  document.getElementById('storyViewerAvatar').src=creator.avatar||'';
-  document.getElementById('storyViewerName').textContent=creator.name;
-  document.getElementById('storyViewerTime').textContent=_timeAgo(s.created_at)||'';
-  document.getElementById('storyCaption').textContent=s.caption||'';
-  const content=document.getElementById('storyContent');
-  if(s.media_type==='video'){
-    content.innerHTML=`<video src="${s.media_url}" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>`;
-    const vid=content.querySelector('video');
-    vid.onloadedmetadata=()=>{_storyDur=Math.min(vid.duration*1000,30000);};
-    vid.play();
-  } else {
-    content.innerHTML=`<img src="${s.media_url}" alt="" style="width:100%;height:100%;object-fit:cover">`;
-  }
-  const barEl=document.querySelector('.story-bar.active');
-  if(barEl)barEl.style.setProperty('--dur',(_storyDur/1000)+'s');
-  _storyTimer=setTimeout(()=>_storyNext(),_storyDur);
-}
-
-function _storyPrev(){
-  const c=_storyCreators[_currentCreatorIdx];if(!c)return;
-  if(_storyIdx>0)_playStory(c,_storyIdx-1);
-  else if(_currentCreatorIdx>0){_currentCreatorIdx--;openStory(_currentCreatorIdx);}
-}
-function _storyNext(){
-  const c=_storyCreators[_currentCreatorIdx];if(!c)return;
-  if(_storyIdx+1<c.stories.length)_playStory(c,_storyIdx+1);
-  else if(_currentCreatorIdx+1<_storyCreators.length){_currentCreatorIdx++;openStory(_currentCreatorIdx);}
-  else closeStoryViewer();
-}
-function closeStoryViewer(){
-  clearTimeout(_storyTimer);
-  document.getElementById('storyViewer').style.display='none';
-  document.body.style.overflow='';
-  _storyDur=5000;
-}
-function _tipStoryCreator(){
-  const c=_storyCreators[_currentCreatorIdx];if(!c)return;
-  clearTimeout(_storyTimer);
-  closeStoryViewer();
-  setTimeout(()=>openTipModal(c.stories[_storyIdx]?.id||'',c.creator_id,c.name),100);
-}
-
-function openAddStory(){
-  if(!currentUser){openModal('login');return;}
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div><div style="font-weight:700;font-size:1rem;color:var(--text)">Add story</div><div style="font-size:.75rem;color:var(--muted);margin-top:2px">Disappears after 24h</div></div>
-      <button onclick="closeModal()" style="background:var(--bg3);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <input id="storyFileInput" type="file" accept="image/*,video/*" style="display:none" onchange="_handleStoryFile(event)">
-    <div id="storyPreview" onclick="document.getElementById('storyFileInput').click()" class="cover-up" style="min-height:200px">
-      <div class="cover-up-empty"><span class="cup-icon">📸</span>Tap to pick photo or video<div style="font-size:.7rem;color:var(--muted);margin-top:3px">Max 30s video</div></div>
-    </div>
-    <div class="fg" style="margin-top:12px"><label>Caption (optional)</label><input id="storyCaptionInput" placeholder="Add a caption…" maxlength="100"></div>
-    <button style="width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,#d4a843,#f0c84a,#b8902e);border:none;border-radius:100px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer" onclick="submitStory()">Post story →</button>`;
-  openModal('addStory',html);
-}
-
-function _handleStoryFile(ev){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  _pendingStoryFile=f;_pendingStoryUrl='';
-  const isImg=f.type.startsWith('image/');
-  if(isImg){
-    _resizeToDataURL(f,1080,1920,0.85).then(src=>{
-      const prev=document.getElementById('storyPreview');
-      if(prev)prev.innerHTML=`<img src="${src}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px">`;
-    });
-    _resizeToBlob(f,1080,1920,0.85).then(blob=>_uploadToR2(blob,'stories','image/jpeg')).then(url=>{
-      _pendingStoryUrl=url;toast('Photo uploaded ✓','🖼️');
-    }).catch(e=>console.warn('story upload failed:',e));
-  } else {
-    const r=new FileReader();
-    r.onload=e=>{
-      const prev=document.getElementById('storyPreview');
-      if(prev)prev.innerHTML=`<video src="${e.target.result}" controls style="width:100%;max-height:220px;border-radius:10px"></video>`;
-    };
-    r.readAsDataURL(f);
-    _uploadToR2(f,'stories',f.type||'video/mp4').then(url=>{
-      _pendingStoryUrl=url;toast('Video uploaded ✓','🎬');
-    }).catch(e=>console.warn('story video upload failed:',e));
-  }
-}
-
-async function submitStory(){
-  if(!currentUser){toast('Sign in first','⚠️');return;}
-  if(!_pendingStoryFile){toast('Pick a photo or video first','⚠️');return;}
-  const caption=(document.getElementById('storyCaptionInput')||{}).value?.trim()||'';
-  const isImg=_pendingStoryFile.type.startsWith('image/');
-  if(!_pendingStoryUrl){
-    toast('Uploading…','⏳');
-    try{
-      if(isImg){const blob=await _resizeToBlob(_pendingStoryFile,1080,1920,0.85);_pendingStoryUrl=await _uploadToR2(blob,'stories','image/jpeg');}
-      else{_pendingStoryUrl=await _uploadToR2(_pendingStoryFile,'stories',_pendingStoryFile.type||'video/mp4');}
-    }catch(e){toast('Upload failed: '+e.message,'⚠️');return;}
-  }
-  try{
-    await apiFetch('/api/stories','POST',{
-      creator_id:currentUser.id,creator_name:currentUser.name,creator_avatar:currentUser.avatar||'',
-      media_url:_pendingStoryUrl,media_type:isImg?'image':'video',caption
-    });
-    closeModal();toast('Story posted!','✨');renderStories();
-    _pendingStoryFile=null;_pendingStoryUrl='';
-  }catch(e){toast('Failed: '+e.message,'⚠️');}
-}
-
-// ═══ NEW POST ════════════════════════════════════════════════════════
-let _pendingPostMedia=null;
-
-function _togglePostPrice(val){
-  const wrap=document.getElementById('postPriceWrap');
-  if(wrap)wrap.style.display=val==='ppv'?'flex':'none';
-}
-
-function _handlePostMedia(ev){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  const isImg=f.type.startsWith('image/'),isVid=f.type.startsWith('video/');
-  if(!isImg&&!isVid){toast('Pick an image or video file','⚠️');return;}
-  if(f.size>100*1024*1024){toast('File too large — max 100 MB','⚠️');return;}
-  if(isImg){
-    // Preview instantly — same as profile pic
-    _resizeToDataURL(f,1200,1200,0.85).then(src=>{
-      _pendingPostMedia={type:'image',src,publicUrl:null,file:f};
-      _renderPostMediaPreview();
-    });
-    // Upload in background — same as profile pic
-    _resizeToBlob(f,1200,1200,0.85).then(blob=>_uploadToR2(blob,'posts','image/jpeg')).then(url=>{
-      if(_pendingPostMedia)_pendingPostMedia.publicUrl=url;
-      toast('Photo uploaded ✓','🖼️');
-    }).catch(e=>console.warn('post image upload failed:',e));
-    return;
-  }
-  // Video
-  const r=new FileReader();
-  r.onload=function(e){
-    const src=e.target.result;
-    const v=document.createElement('video');
-    v.preload='metadata';
-    v.onloadedmetadata=function(){
-      const dur=v.duration||0;
-      if(dur>30.5){toast('Video max 30 seconds','⚠️');_pendingPostMedia=null;return;}
-      _pendingPostMedia={type:'video',src,publicUrl:null,duration:dur,file:f};
-      _renderPostMediaPreview();
-      _uploadToR2(f,'posts',f.type||'video/mp4').then(url=>{
-        if(_pendingPostMedia)_pendingPostMedia.publicUrl=url;
-        toast('Video uploaded ✓','🎬');
-      }).catch(e=>console.warn('post video upload failed:',e));
-    };
-    v.src=src;
+    if (path === "/" || path === "/index.html" || path === "/privacy" || path === "/terms") {
+      const obj = await env.MEDIA.get("index.html");
+      if (obj) {
+        let html = await obj.text();
+        // For /privacy and /terms inject a script to auto-open the right page
+        if (path === "/privacy" || path === "/terms") {
+          const page = path.slice(1); // 'privacy' or 'terms'
+          html = html.replace('</body>', `<script>
+(function(){
+  var open=function(){
+    document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+    var t=document.getElementById('page-${page}');
+    if(t){t.classList.add('active');window.scrollTo({top:0});}
   };
-  r.readAsDataURL(f);
-}
+  open();setTimeout(open,200);
+})();
+</script></body>`);
+        }
+        return new Response(html, { headers: { "Content-Type": "text/html", "Cache-Control": "no-cache", ...CORS } });
+      }
+    }
+    // ── File upload — handle before body parsing to preserve multipart stream
+    if (path === "/api/upload" && method === "POST") {
+      try {
+        const formData = await request.formData();
+        const file = formData.get("file");
+        const folder = (formData.get("folder") || "misc");
+        if (!file) return err("No file provided");
+        const originalName = (file.name || "file").replace(/[/\\/]/g, "_");
+        const ext = (originalName.split(".").pop() || "bin").toLowerCase();
+        const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        const key = folder + "/" + safeName;
+        const mimeType = file.type || "application/octet-stream";
+        const arrayBuffer = await file.arrayBuffer();
+        await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+        return json({ url: publicUrl, key });
+      } catch(e) {
+        return err("Upload error: " + e.message, 500);
+      }
+    }
 
-function _renderPostMediaPreview(){
-  const box=document.getElementById('postMediaPreview');if(!box||!_pendingPostMedia)return;
-  box.style.display='block';
-  box.style.position='relative';
-  if(_pendingPostMedia.type==='image'){
-    box.innerHTML=`<img src="${_pendingPostMedia.src}" style="width:100%;max-height:260px;object-fit:cover;display:block"><button type="button" onclick="_clearPostMedia()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.9rem">×</button>`;
-  } else {
-    box.innerHTML=`<video src="${_pendingPostMedia.src}" controls style="width:100%;max-height:260px;object-fit:cover;display:block"></video><button type="button" onclick="_clearPostMedia()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.9rem">×</button>`;
-  }
-}
+    let body = {};
+    if (method === "POST" || method === "PUT") {
+      const ct = request.headers.get("Content-Type") || "";
+      if (ct.includes("application/json")) {
+        try { body = await request.json(); } catch {}
+      }
+    }
+    try {
+      if (path === "/api/paypal/test") {
+        try {
+          const token = await getPayPalToken(env);
+          return json({ success: true, preview: token.substring(0, 20) + "..." });
+        } catch (e) {
+          return json({ success: false, error: e.message });
+        }
+      }
+      if (path === "/api/paypal/order" && method === "POST") {
+        const { amount, description, user_id, creator_id, post_id, product_id, plan, user_name } = body;
+        if (!amount) return err("Missing amount");
+        const order = await paypalReq(env, "/v2/checkout/orders", "POST", {
+          intent: "CAPTURE",
+          purchase_units: [{
+            amount: { currency_code: "USD", value: Number(amount).toFixed(2) },
+            description: description || "Galaxy Payment"
+          }],
+          application_context: {
+            return_url: "https://vygalaxy.dabarey24.workers.dev/?pp=success",
+            cancel_url: "https://vygalaxy.dabarey24.workers.dev/?pp=cancel",
+            brand_name: "Galaxy",
+            user_action: "PAY_NOW",
+            landing_page: "BILLING"
+          }
+        });
+        return json({ id: order.id, status: order.status });
+      }
+      if (path === "/api/paypal/capture" && method === "POST") {
+        const { order_id, user_id, creator_id, post_id, product_id, plan, amount, user_name } = body;
+        if (!order_id) return err("Missing order_id");
+        const amountNum = Number(amount||0);
+        if (amountNum < 1) return err("Minimum payment is $1.");
+        if (plan === "purchase" && amountNum < 5) return err("Minimum product price is $5.");
+        const capture = await paypalReq(env, "/v2/checkout/orders/" + order_id + "/capture", "POST", {});
+        if (capture.status !== "COMPLETED") return err("Payment not completed: " + capture.status);
+        const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
+        if (plan === "tip" && post_id) {
+          await env.DB.prepare(
+            `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind("tip_" + Date.now(), post_id, creator_id, user_id || "", user_name || "", creatorAmount).run();
+          await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
+        }
+        if (plan === "purchase" && product_id) {
+          await env.DB.prepare(
+            `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+          ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, "paypal_" + order_id).run();
+          await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+        }
+        // Credit creator balance for PayPal payments
+        if (creator_id) await creditBalance(env, creator_id, Number(amount));
+        return json({ success: true, capture_id: order_id });
+      }
+      if (path === "/api/posts" && method === "GET") {
+        const creatorId = url.searchParams.get("creator_id");
+        if (creatorId) {
+          const { results: results2 } = await env.DB.prepare(
+            `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+             FROM posts p LEFT JOIN users u ON p.creator_id = u.id
+             WHERE p.creator_id = ?
+             ORDER BY p.created_at DESC LIMIT 100`
+          ).bind(creatorId).all();
+          return json(results2 || []);
+        }
+        const { results } = await env.DB.prepare(
+          `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+           FROM posts p LEFT JOIN users u ON p.creator_id = u.id
+           ORDER BY p.created_at DESC LIMIT 200`
+        ).all();
+        return json(results || []);
+      }
+      if (path === "/api/posts" && method === "POST") {
+        const { creator_id, title, content, tier, media_type, media_url } = body;
+        if (!creator_id || !content) return err("Missing fields");
+        const id = "post_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO posts (id, creator_id, title, content, tier, media_type, media_url, tips_count, comments_count, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, datetime('now'))`
+        ).bind(id, creator_id, title || "", content, tier || "free", media_type || "", media_url || "").run();
+        return json({ id, success: true });
+      }
+      if (path.startsWith("/api/posts/") && method === "DELETE") {
+        const postId = path.split("/")[3];
+        // Get media_url before deleting so we can remove from R2
+        const post = await env.DB.prepare("SELECT media_url FROM posts WHERE id=?").bind(postId).first();
+        await env.DB.prepare("DELETE FROM posts WHERE id=?").bind(postId).run();
+        // Delete from R2 if media exists
+        if (post?.media_url) {
+          try {
+            // Extract R2 key from public URL
+            // e.g. https://pub-xxx.r2.dev/posts/filename.jpg -> posts/filename.jpg
+            const r2Key = post.media_url.replace(/^https?:\/\/[^/]+\//, '');
+            if (r2Key && !r2Key.startsWith('http')) {
+              await env.MEDIA.delete(r2Key);
+            }
+          } catch(e) {
+            console.warn('R2 delete failed:', e.message);
+          }
+        }
+        return json({ success: true });
+      }
+      
+      // ── Presigned upload URL for direct R2 upload ──────────────────────
+      // ── Base64 upload endpoint (JSON, no multipart) ────────────────────
+      if (path === "/api/upload/b64" && method === "POST") {
+        const { key, mimeType, data } = body;
+        if (!key || !mimeType || !data) return err("Missing key, mimeType or data");
+        // Decode base64
+        const binaryStr = atob(data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        await env.MEDIA.put(key, bytes.buffer, {
+          httpMetadata: { contentType: mimeType }
+        });
+        const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+        return json({ url: publicUrl, key });
+      }
 
-function _clearPostMedia(){
-  _pendingPostMedia=null;
-  const fi=document.getElementById('postMediaFile');if(fi)fi.value='';
-  const box=document.getElementById('postMediaPreview');
-  if(box){box.innerHTML='';box.style.display='none';}
-}
+      if (path === "/api/upload/presign" && method === "POST") {
+        const { key, mimeType } = body;
+        if (!key || !mimeType) return err("Missing key or mimeType");
+        const allowed = ["image/jpeg","image/jpg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime","video/mov"];
+        if (!allowed.includes(mimeType)) return err("File type not allowed: " + mimeType);
+        if (key.includes("..") || key.startsWith("/")) return err("Invalid key");
+        try {
+          const signedUrl = await env.MEDIA.createMultipartUpload ? null : null; // fallback below
+          // Generate presigned URL via R2 binding
+          const url = await env.MEDIA.createPresignedUrl("PUT", key, {
+            expiresIn: 300,
+            httpMetadata: { contentType: mimeType }
+          }).catch(async () => {
+            // If createPresignedUrl not available, use Workers R2 presigned URL
+            return null;
+          });
+          if (url) {
+            const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
+            return json({ url, publicUrl, key });
+          }
+          // Fallback: direct upload through Worker
+          return json({ url: null, publicUrl: null, key, fallback: true });
+        } catch(e) {
+          return err("Presign failed: " + e.message);
+        }
+      }
 
-async function publishPost(){
-  if(!currentUser){toast('Please sign in to post','⚠️');openModal('login');return;}
-  // Check daily post limit (3 per day)
-  const todayKey='posts_today_'+new Date().toISOString().slice(0,10)+'_'+currentUser.id;
-  const todayCount=parseInt(localStorage.getItem(todayKey)||'0');
-  if(todayCount>=3){toast('Daily limit reached — max 3 posts per day','⚠️');return;}
-  const content=(document.getElementById('postContent')||{}).value?.trim()||'';
-  const tier=(document.getElementById('postTier')||{}).value||'free';
-  const ppvPrice=tier==='ppv'?parseFloat((document.getElementById('postPrice')||{}).value||'1'):0;
-  if(!content&&!_pendingPostMedia){toast('Write something or add a photo','⚠️');return;}
+      if (path === "/api/upload/sign" && method === "POST") {
+        const { key, mimeType } = body;
+        if (!key || !mimeType) return err("Missing key or mimeType");
+        const allowed = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
+        if (!allowed.includes(mimeType)) return err("File type not allowed");
+        if (key.includes("..") || key.startsWith("/")) return err("Invalid key");
+        const url2 = await env.MEDIA_BUCKET.createPresignedUrl("PUT", key, {
+          expiresIn: 300,
+          httpMetadata: { contentType: mimeType }
+        });
+        return json({ url: url2, publicUrl: "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key });
+      }
+      // ── Google OAuth ──────────────────────────────────────────────────────
+      if (path === "/api/auth/google" && method === "POST") {
+        const { id_token, ref_code } = body;
+        if (!id_token) return err("Missing id_token");
 
-  let mediaUrl=null,mediaType=null;
-  if(_pendingPostMedia){
-    mediaType=_pendingPostMedia.type;
-    if(!_pendingPostMedia.publicUrl){
-      toast('Uploading…','⏳');
-      try{
-        if(mediaType==='image'){
-          const blob=await _resizeToBlob(_pendingPostMedia.file,1200,1200,0.85);
-          _pendingPostMedia.publicUrl=await _uploadToR2(blob,'posts','image/jpeg');
+        // Verify Google ID token via Google's tokeninfo endpoint
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
+        const payload = await verifyRes.json();
+
+        if (!verifyRes.ok || payload.error) return err("Invalid Google token");
+        if (payload.aud !== "402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googleusercontent.com") {
+          return err("Token audience mismatch");
+        }
+
+        const email = payload.email;
+        const name = payload.name || email.split('@')[0];
+        const avatar = payload.picture || '';
+        const googleId = payload.sub;
+
+        // Check if user exists
+        let user = await env.DB.prepare("SELECT * FROM users WHERE email=?").bind(email).first();
+
+        if (!user) {
+          // Create new user
+          const id = "user_" + Date.now();
+          const role = email === "dabarey24@gmail.com" ? "admin" : "user";
+          await env.DB.prepare(
+            `INSERT INTO users (id, email, name, avatar, role, category, google_id, ref_code, created_at)
+             VALUES (?, ?, ?, ?, ?, 'Other', ?, ?, datetime('now'))`
+          ).bind(id, email, name, avatar, role, googleId, ref_code||null).run();
+          user = await env.DB.prepare("SELECT * FROM users WHERE id=?").bind(id).first();
+        } else if (!user.google_id) {
+          // Link Google to existing account
+          await env.DB.prepare("UPDATE users SET google_id=?, avatar=COALESCE(NULLIF(avatar,''),?) WHERE id=?")
+            .bind(googleId, avatar, user.id).run();
+        }
+
+        const { password_hash, ...safe } = user;
+        return json({ ...safe, avatar: avatar || safe.avatar });
+      }
+
+      // ── Forgot password ───────────────────────────────────────────────
+      if (path === "/api/auth/forgot-password" && method === "POST") {
+        const { email } = body;
+        if (!email) return err("Missing email");
+        const user = await env.DB.prepare("SELECT id, name FROM users WHERE email=?").bind(email).first();
+        if (!user) return json({ success: true }); // Don't reveal if email exists
+        // Generate reset token
+        const token = crypto.randomUUID().replace(/-/g,'');
+        const expires = new Date(Date.now() + 60*60*1000).toISOString(); // 1 hour
+        await env.DB.prepare("UPDATE users SET reset_token=?, reset_expires=? WHERE id=?")
+          .bind(token, expires, user.id).run().catch(async ()=>{
+            // Add columns if missing
+            await env.DB.prepare("ALTER TABLE users ADD COLUMN reset_token TEXT").run().catch(()=>{});
+            await env.DB.prepare("ALTER TABLE users ADD COLUMN reset_expires TEXT").run().catch(()=>{});
+            await env.DB.prepare("UPDATE users SET reset_token=?, reset_expires=? WHERE id=?")
+              .bind(token, expires, user.id).run();
+          });
+        const resetUrl = "https://galaxyvy.com/?reset=" + token;
+        // Send email via Resend
+        if (env.RESEND_API_KEY) {
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + env.RESEND_API_KEY },
+            body: JSON.stringify({
+              from: "GALAXY <vino@galaxyvy.com>",
+              to: email,
+              subject: "Reset your GALAXY password",
+              html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#0a0000;color:#fff;border-radius:16px">
+                <h2 style="font-family:Georgia,serif;font-weight:400;margin-bottom:8px">Password Reset</h2>
+                <p style="color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px">Hi ${user.name}, click the button below to set a new password. This link expires in 1 hour.</p>
+                <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#d4a843,#b8902e);color:#0a0000;text-decoration:none;padding:14px 28px;border-radius:100px;font-weight:700;font-size:15px">Reset password →</a>
+                <p style="color:rgba(255,255,255,.3);font-size:12px;margin-top:24px">If you didn't request this, ignore this email. Your password won't change.</p>
+              </div>`
+            })
+          });
+        }
+        return json({ success: true });
+      }
+
+      // ── Reset password (verify token + set new password) ─────────────
+      if (path === "/api/auth/reset-password" && method === "POST") {
+        const { token, password } = body;
+        if (!token || !password) return err("Missing fields");
+        if (password.length < 6) return err("Password too short");
+        const user = await env.DB.prepare(
+          "SELECT id FROM users WHERE reset_token=? AND reset_expires > datetime('now')"
+        ).bind(token).first();
+        if (!user) return err("Invalid or expired reset link");
+        const hash = await hashPassword(password);
+        await env.DB.prepare("UPDATE users SET password_hash=?, reset_token=NULL, reset_expires=NULL WHERE id=?")
+          .bind(hash, user.id).run();
+        return json({ success: true });
+      }
+
+      if (path === "/api/db/migrate" && method === "POST") {
+        // Run migrations
+        const migrations = [
+          "ALTER TABLE users ADD COLUMN cert_status TEXT DEFAULT 'unsubmitted'",
+          "ALTER TABLE users ADD COLUMN reset_token TEXT",
+          "ALTER TABLE users ADD COLUMN reset_expires TEXT",
+          "ALTER TABLE users ADD COLUMN ref_rate INTEGER DEFAULT 1",
+          `CREATE TABLE IF NOT EXISTS cert_requests (id TEXT PRIMARY KEY, user_id TEXT, user_name TEXT, user_email TEXT, category TEXT, cert_url TEXT, status TEXT DEFAULT 'pending', submitted_at TEXT)`
+        ];
+        const results = [];
+        for (const sql of migrations) {
+          try { await env.DB.prepare(sql).run(); results.push({sql:'ok'}); }
+          catch(e) { results.push({sql:'skip:'+e.message.slice(0,50)}); }
+        }
+        return json({ results });
+      }
+
+      if (path === "/api/users/register" && method === "POST") {
+        const { email, password, name, category, ref_code } = body;
+        if (!email || !password || !name) return err("Missing fields");
+        const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+        if (existing) return err("Email already registered", 409);
+        const id = "user_" + Date.now();
+        const hash = await hashPassword(password);
+        const role = email === "dabarey24@gmail.com" ? "admin" : "user";
+        await env.DB.prepare(
+          `INSERT INTO users (id, email, password_hash, name, role, category, ref_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+        ).bind(id, email, hash, name, role, category || "Other", ref_code||null).run();
+        return json({ id, email, name, role, category: category || "Other" });
+      }
+      if (path === "/api/users/login" && method === "POST") {
+        const { email, password } = body;
+        if (!email || !password) return err("Missing fields");
+        const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+        if (!user) return err("Invalid email or password", 401);
+        const valid = await verifyPassword(password, user.password_hash);
+        if (!valid) return err("Invalid email or password", 401);
+        const { password_hash, ...safe } = user;
+        return json(safe);
+      }
+      if (path === "/api/users" && method === "GET") {
+        const id = url.searchParams.get("id");
+        const role = url.searchParams.get("role");
+        if (role === "creator") {
+          const { results } = await env.DB.prepare(
+            `SELECT id,name,bio,avatar,cover,category,price,role,verified,kyc_status,subs_count,created_at FROM users WHERE role!='admin' ORDER BY created_at DESC`
+          ).all();
+          return json(results || []);
+        }
+        if (!id) return err("Missing id");
+        const user = await env.DB.prepare("SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,cert_status,ref_rate,subs_count,created_at FROM users WHERE id=?").bind(id).first();
+        if (!user) return err("User not found", 404);
+        return json(user);
+      }
+      if (path === "/api/products" && method === "GET") {
+        const creatorId = url.searchParams.get("creator_id");
+        const normalize = rows => (rows||[]).map(p => ({
+          ...p,
+          creatorId:    p.creator_id,
+          creatorName:  p.creator_name  || '',
+          creatorAvatar:p.creator_avatar || '',
+          desc:         p.desc || p.description || '',
+          sales:        p.sales || p.sales_count || 0,
+          includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
+        }));
+        if (creatorId) {
+          const { results } = await env.DB.prepare(
+            `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+             FROM products p LEFT JOIN users u ON p.creator_id = u.id
+             WHERE p.creator_id=? ORDER BY p.created_at DESC`
+          ).bind(creatorId).all();
+          return json(normalize(results));
+        }
+        const { results } = await env.DB.prepare(
+          `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+           FROM products p LEFT JOIN users u ON p.creator_id = u.id
+           ORDER BY p.created_at DESC`
+        ).all();
+        return json(normalize(results));
+      }
+      if (path === "/api/products" && method === "POST") {
+        const { id: clientId, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview } = body;
+        if (!creator_id || !title || !price) return err("Missing fields");
+        if (Number(price) < 5) return err("Minimum product price is $5.");
+        const id = clientId || ("prod_" + Date.now());
+        const finalDesc = description || desc || "";
+        // Add columns if missing
+        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT"]) {
+          await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
+        }
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category, sales, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
+        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'').run();
+        return json({ id, success: true });
+      }
+      if (path.match(/^\/api\/products\/[^\/]+\/analytics$/) && method === "GET") {
+        const productId = path.split("/")[3];
+        const { results } = await env.DB.prepare(
+          `SELECT pu.created_at, u.name as buyer_name, pu.amount
+           FROM purchases pu LEFT JOIN users u ON pu.user_id = u.id
+           WHERE pu.product_id=? ORDER BY pu.created_at DESC LIMIT 20`
+        ).bind(productId).all().catch(()=>({results:[]}));
+        const prod = await env.DB.prepare("SELECT sales, price FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+        return json({ recent: results||[], sales: prod?.sales||0, price: prod?.price||0 });
+      }
+
+      // ── Product analytics ─────────────────────────────────────────────
+      if (path.match(/^\/api\/products\/[^/]+\/analytics$/) && method === "GET") {
+        const productId = path.split("/")[3];
+        // Get recent purchases for this product
+        const { results: recent } = await env.DB.prepare(
+          `SELECT p.buyer_name, p.amount, p.created_at
+           FROM purchases p WHERE p.product_id=?
+           ORDER BY p.created_at DESC LIMIT 20`
+        ).bind(productId).all().catch(()=>({results:[]}));
+        // Get total sales from product record
+        const prod = await env.DB.prepare("SELECT sales, price FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+        return json({ recent: recent||[], sales: prod?.sales||0, price: prod?.price||0 });
+      }
+
+      if (path.startsWith("/api/products/") && method === "DELETE") {
+        const productId = path.split("/")[3];
+        const prod = await env.DB.prepare("SELECT cover_url, sample_url FROM products WHERE id=?").bind(productId).first();
+        await env.DB.prepare("DELETE FROM products WHERE id=?").bind(productId).run();
+        // Delete cover and sample from R2
+        for (const url of [prod?.cover_url, prod?.sample_url]) {
+          if (!url) continue;
+          try {
+            const key = url.replace(/^https?:\/\/[^/]+\//, '');
+            if (key && !key.startsWith('http')) await env.MEDIA.delete(key);
+          } catch(e) {}
+        }
+        return json({ success: true });
+      }
+
+      if (path === "/api/subscriptions" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM subscriptions WHERE user_id = ? AND status = 'active'`
+        ).bind(userId).all();
+        return json(results || []);
+      }
+      if (path === "/api/purchases" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const { results } = await env.DB.prepare(
+          `SELECT pu.*, p.title as product_title, p.emoji, p.deliverables
+           FROM purchases pu LEFT JOIN products p ON pu.product_id = p.id
+           WHERE pu.user_id = ?`
+        ).bind(userId).all();
+        return json(results || []);
+      }
+      if (path === "/api/pay" && method === "POST") {
+        const {
+          payment_method_id, user_id, user_email, user_name, plan, price_usd,
+          creator_id, creator_name, product_id, product_title, post_id
+        } = body;
+        if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
+        const amountUsd = Number(price_usd); // gross charge including Stripe fee passthrough
+        const originalPrice = Number(body.original_price || price_usd); // original price before fee
+        // Enforce minimum $1 for all — Stripe fee added on top by client
+        if (originalPrice < 1) return err("Minimum payment is $1.");
+        if (plan === "purchase" && originalPrice < 5) return err("Minimum product price is $5.");
+        const amountCents = Math.round(amountUsd * 100);
+        // Creator earns 71% of original price (not gross charge)
+        const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
+        const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
+        let customerId;
+        if (existing.data?.length > 0) {
+          customerId = existing.data[0].id;
         } else {
-          _pendingPostMedia.publicUrl=await _uploadToR2(_pendingPostMedia.file,'posts',_pendingPostMedia.file.type||'video/mp4');
+          const c = await stripeReq(env, "/customers", "POST", { email: user_email, name: user_name || user_email });
+          customerId = c.id;
         }
-      }catch(e){toast('Upload failed: '+e.message,'⚠️');return;}
-    }
-    mediaUrl=_pendingPostMedia.publicUrl;
-  }
-
-  try{
-    const saved=await apiFetch('/api/posts','POST',{
-      creator_id:currentUser.id,title:'',content,tier:tier==='ppv'?'ppv':tier==='live'?'live':tier,
-      ppv_price:ppvPrice||null,
-      media_type:mediaType,media_url:mediaUrl,
-      expires_at:new Date(Date.now()+90*24*60*60*1000).toISOString()
-    });
-    const localPost={
-      id:saved?.id||('p'+Date.now()),
-      creator:currentUser.id,creatorName:currentUser.name,
-      creatorAvatar:currentUser.avatar||'',
-      content,tier:tier==='ppv'?'ppv':tier,ppv_price:ppvPrice||0,time:'just now',tips:0,comments:0,
-      media:mediaType,mediaSrc:mediaUrl,
-      created_at:new Date().toISOString()
-    };
-    const posts=DB.get('posts')||[];posts.unshift(localPost);DB.set('posts',posts);
-    document.getElementById('postContent').value='';
-    _clearPostMedia();
-    const pwrap=document.getElementById('postPriceWrap');if(pwrap)pwrap.style.display='none';
-    const ptier=document.getElementById('postTier');if(ptier)ptier.value='free';
-    toast('Post published! ✅','');
-    localStorage.setItem(todayKey, todayCount+1);
-    _notifyMentions(content,saved?.id||'',currentUser.name);
-    renderFeed();
-  }catch(e){toast('Could not publish: '+e.message,'⚠️');}
-}
-
-// ═══ MENTIONS ════════════════════════════════════════════════════════
-let _mentionDropdown=null,_mentionTarget=null,_mentionStart=0,_allUsers=[];
-
-function _initMentions(textarea){
-  if(!textarea)return;
-  textarea.addEventListener('input',_onMentionInput);
-  textarea.addEventListener('keydown',_onMentionKey);
-  textarea.addEventListener('blur',()=>setTimeout(_closeMentionDropdown,150));
-}
-
-function _onMentionInput(e){
-  const ta=e.target;
-  const val=ta.value,pos=ta.selectionStart;
-  const before=val.slice(0,pos);
-  const match=before.match(/@([a-zA-Z0-9_]*)$/);
-  if(!match){_closeMentionDropdown();return;}
-  _mentionTarget=ta;
-  _mentionStart=before.lastIndexOf('@');
-  const query=match[1].toLowerCase();
-  _showMentionDropdown(ta,query);
-}
-
-function _onMentionKey(e){
-  if(!_mentionDropdown)return;
-  const items=_mentionDropdown.querySelectorAll('.mention-item');
-  const active=_mentionDropdown.querySelector('.mention-item.active');
-  let idx=Array.from(items).indexOf(active);
-  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);items.forEach((it,i)=>it.classList.toggle('active',i===idx));}
-  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);items.forEach((it,i)=>it.classList.toggle('active',i===idx));}
-  else if(e.key==='Enter'&&active){e.preventDefault();active.click();}
-  else if(e.key==='Escape'){_closeMentionDropdown();}
-}
-
-async function _showMentionDropdown(ta,query){
-  // Load users if not cached
-  if(!_allUsers.length){
-    try{
-      const res=await fetch(WORKER_URL+'/api/users?role=creator');
-      const data=await res.json();
-      _allUsers=data||[];
-    }catch(e){return;}
-  }
-  const matches=_allUsers.filter(u=>{
-    if(!u.name)return false;
-    const n=(u.name||'').toLowerCase(),h=(u.handle||'').toLowerCase();
-    return n.includes(query)||h.includes(query);
-  }).slice(0,6);
-
-  if(!matches.length){_closeMentionDropdown();return;}
-
-  if(!_mentionDropdown){
-    _mentionDropdown=document.createElement('div');
-    _mentionDropdown.className='mention-dropdown';
-    document.body.appendChild(_mentionDropdown);
-  }
-
-  _mentionDropdown.innerHTML=matches.map((u,i)=>`
-    <div class="mention-item${i===0?' active':''}" data-id="${u.id}" data-name="${u.name}" onclick="_selectMention('${u.id}','${(u.name||'').replace(/'/g,"\'")}')">
-      <img src="${u.avatar||''}" onerror="this.style.background='var(--card2)'" alt="">
-      <div><div class="mention-item-name">${u.name}</div><div class="mention-item-handle">@${(u.name||'').toLowerCase().replace(/\s+/g,'_')}</div></div>
-    </div>`).join('');
-
-  // Position dropdown near textarea
-  const rect=ta.getBoundingClientRect();
-  _mentionDropdown.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;display:block`;
-}
-
-function _selectMention(userId,userName){
-  if(!_mentionTarget)return;
-  const val=_mentionTarget.value;
-  const before=val.slice(0,_mentionStart);
-  const after=val.slice(_mentionTarget.selectionStart);
-  const tag='@'+userName.replace(/\s+/g,'_');
-  _mentionTarget.value=before+tag+' '+after;
-  _mentionTarget.selectionStart=_mentionTarget.selectionEnd=(before+tag+' ').length;
-  _mentionTarget.focus();
-  _closeMentionDropdown();
-  // Store tagged user for notification
-  if(!_mentionTarget._tags)_mentionTarget._tags=[];
-  _mentionTarget._tags.push({userId,userName});
-}
-
-function _closeMentionDropdown(){
-  if(_mentionDropdown){_mentionDropdown.style.display='none';}
-}
-
-function _extractMentions(text){
-  const matches=text.match(/@([a-zA-Z0-9_]+)/g)||[];
-  return matches.map(m=>m.slice(1));
-}
-
-function _renderMentions(text){
-  return (text||'').replace(/@([a-zA-Z0-9_]+)/g,(match,handle)=>{
-    const user=_allUsers.find(u=>(u.name||'').replace(/\s+/g,'_')===handle||(u.handle||'').replace('@','')===handle);
-    if(user) return `<span class="mention-tag" onclick="showProfile('${user.id}')">${match}</span>`;
-    return `<span class="mention-tag">${match}</span>`;
-  });
-}
-
-async function _notifyMentions(text,postId,fromName){
-  const handles=_extractMentions(text);
-  if(!handles.length||!currentUser)return;
-  for(const handle of handles){
-    const user=_allUsers.find(u=>(u.name||'').replace(/\s+/g,'_')===handle);
-    if(user&&user.id!==currentUser.id){
-      apiFetch('/api/notifications','POST',{
-        user_id:user.id,
-        icon:'🏷️',
-        text:`${fromName||currentUser.name} mentioned you in a post`,
-        time:'just now'
-      }).catch(()=>{});
-    }
-  }
-}
-
-// ═══ COMMENTS ═══════════════════════════════════════════════════════
-async function openComments(postId, postTitle){
-  if(!currentUser){openModal('login');toast('Please sign in to comment','🔐');return;}
-  const renderList=(comments)=>{
-    if(!comments||!comments.length) return '<div style="text-align:center;color:var(--muted);font-size:.85rem;padding:20px 0">No comments yet — be the first!</div>';
-    return comments.map(c=>`
-      <div style="display:flex;gap:10px;margin-bottom:14px">
-        <img src="${c.avatar||''}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--card2)" onerror="this.style.background='var(--card2)'">
-        <div style="flex:1">
-          <div style="font-weight:600;font-size:.83rem;margin-bottom:2px">${c.name||'User'} <span style="font-weight:400;color:var(--muted);font-size:.72rem">${c.time||''}</span></div>
-          <div style="font-size:.84rem;color:var(--text);line-height:1.5">${c.text}</div>
-        </div>
-      </div>`).join('');
-  };
-  const html=`
-    <h2 style="font-family:'Fraunces',serif;font-weight:400;font-size:1.3rem;margin:0 0 4px">Comments</h2>
-    <div style="color:var(--muted);font-size:.82rem;margin-bottom:16px">${postTitle||''}</div>
-    <div id="commentsList" style="max-height:260px;overflow-y:auto;margin-bottom:16px;padding-right:4px">
-      <div style="text-align:center;color:var(--muted);font-size:.83rem;padding:16px 0">Loading…</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <textarea id="commentInput" placeholder="Write a comment…" rows="2" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.85rem;resize:none;outline:none"></textarea>
-      <button type="button" onclick="_submitComment('${postId}')" style="align-self:flex-end;padding:10px 16px;background:var(--gold);border:none;border-radius:10px;color:#0a0a0b;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem">Post</button>
-    </div>`;
-  openModal('comments', html);
-  // Load comments from Worker
-  fetch(WORKER_URL+'/api/comments?post_id='+postId)
-    .then(r=>r.json()).then(list=>{
-      const el=document.getElementById('commentsList');
-      if(el) el.innerHTML=renderList(list);
-    }).catch(()=>{
-      const el=document.getElementById('commentsList');
-      if(el) el.innerHTML=renderList([]);
-    });
-}
-async function _submitComment(postId){
-  const input=document.getElementById('commentInput');
-  const text=(input&&input.value||'').trim();
-  if(!text){return;}
-  if(!currentUser){toast('Sign in to comment','🔐');return;}
-  const btn=input.nextElementSibling;
-  if(btn){btn.disabled=true;btn.textContent='...';}
-  try{
-    const comment=await apiFetch('/api/comments','POST',{
-      post_id:postId, user_id:currentUser.id,
-      user_name:currentUser.name, user_avatar:currentUser.avatar||'',
-      text
-    });
-    // Optimistically append
-    const list=document.getElementById('commentsList');
-    if(list){
-      const empty=list.querySelector('div[style*="No comments"]');if(empty)empty.remove();
-      const dummy=document.createElement('div');
-      dummy.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:14px">
-        <img src="${currentUser.avatar||''}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--card2)">
-        <div style="flex:1"><div style="font-weight:600;font-size:.83rem;margin-bottom:2px">${currentUser.name} <span style="font-weight:400;color:var(--muted);font-size:.72rem">just now</span></div>
-        <div style="font-size:.84rem;line-height:1.5">${text}</div></div></div>`;
-      list.appendChild(dummy.firstElementChild);
-      list.scrollTop=list.scrollHeight;
-    }
-    // Update count in post card
-    // Update DB cache first so any subsequent renderFeed uses the new count
-    const posts=DB.get('posts')||[];
-    const p=posts.find(x=>x.id===postId);if(p){p.comments=(p.comments||0)+1;DB.set('posts',posts);}
-    // Update count span in-place
-    const ccount=document.getElementById('ccount-'+postId);
-    if(ccount) ccount.textContent=p?p.comments:(Number(ccount.textContent||0)+1);
-    if(input){input.value='';}
-  }catch(e){toast('Could not post comment','⚠️');}
-  if(btn){btn.disabled=false;btn.textContent='Post';}
-}
-
-// ═══ SHARE ═══════════════════════════════════════════════════════════
-function sharePost(postId, title, creatorName){
-  const url=window.location.origin+window.location.pathname+'?post='+postId;
-  const text=(title||'Check this out')+' by '+(creatorName||'a creator')+' on GALAXY';
-  if(navigator.share){
-    navigator.share({title:text, url}).catch(()=>{});
-  } else {
-    navigator.clipboard.writeText(url).then(()=>toast('Link copied to clipboard!','🔗')).catch(()=>{
-      // Fallback for browsers without clipboard API
-      const ta=document.createElement('textarea');ta.value=url;ta.style.position='fixed';ta.style.opacity='0';
-      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-      toast('Link copied!','🔗');
-    });
-  }
-}
-
-// ═══ PRODUCT SHARE ══════════════════════════════════════════════════
-function shareProduct(productId, title, creatorName){
-  const url=window.location.origin+window.location.pathname+'?product='+encodeURIComponent(productId);
-  const text=(title||'Check this out')+' by '+(creatorName||'a creator')+' on GALAXY';
-  if(navigator.share){
-    navigator.share({title:text, url}).catch(()=>{});
-  } else {
-    navigator.clipboard.writeText(url).then(()=>toast('Product link copied!','🔗')).catch(()=>{
-      const ta=document.createElement('textarea');ta.value=url;ta.style.position='fixed';ta.style.opacity='0';
-      document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-      toast('Link copied!','🔗');
-    });
-  }
-}
-
-// ═══ TIPS ════════════════════════════════════════════════════════════
-function openTipModal(postId, creatorId, creatorName){
-  if(!currentUser){openModal('login');return;}
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div>
-        <div style="font-weight:700;font-size:1rem;color:var(--text)">Send a tip 💰</div>
-        <div style="color:var(--muted);font-size:.75rem;margin-top:2px">To ${creatorName||'this creator'}</div>
-      </div>
-      <button onclick="closeModal()" style="background:var(--bg3);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      ${[1,3,5,10].map(v=>`<button type="button" class="tip-quick" data-amt="${v}" onclick="_setTipAmt(${v})" style="flex:1;padding:7px 4px;font-size:.8rem">$${v}</button>`).join('')}
-    </div>
-    <input id="tipAmt" type="number" min="1" max="500" value="1" inputmode="decimal" oninput="_clearQuick()"
-      style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:.95rem;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;box-sizing:border-box;text-align:center">
-    <div style="display:flex;gap:8px">
-      <button type="button" onclick="sendTip('${postId}','${creatorId}','stripe')"
-        style="flex:1;padding:10px 8px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
-        💳 Card
-      </button>
-      <button type="button" onclick="sendTip('${postId}','${creatorId}','paypal')"
-        style="flex:1;padding:10px 8px;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">
-        🅿️ PayPal
-      </button>
-    </div>
-    <div style="font-size:.68rem;color:var(--muted2);text-align:center;margin-top:10px">🔒 Secured · Processing fee added at checkout</div>`;
-  openModal('tip', html);
-  setTimeout(()=>_setTipAmt(1),50);
-}
-function _setTipAmt(v){
-  const i=document.getElementById('tipAmt');if(i)i.value=v;
-  document.querySelectorAll('.tip-quick').forEach(b=>b.classList.toggle('active',+b.dataset.amt===v));
-}
-function _clearQuick(){
-  document.querySelectorAll('.tip-quick').forEach(b=>b.classList.remove('active'));
-}
-function sendTip(postId, creatorId, method){
-  const amt=parseFloat((document.getElementById('tipAmt')||{}).value||'0');
-  const msg=((document.getElementById('tipMsg')||{}).value||'').trim();
-  if(!amt||amt<1){toast('Tip amount must be at least $1','⚠️');return;}
-  if(amt>500){toast('Maximum tip is $500','⚠️');return;}
-  if(method==='paypal'){
-    closeModal();
-    toast('Opening PayPal...','🅿️');
-    sessionStorage.setItem('pp_pending',JSON.stringify({type:'tip',postId,creatorId,amt,msg,userId:currentUser.id,userName:currentUser.name}));
-    fetch(WORKER_URL+'/api/paypal/order',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amount:amt,description:'Tip',user_id:currentUser.id,creator_id:creatorId,post_id:postId,plan:'tip',user_name:currentUser.name})
-    }).then(r=>r.json()).then(order=>{
-      console.log('PayPal order response:',JSON.stringify(order));
-      if(!order.id){toast('PayPal error: '+(order.error||'no order id'),'⚠️');return;}
-      sessionStorage.setItem('pp_order_id',order.id);
-      window.location.href='https://www.paypal.com/checkoutnow?token='+order.id+'&useraction=commit';
-    }).catch(e=>{console.error('PayPal fetch error:',e);toast('PayPal error, try again','⚠️');});
-    return;
-  }
-  const posts=DB.get('posts')||[];
-  const p=posts.find(x=>x.id===postId);
-  if(p){p.tips=(p.tips||0)+1;DB.set('posts',posts);}
-  const tips=DB.get('tips')||[];
-  tips.push({id:'tip_'+Date.now(),postId,creatorId,fromUserId:currentUser.id,fromName:currentUser.name,amount:amt,method,message:msg,at:new Date().toISOString()});
-  DB.set('tips',tips);
-  pushNotif(creatorId,{icon:'💰',text:currentUser.name+' tipped you $'+amt.toFixed(2)+(msg?' — "'+msg+'"':''),time:'just now'});
-  closeModal();
-  toast('Tipped $'+amt.toFixed(2)+' via card!','💰');
-  // Update tip count in-place — no full re-render needed
-  const tc=document.getElementById('tcount-'+postId);
-  if(tc) tc.textContent=Number(tc.textContent||0)+1;
-}
-
-// MESSAGES
-function getThreads(){
-  if(!currentUser)return[];
-  const msgs=DB.get('messages')||[],seen={};
-  msgs.forEach(m=>{const other=m.from===currentUser.id?m.to:m.from,k=[currentUser.id,other].sort().join('__');
-    if(!seen[k]||new Date(m.at)>new Date(seen[k].at))seen[k]={otherId:other,otherName:m.from===currentUser.id?m.toName:m.fromName,at:m.at,preview:m.text,unread:m.to===currentUser.id&&!m.read};
-  });
-  return Object.values(seen).sort((a,b)=>new Date(b.at)-new Date(a.at));
-}
-function renderMessages(){
-  if(!currentUser)return;
-  const threads=getThreads();
-  document.getElementById('msgThreads').innerHTML=threads.length?threads.map(t=>`
-    <div class="msg-thread ${_activeMsgThread===t.otherId?'act':''}" onclick="openThread('${t.otherId}','${t.otherName}')">
-      <div class="msg-thread-av">${(t.otherName||'?')[0]}</div>
-      <div style="min-width:0;flex:1"><div class="msg-thread-name">${t.otherName}</div><div class="msg-thread-prev">${t.preview}</div></div>
-      ${t.unread?'<div class="msg-unread-dot"></div>':''}
-    </div>`).join(''):`<div style="padding:16px 14px;font-size:.8rem;color:var(--muted)">No conversations yet.</div>`;
-  if(_activeMsgThread)openThread(_activeMsgThread,'');
-}
-function openThread(userId,name){
-  _activeMsgThread=userId;
-  const msgs=DB.get('messages')||[];
-  msgs.forEach(m=>{if(m.to===currentUser.id&&m.from===userId)m.read=true;});
-  DB.set('messages',msgs);_refreshBadges();
-  const users=DB.get('users')||{},creators=DB.get('creators')||[];
-  const other=Object.values(users).find(u=>u.id===userId)||creators.find(c=>c.id===userId);
-  const otherName=other?other.name:name||'User';
-  const thread=msgs.filter(m=>(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id)).sort((a,b)=>new Date(a.at)-new Date(b.at));
-  document.getElementById('msgMain').innerHTML=`
-    <div class="msg-main-head"><button onclick="document.querySelector('.msg-sidebar').style.display='';document.getElementById('msgMain').style.flex='';" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0;display:none" class="msg-back-btn" id="msgBackBtn">←</button><div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">${otherName[0]||'?'}</div><div class="msg-main-name">${otherName}</div></div>
-    <div class="msg-messages" id="msgBubbles">
-      ${thread.map(m=>`<div class="msg-bubble ${m.from===currentUser.id?'mine':'theirs'}">${m.text}</div>`).join('')}
-      ${!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':''}
-    </div>
-    <div class="msg-input-row">
-      <input class="msg-input" id="msgInputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg('${userId}','${otherName}')">
-      <button class="msg-send-btn" onclick="sendMsg('${userId}','${otherName}')">Send</button>
-    </div>`;
-  const b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
-  renderMessages();
-}
-function sendMsg(toId,toName){
-  const inp=document.getElementById('msgInputBox');if(!inp||!inp.value.trim())return;
-  const text=inp.value.trim(),msgs=DB.get('messages')||[];
-  msgs.push({id:'m'+Date.now(),from:currentUser.id,to:toId,fromName:currentUser.name,toName,text,at:new Date().toISOString(),read:false});
-  // Save message to D1
-  fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({from_id:currentUser.id,to_id:toId,text})
-  }).catch(()=>{});
-  DB.set('messages',msgs);pushNotif(toId,{icon:'💬',text:currentUser.name+': '+text.slice(0,50),time:'just now'});
-  openThread(toId,toName);
-}
-function openMsgWith(c){
-  if(!c)return;if(!currentUser){openModal('login');return;}
-  if(currentUser.id===c.id){toast("Can\'t message yourself",'ℹ️');return;}
-  // Only subscribers can message creators (either direction)
-  const mySubscriptions=DB.get('user')?.subscriptions||[];
-  const isSubbedToThem=mySubscriptions.includes(c.id);
-  // Check if they are subscribed to me (creator messaging subscriber)
-  const allUsers=DB.get('users')||{};
-  const themUser=Object.values(allUsers).find(u=>u.id===c.id);
-  const theySubToMe=themUser?(themUser.subscriptions||[]).includes(currentUser.id):false;
-  if(!isSubbedToThem&&!theySubToMe){
-    toast('Subscribe to '+c.name+' to send them a message','🔒');
-    showProfile(c.id);return;
-  }
-  _activeMsgThread=c.id;showPage('messages',null);setTimeout(()=>openThread(c.id,c.name),80);
-}
-
-// NOTIFICATIONS
-function pushNotif(userId,notif){
-  // Save to D1
-  fetch(WORKER_URL+'/api/notifications',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user_id:userId,icon:notif.icon||'🔔',text:notif.text,time:notif.time||'just now'})
-  }).catch(()=>{});
-  if(currentUser&&currentUser.id===userId)_refreshBadges();
-}
-function renderNotifs(){
-  if(!currentUser)return;
-  const el=document.getElementById('notifList');
-  if(el)el.innerHTML='<div class="empty">Loading...</div>';
-  fetch(WORKER_URL+'/api/notifications?user_id='+currentUser.id)
-    .then(r=>r.json()).then(list=>{
-      // Mark all as read
-      fetch(WORKER_URL+'/api/notifications/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentUser.id})}).catch(()=>{});
-      if(el)el.innerHTML=(list&&list.length)?list.map(n=>`
-        <div class="notif-item"><div class="notif-icon">${n.icon||'🔔'}</div>
-        <div><div class="notif-text">${n.text}</div><div class="notif-time">${n.time||''}</div></div></div>`).join(''):`<div class="empty"><div class="empty-icon">🔔</div>No notifications yet.</div>`;
-      _refreshBadges();
-    }).catch(()=>{if(el)el.innerHTML='<div class="empty">Could not load notifications.</div>';});
-}
-
-// DASHBOARD
-function renderDashboard(){
-  if(!currentUser)return;
-  const u=DB.get('user')||currentUser;
-  document.getElementById('dashGreeting').textContent='Welcome, '+u.name;
-  document.getElementById('dEarned').textContent='$'+fmtNum(u.earned||0);
-  document.getElementById('dSubs').textContent=fmtNum((u.subs||[]).length);
-  document.getElementById('dBal').textContent='$'+(u.balance||0).toFixed(2);
-  document.getElementById('dPosts').textContent=(DB.get('posts')||[]).filter(p=>p.creator===u.id).length;
-  const refHandle=u.id; // use ID — always unique, no name encoding issues
-  // Load ref video status
-  fetch(WORKER_URL+'/api/ref/video?user_id='+u.id).then(r=>r.json()).then(d=>{
-    const s=document.getElementById('refVideoStatus');if(!s)return;
-    if(d.status==='approved') s.innerHTML='<span style="font-size:.74rem;color:var(--green);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:100px;padding:3px 10px">✅ Verified — earning 2%</span>';
-    else if(d.status==='pending') s.innerHTML='<span style="font-size:.74rem;color:var(--gold);background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:3px 10px">⏳ Pending review</span>';
-  }).catch(()=>{});
-  const refLink=window.location.origin+window.location.pathname+'?ref='+encodeURIComponent(refHandle);
-  const refBox=document.getElementById('refLinkBox');if(refBox)refBox.textContent=refLink;
-  renderCreatorProducts();
-  const sp=document.getElementById('subPriceInput');if(sp)sp.value=u.price||9;
-  renderKycSection(u);
-  renderCertSection(u);
-  renderPayoutZone(u);
-  // Fetch real balance from D1
-  fetch(WORKER_URL+'/api/balance?user_id='+currentUser.id)
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.balance!==undefined){
-        const balEl=document.getElementById('dBal');
-        if(balEl)balEl.textContent='$'+Number(data.balance).toFixed(2);
-        const earnEl=document.getElementById('dEarned');
-        if(earnEl)earnEl.textContent='$'+Number(data.total_earned).toFixed(2);
-        const subsEl=document.getElementById('dSubs');
-        if(subsEl)subsEl.textContent=fmtNum(data.subscriber_count||0);
+        await stripeReq(env, `/payment_methods/${payment_method_id}/attach`, "POST", { customer: customerId });
+        await stripeReq(env, `/customers/${customerId}`, "POST", { "invoice_settings[default_payment_method]": payment_method_id });
+        if (plan === "tip" || plan === "purchase") {
+          const pi = await stripeReq(env, "/payment_intents", "POST", {
+            amount: String(amountCents),
+            currency: "usd",
+            customer: customerId,
+            payment_method: payment_method_id,
+            confirm: "true",
+            "automatic_payment_methods[enabled]": "true",
+            "automatic_payment_methods[allow_redirects]": "never",
+            "metadata[plan]": plan,
+            "metadata[user_id]": user_id || "",
+            "metadata[creator_id]": creator_id || "",
+            "metadata[post_id]": post_id || "",
+            "metadata[product_id]": product_id || ""
+          });
+          if (pi.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret });
+          if (plan === "tip" && post_id) {
+            await env.DB.prepare(
+              `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+            ).bind("tip_" + Date.now(), post_id, creator_id, user_id || "", user_name || "", creatorAmount).run();
+            await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
+          }
+          if (plan === "purchase" && product_id) {
+            await env.DB.prepare(
+              `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+            ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, pi.id).run();
+            await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+          }
+          // Credit creator balance
+          if (creator_id) await creditBalance(env, creator_id, originalPrice);
+          return json({ success: true, payment_intent_id: pi.id });
+        } else {
+          // Subscription
+          const priceObj = await stripeReq(env, "/prices", "POST", {
+            unit_amount: String(amountCents),
+            currency: "usd",
+            "recurring[interval]": "month",
+            "product_data[name]": `Galaxy - ${creator_name} (${plan})`
+          });
+          const sub = await stripeReq(env, "/subscriptions", "POST", {
+            customer: customerId,
+            "items[0][price]": priceObj.id,
+            default_payment_method: payment_method_id,
+            "metadata[creator_id]": creator_id || "",
+            "metadata[user_id]": user_id || "",
+            "expand[0]": "latest_invoice.payment_intent"
+          });
+          const pi = sub.latest_invoice?.payment_intent;
+          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1e3).toISOString() : null;
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO subscriptions (id, user_id, creator_id, creator_name, plan, price, status, stripe_sub_id, stripe_customer_id, period_end, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).bind("sub_" + Date.now(), user_id, creator_id, creator_name, plan, price_usd, sub.status, sub.id, customerId, periodEnd).run();
+          if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
+          // Do NOT credit here — webhook invoice.payment_succeeded handles first + recurring payments
+          // Credit referrer 1% of subscription price for 12 months
+          try { await creditReferrer(env, user_id, price_usd, 'sub'); } catch(e) { console.warn("referral credit failed:", e.message); }
+          return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
+        }
       }
-    }).catch(()=>{});
-}
+      if (path === "/api/webhook/stripe" && method === "POST") {
+        const sig = request.headers.get("stripe-signature");
+        const rawBody = await request.text();
+        const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+        if (webhookSecret) {
+          try {
+            const parts = sig.split(",");
+            const timestamp = parts.find((p) => p.startsWith("t=")).split("=")[1];
+            const signatures = parts.filter((p) => p.startsWith("v1=")).map((p) => p.split("=")[1]);
+            const signedPayload = timestamp + "." + rawBody;
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey("raw", enc.encode(webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+            const sig_bytes = await crypto.subtle.sign("HMAC", key, enc.encode(signedPayload));
+            const computed = Array.from(new Uint8Array(sig_bytes)).map((b) => b.toString(16).padStart(2, "0")).join("");
+            if (!signatures.includes(computed)) return err("Invalid signature", 400);
+          } catch (e) {
+            return err("Webhook verification failed", 400);
+          }
+        }
+        const event = JSON.parse(rawBody);
+        const data = event.data?.object;
 
-function renderPayoutZone(u){
-  const zone=document.getElementById('payoutZone');if(!zone)return;
-  zone.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading payout info…</div>`;
-  Promise.all([
-    fetch(WORKER_URL+'/api/payout/balance?creator_id='+currentUser.id).then(r=>r.json()).catch(()=>({balance:u.balance||0,lifetime:u.earned||0,history:[]})),
-    fetch(WORKER_URL+'/api/payout/settings?creator_id='+currentUser.id).then(r=>r.json()).catch(()=>({}))
-  ]).then(([bal,settings])=>{
-    const balance=Number(bal.balance||0);
-    const lifetime=Number(bal.lifetime||0);
-    const method=settings.method||'paypal';
-    const min=method==='stripe'?500:100;
-    const canRequest=balance>=min;
-    const history=bal.history||[];
+        if (event.type === "payment_intent.succeeded") {
+          const meta = data.metadata || {};
+          const creatorId = meta.creator_id;
+          const amountUsd = (data.amount || 0) / 100;
+          if (creatorId) await creditBalance(env, creatorId, amountUsd);
+        }
 
-    const historyHtml=history.length?`
-      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
-        <div style="font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Payout history</div>
-        ${history.map(h=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div>
-            <div style="font-size:.88rem;font-weight:600;color:var(--text)">$${Number(h.amount).toFixed(2)} · ${h.method==='stripe'?'🏦 Bank':'💰 PayPal'}</div>
-            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${h.requested_at?.slice(0,10)||''}</div>
-          </div>
-          <span style="font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:100px;background:${
-            h.status==='paid'?'rgba(74,222,128,.15)':
-            h.status==='processing'?'rgba(212,168,67,.15)':
-            h.status==='failed'?'rgba(232,108,108,.15)':'rgba(255,255,255,.07)'
-          };color:${
-            h.status==='paid'?'#4ade80':
-            h.status==='processing'?'var(--gold)':
-            h.status==='failed'?'var(--rose)':'var(--muted)'
-          }">${h.status}</span>
-        </div>`).join('')}
-      </div>`:'';
-
-    zone.innerHTML=`
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:8px">
-
-        <!-- Header -->
-        <div style="padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#c8a93a);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">💸</div>
-          <div>
-            <div style="font-weight:700;font-size:.95rem">Payouts</div>
-          </div>
-        </div>
-
-        <!-- Balance cards -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:0">
-          <div style="background:var(--card);padding:16px 18px">
-            <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Available</div>
-            <div style="font-size:1.8rem;font-weight:800;color:${canRequest?'var(--gold)':'var(--text)'}">$${balance.toFixed(2)}</div>
-          </div>
-          <div style="background:var(--card);padding:16px 18px">
-            <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Lifetime</div>
-            <div style="font-size:1.8rem;font-weight:800;color:var(--text);font-family:'Fraunces',serif">$${lifetime.toFixed(2)}</div>
-          </div>
-        </div>
-
-        <!-- Method + fields -->
-        <div style="padding:16px 18px">
-
-          <div style="font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Payout method</div>
-
-          <!-- Toggle -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-            <button id="pm-paypal" onclick="_setPayoutMethod('paypal')" style="padding:12px 10px;border-radius:12px;border:2px solid ${method==='paypal'?'var(--gold)':'var(--border)'};background:${method==='paypal'?'rgba(212,168,67,.08)':'var(--bg3)'};color:var(--text);font-family:inherit;cursor:pointer;text-align:left;transition:all .2s">
-              <div style="font-size:1.2rem;margin-bottom:4px">💰</div>
-              <div style="font-size:.82rem;font-weight:700">PayPal</div>
-              <div style="font-size:.7rem;color:var(--muted);margin-top:2px">Min $100 · 24h</div>
-            </button>
-            <button id="pm-stripe" onclick="_setPayoutMethod('stripe')" style="padding:12px 10px;border-radius:12px;border:2px solid ${method==='stripe'?'var(--gold)':'var(--border)'};background:${method==='stripe'?'rgba(212,168,67,.08)':'var(--bg3)'};color:var(--text);font-family:inherit;cursor:pointer;text-align:left;transition:all .2s">
-              <div style="font-size:1.2rem;margin-bottom:4px">🏦</div>
-              <div style="font-size:.82rem;font-weight:700">Bank transfer</div>
-              <div style="font-size:.7rem;color:var(--muted);margin-top:2px">Min $500 · 21–28 days</div>
-            </button>
-          </div>
-
-          <!-- PayPal email -->
-          <div id="paypal-field" style="${method==='paypal'?'':'display:none'}margin-bottom:16px">
-            <label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">PayPal email</label>
-            <input id="paypal-email-input" type="email" placeholder="your@paypal.com" value="${settings.paypal_email||''}"
-              style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:.88rem;outline:none;box-sizing:border-box;transition:border-color .2s"
-              onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-          </div>
-
-          <!-- Bank details (manual, smart form) -->
-          <div id="stripe-field" style="${method==='stripe'?'':'display:none'}margin-bottom:16px">
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <!-- Country selector -->
-              <div>
-                <label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Country</label>
-                <select id="bank-country" onchange="_renderBankFields()" style="width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:.88rem;outline:none;cursor:pointer;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-                  <option value="">— Select your country —</option>
-                  <optgroup label="🌍 IBAN Countries">
-                    <option value="RO" ${settings.bank_country==='RO'?'selected':''}>🇷🇴 Romania</option>
-                    <option value="DE" ${settings.bank_country==='DE'?'selected':''}>🇩🇪 Germany</option>
-                    <option value="FR" ${settings.bank_country==='FR'?'selected':''}>🇫🇷 France</option>
-                    <option value="IT" ${settings.bank_country==='IT'?'selected':''}>🇮🇹 Italy</option>
-                    <option value="ES" ${settings.bank_country==='ES'?'selected':''}>🇪🇸 Spain</option>
-                    <option value="NL" ${settings.bank_country==='NL'?'selected':''}>🇳🇱 Netherlands</option>
-                    <option value="PL" ${settings.bank_country==='PL'?'selected':''}>🇵🇱 Poland</option>
-                    <option value="SE" ${settings.bank_country==='SE'?'selected':''}>🇸🇪 Sweden</option>
-                    <option value="NO" ${settings.bank_country==='NO'?'selected':''}>🇳🇴 Norway</option>
-                    <option value="DK" ${settings.bank_country==='DK'?'selected':''}>🇩🇰 Denmark</option>
-                    <option value="FI" ${settings.bank_country==='FI'?'selected':''}>🇫🇮 Finland</option>
-                    <option value="BE" ${settings.bank_country==='BE'?'selected':''}>🇧🇪 Belgium</option>
-                    <option value="AT" ${settings.bank_country==='AT'?'selected':''}>🇦🇹 Austria</option>
-                    <option value="CH" ${settings.bank_country==='CH'?'selected':''}>🇨🇭 Switzerland</option>
-                    <option value="PT" ${settings.bank_country==='PT'?'selected':''}>🇵🇹 Portugal</option>
-                    <option value="IE" ${settings.bank_country==='IE'?'selected':''}>🇮🇪 Ireland</option>
-                    <option value="HU" ${settings.bank_country==='HU'?'selected':''}>🇭🇺 Hungary</option>
-                    <option value="CZ" ${settings.bank_country==='CZ'?'selected':''}>🇨🇿 Czechia</option>
-                    <option value="BG" ${settings.bank_country==='BG'?'selected':''}>🇧🇬 Bulgaria</option>
-                    <option value="HR" ${settings.bank_country==='HR'?'selected':''}>🇭🇷 Croatia</option>
-                    <option value="SK" ${settings.bank_country==='SK'?'selected':''}>🇸🇰 Slovakia</option>
-                    <option value="SI" ${settings.bank_country==='SI'?'selected':''}>🇸🇮 Slovenia</option>
-                    <option value="EE" ${settings.bank_country==='EE'?'selected':''}>🇪🇪 Estonia</option>
-                    <option value="LV" ${settings.bank_country==='LV'?'selected':''}>🇱🇻 Latvia</option>
-                    <option value="LT" ${settings.bank_country==='LT'?'selected':''}>🇱🇹 Lithuania</option>
-                    <option value="LU" ${settings.bank_country==='LU'?'selected':''}>🇱🇺 Luxembourg</option>
-                    <option value="MT" ${settings.bank_country==='MT'?'selected':''}>🇲🇹 Malta</option>
-                    <option value="CY" ${settings.bank_country==='CY'?'selected':''}>🇨🇾 Cyprus</option>
-                    <option value="IL" ${settings.bank_country==='IL'?'selected':''}>🇮🇱 Israel</option>
-                    <option value="AE" ${settings.bank_country==='AE'?'selected':''}>🇦🇪 UAE</option>
-                    <option value="ZA" ${settings.bank_country==='ZA'?'selected':''}>🇿🇦 South Africa</option>
-                    <option value="BR" ${settings.bank_country==='BR'?'selected':''}>🇧🇷 Brazil</option>
-                  </optgroup>
-                  <optgroup label="🇺🇸 United States">
-                    <option value="US" ${settings.bank_country==='US'?'selected':''}>🇺🇸 United States</option>
-                  </optgroup>
-                  <optgroup label="🌏 SWIFT Countries">
-                    <option value="GB" ${settings.bank_country==='GB'?'selected':''}>🇬🇧 United Kingdom</option>
-                    <option value="AU" ${settings.bank_country==='AU'?'selected':''}>🇦🇺 Australia</option>
-                    <option value="CA" ${settings.bank_country==='CA'?'selected':''}>🇨🇦 Canada</option>
-                    <option value="SG" ${settings.bank_country==='SG'?'selected':''}>🇸🇬 Singapore</option>
-                    <option value="HK" ${settings.bank_country==='HK'?'selected':''}>🇭🇰 Hong Kong</option>
-                    <option value="JP" ${settings.bank_country==='JP'?'selected':''}>🇯🇵 Japan</option>
-                    <option value="MY" ${settings.bank_country==='MY'?'selected':''}>🇲🇾 Malaysia</option>
-                    <option value="TH" ${settings.bank_country==='TH'?'selected':''}>🇹🇭 Thailand</option>
-                    <option value="PH" ${settings.bank_country==='PH'?'selected':''}>🇵🇭 Philippines</option>
-                    <option value="MX" ${settings.bank_country==='MX'?'selected':''}>🇲🇽 Mexico</option>
-                    <option value="NZ" ${settings.bank_country==='NZ'?'selected':''}>🇳🇿 New Zealand</option>
-                  </optgroup>
-                </select>
-              </div>
-              <!-- Dynamic fields injected here -->
-              <div id="bank-dynamic-fields"></div>
-              <div style="font-size:.72rem;color:var(--muted);padding:10px 12px;background:var(--bg3);border-radius:8px;line-height:1.6">
-                🔒 Details stored securely. Bank transfers processed within 21–28 business days after request.
-              </div>
-            </div>
-          </div>
-
-          <!-- Request button -->
-          <button id="payout-req-btn" onclick="_requestPayout()" style="width:100%;padding:13px;background:${canRequest?'var(--gold)':'var(--bg3)'};border:2px solid ${canRequest?'var(--gold)':'var(--border)'};border-radius:100px;color:${canRequest?'#0a0a0b':'var(--muted)'};font-family:inherit;font-size:.9rem;font-weight:700;cursor:${canRequest?'pointer':'default'};transition:all .2s;margin-bottom:6px">
-            ${canRequest?'Request withdrawal →':'Need $'+min+' minimum · Current: $'+balance.toFixed(2)}
-          </button>
-
-
-          ${historyHtml}
-        </div>
-      </div>`;
-    // Pre-render bank fields if country already saved
-    if(settings.bank_country)setTimeout(()=>_renderBankFields(),50);
-  });
-}
-
-let _currentPayoutMethod='paypal';
-function _setPayoutMethod(method){
-  _currentPayoutMethod=method;
-  document.getElementById('paypal-field').style.display=method==='paypal'?'':'none';
-  document.getElementById('stripe-field').style.display=method==='stripe'?'':'none';
-  ['paypal','stripe'].forEach(m=>{
-    const btn=document.getElementById('pm-'+m);
-    if(btn){
-      btn.style.borderColor=m===method?'var(--gold)':'var(--border)';
-      btn.style.background=m===method?'rgba(212,168,67,.08)':'var(--bg3)';
-    }
-  });
-  // Update withdraw button to reflect correct minimum for selected method
-  const min=method==='stripe'?500:100;
-  const reqBtn=document.getElementById('payout-req-btn');
-  if(reqBtn){
-    const balEl=reqBtn.closest('div')?.parentElement?.querySelector('[style*="1.8rem"]');
-    const balance=balEl?parseFloat(balEl.textContent.replace('$',''))||0:0;
-    const canReq=balance>=min;
-    reqBtn.style.background=canReq?'var(--gold)':'var(--bg3)';
-    reqBtn.style.borderColor=canReq?'var(--gold)':'var(--border)';
-    reqBtn.style.color=canReq?'#0a0a0b':'var(--muted)';
-    reqBtn.style.cursor=canReq?'pointer':'default';
-    reqBtn.textContent=canReq?'Request withdrawal →':'Need $'+min+' minimum · Current: $'+balance.toFixed(2);
-  }
-}
-
-async function _requestPayout(){
-  if(!currentUser)return;
-  const method=_currentPayoutMethod||'paypal';
-  const paypalEmail=(document.getElementById('paypal-email-input')||{}).value?.trim();
-  const g=id=>(document.getElementById(id)||{}).value?.trim()||null;
-  const bankCountry=g('bank-country');
-  const bankName=g('bank-name');
-  const bankDetails={
-    bank_country:bankCountry,
-    bank_name:bankName,
-    bank_iban:g('bank-iban'),
-    bank_swift:g('bank-swift'),
-    bank_account:g('bank-account'),
-    bank_routing:g('bank-routing'),
-    bank_sortcode:g('bank-sortcode'),
-    bank_bsb:g('bank-bsb'),
-    bank_transit:g('bank-transit'),
-    bank_institution:g('bank-institution'),
-    bank_bankname:g('bank-bankname'),
-  };
-
-  if(method==='paypal'&&!paypalEmail){toast('Enter your PayPal email first','⚠️');return;}
-  if(method==='stripe'){
-    if(!bankCountry){toast('Select your country','⚠️');return;}
-    if(!bankName){toast('Enter account holder name','⚠️');return;}
-    if(!bankDetails.bank_iban&&!bankDetails.bank_account&&!bankDetails.bank_routing){
-      toast('Enter your bank account details','⚠️');return;
-    }
-  }
-
-  await fetch(WORKER_URL+'/api/payout/settings',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      creator_id:currentUser.id, method,
-      paypal_email:paypalEmail||null,
-      country:bankCountry||'RO',
-      ...bankDetails
-    })
-  }).catch(()=>{});
-
-  const res=await fetch(WORKER_URL+'/api/payout/request',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({creator_id:currentUser.id,method})
-  });
-  const data=await res.json();
-  if(!res.ok){toast(data.error||'Request failed','⚠️');return;}
-  toast(data.message||'Payout sent!','💸');
-  renderDashboard();
-}
-
-// IBAN countries
-const _IBAN_COUNTRIES=new Set(['RO','DE','FR','IT','ES','NL','PL','SE','NO','DK','FI','BE','AT','CH','PT','IE','HU','CZ','BG','HR','SK','SI','EE','LV','LT','LU','MT','CY','IL','AE','ZA','BR']);
-// UK-style sort code countries
-const _SORTCODE_COUNTRIES=new Set(['GB']);
-// US routing number
-const _US_COUNTRIES=new Set(['US']);
-// AU BSB
-const _BSB_COUNTRIES=new Set(['AU']);
-// CA transit
-const _CA_COUNTRIES=new Set(['CA']);
-// SWIFT + account (rest)
-const _SWIFT_COUNTRIES=new Set(['SG','HK','JP','MY','TH','PH','MX','NZ']);
-
-function _bankInpStyle(){
-  return 'width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:.88rem;outline:none;box-sizing:border-box;transition:border-color .2s';
-}
-function _bankLblStyle(){
-  return 'font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px';
-}
-function _bankField(id,label,placeholder,value,type){
-  const s=_bankInpStyle(),l=_bankLblStyle(),t=type||'text';
-  return `<div><label style="${l}">${label}</label><input id="${id}" type="${t}" placeholder="${placeholder}" value="${value||''}" style="${s}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>`;
-}
-
-function _renderBankFields(){
-  const wrap=document.getElementById('bank-dynamic-fields');if(!wrap)return;
-  const country=(document.getElementById('bank-country')||{}).value||'';
-  if(!country){wrap.innerHTML='';return;}
-  const s=_bankInpStyle(),l=_bankLblStyle();
-
-  // Always show account holder name
-  let html=_bankField('bank-name','Account holder name','Full legal name',document.getElementById('bank-name')?.value);
-
-  if(_IBAN_COUNTRIES.has(country)){
-    html+=_bankField('bank-iban','IBAN','e.g. RO49 AAAA 1B31 0075 9384 0000',document.getElementById('bank-iban')?.value);
-    html+=_bankField('bank-swift','BIC / SWIFT code','e.g. INGBROBU',document.getElementById('bank-swift')?.value);
-    html+=_bankField('bank-bankname','Bank name','e.g. ING Bank Romania',document.getElementById('bank-bankname')?.value);
-  } else if(_US_COUNTRIES.has(country)){
-    html+=_bankField('bank-routing','Routing number (ABA)','9 digits e.g. 021000021',document.getElementById('bank-routing')?.value);
-    html+=_bankField('bank-account','Account number','e.g. 000123456789',document.getElementById('bank-account')?.value);
-    html+=_bankField('bank-bankname','Bank name','e.g. Chase Bank',document.getElementById('bank-bankname')?.value);
-  } else if(_SORTCODE_COUNTRIES.has(country)){
-    html+=_bankField('bank-sortcode','Sort code','6 digits e.g. 20-00-00',document.getElementById('bank-sortcode')?.value);
-    html+=_bankField('bank-account','Account number','8 digits e.g. 12345678',document.getElementById('bank-account')?.value);
-    html+=_bankField('bank-bankname','Bank name','e.g. Barclays',document.getElementById('bank-bankname')?.value);
-  } else if(_BSB_COUNTRIES.has(country)){
-    html+=_bankField('bank-bsb','BSB number','6 digits e.g. 062-000',document.getElementById('bank-bsb')?.value);
-    html+=_bankField('bank-account','Account number','e.g. 12345678',document.getElementById('bank-account')?.value);
-    html+=_bankField('bank-bankname','Bank name','e.g. Commonwealth Bank',document.getElementById('bank-bankname')?.value);
-  } else if(_CA_COUNTRIES.has(country)){
-    html+=_bankField('bank-transit','Transit number','5 digits',document.getElementById('bank-transit')?.value);
-    html+=_bankField('bank-institution','Institution number','3 digits',document.getElementById('bank-institution')?.value);
-    html+=_bankField('bank-account','Account number','7-12 digits',document.getElementById('bank-account')?.value);
-    html+=_bankField('bank-bankname','Bank name','e.g. TD Bank',document.getElementById('bank-bankname')?.value);
-  } else {
-    // SWIFT
-    html+=_bankField('bank-swift','SWIFT / BIC code','8-11 characters e.g. DBSSSGSG',document.getElementById('bank-swift')?.value);
-    html+=_bankField('bank-account','Account number','',document.getElementById('bank-account')?.value);
-    html+=_bankField('bank-bankname','Bank name','',document.getElementById('bank-bankname')?.value);
-  }
-  wrap.innerHTML=html;
-}
-
-async function _startStripeConnect(){
-  if(!currentUser)return;
-  const sel=document.getElementById('stripe-country-select');
-  const country=sel?.value||currentUser.country||'RO';
-  const res=await fetch(WORKER_URL+'/api/stripe/connect',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({creator_id:currentUser.id,email:currentUser.email,country})
-  });
-  const data=await res.json();
-  if(!res.ok){toast(data.error||'Could not start onboarding','⚠️');return;}
-  window.open(data.url,'_blank');
-}
-async function submitRefVideo(){
-  if(!currentUser){toast('Sign in first','⚠️');return;}
-  const url=(document.getElementById('refVideoUrl')||{}).value?.trim();
-  if(!url||(!url.includes('youtube')||url.includes('youtu.be'))&&!url.includes('tiktok')&&!url.includes('instagram')&&!url.includes('youtu')){
-    if(!url){toast('Enter a video URL','⚠️');return;}
-  }
-  try{
-    await apiFetch('/api/ref/video','POST',{user_id:currentUser.id,user_name:currentUser.name,url});
-    toast('Video submitted for review!','🎬');
-    document.getElementById('refVideoUrl').value='';
-    const s=document.getElementById('refVideoStatus');
-    if(s)s.innerHTML='<span style="font-size:.74rem;color:var(--gold);background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:3px 10px">⏳ Pending review</span>';
-  }catch(e){toast('Failed: '+e.message,'⚠️');}
-}
-
-function openBoostModal(type, targetId, targetName){
-  if(!currentUser){openModal('login');return;}
-  const typeLabel=type==='profile'?'Profile on Explore':'Product in Shop';
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <div style="font-weight:700;font-size:1rem;color:var(--text)">⚡ Boost ${typeLabel}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${targetName||''}</div>
-      </div>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:.78rem;color:var(--text);line-height:1.7">
-        <div style="margin-bottom:6px">📈 <strong>How boosting works:</strong></div>
-        <div style="color:var(--muted)">Your ${type==='profile'?'profile':'product'} appears at the <strong style="color:var(--gold)">top of ${type==='profile'?'Explore':'Shop'}</strong> for 7 days. Higher amount = higher position. Multiple creators can boost at once — sorted by bid.</div>
-      </div>
-    </div>
-    <div style="margin-bottom:16px">
-      <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Choose your boost amount</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
-        ${[5,10,25,50].map(v=>`<button type="button" class="tip-quick" data-amt="${v}" onclick="_setBoostAmt(${v})" style="padding:10px 4px;font-size:.88rem">$${v}</button>`).join('')}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:.82rem;color:var(--muted)">Custom:</span>
-        <input id="boostAmt" type="number" min="1" value="10" inputmode="decimal" oninput="_clearBoostQuick()" style="flex:1;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:.95rem;font-family:'DM Sans',sans-serif;outline:none;text-align:center">
-      </div>
-    </div>
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:14px;text-align:center">7 days · Visible to all users · Highest bidder shown first</div>
-    <div style="display:flex;gap:8px">
-      <button onclick="payBoost('stripe','${type}','${targetId}')" style="flex:1;padding:11px;background:linear-gradient(135deg,#d4a843,#f0c84a,#b8902e);border:none;border-radius:10px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">💳 Pay with Card</button>
-      <button onclick="payBoost('paypal','${type}','${targetId}')" style="flex:1;padding:11px;background:linear-gradient(135deg,#63b3ed,#4299e1,#2b6cb0);border:none;border-radius:10px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">🅿️ PayPal</button>
-    </div>`;
-  openModal('boost', html);
-  setTimeout(()=>_setBoostAmt(10), 50);
-}
-
-function _setBoostAmt(v){
-  document.querySelectorAll('.tip-quick[data-amt]').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.amt)===v));
-  const inp=document.getElementById('boostAmt');if(inp)inp.value=v;
-}
-function _clearBoostQuick(){
-  document.querySelectorAll('.tip-quick[data-amt]').forEach(b=>b.classList.remove('active'));
-}
-
-async function payBoost(method, type, targetId){
-  if(!currentUser)return;
-  const amount=parseFloat(document.getElementById('boostAmt')?.value||'10');
-  if(amount<1){toast('Minimum boost is $1','⚠️');return;}
-  if(method==='stripe'){
-    openStripeModal(
-      '⚡ Boost for 7 days',
-      type==='profile'?'Profile on Explore':'Product in Shop',
-      amount,
-      {type:'boost', boostType:type, targetId, userId:currentUser.id}
-    );
-  } else {
-    // PayPal
-    toast('Processing PayPal boost…','⏳');
-    try{
-      const order=await apiFetch('/api/paypal/boost','POST',{
-        user_id:currentUser.id, type, target_id:targetId, amount
-      });
-      if(order?.approval_url) window.location.href=order.approval_url;
-    }catch(e){toast('PayPal error: '+e.message,'⚠️');}
-  }
-}
-
-function _copyRefLink(){
-  const link=document.getElementById('refLinkBox')?.textContent||'';
-  navigator.clipboard.writeText(link).then(()=>toast('Referral link copied!','🔗')).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=link;ta.style.position='fixed';ta.style.opacity='0';
-    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    toast('Link copied!','🔗');
-  });
-}
-
-function _scrollToKyc(){
-  const el=document.getElementById('kycBoxWrap');
-  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='box-shadow .4s';el.style.boxShadow='0 0 0 2px var(--gold)';setTimeout(()=>el.style.boxShadow='',1800);}
-}
-function saveSubPrice(){
-  if(!currentUser)return;
-  const v=parseFloat((document.getElementById('subPriceInput')||{}).value||'9');
-  if(isNaN(v)||v<1){toast('Invalid price','⚠️');return;}
-  const u=DB.get('user');u.price=v;DB.set('user',u);currentUser=u;_saveProfile({price:v});
-  const users=DB.get('users')||{};if(users[u.email])users[u.email].price=v;DB.set('users',users);
-  toast('Price updated to $'+v.toFixed(2)+'/mo','✅');
-}
-
-// KYC
-function renderCertSection(u){
-  const wrap=document.getElementById('certBoxWrap');if(!wrap)return;
-  const cat=u.category||'';
-  const profCats=['Doctor','Personal Trainer','Therapist','Financial Advisor','Police'];
-  if(!profCats.includes(cat)){wrap.innerHTML='';return;}
-  const labels={Doctor:'Medical',Law:'Legal (Bar/Licence)','Real Estate':'Real Estate Licence','Personal Trainer':'PT Certification (NASM/ACE/REPS)','Therapist':'Psychology Licence / BACP','Financial Advisor':'FCA/SEC Registration','Police':'Police ID / Badge'};
-  const badges={Doctor:'🩺 Doctor',Law:'⚖️ Lawyer','Real Estate':'🏠 Agent','Personal Trainer':'🏋️ Personal Trainer','Therapist':'🧠 Therapist','Financial Advisor':'💰 Financial Advisor','Police':'👮 Police'};
-  const label=labels[cat]||cat;
-  const badge=badges[cat]||cat;
-  const st=u.certStatus||'unsubmitted';
-  const statusMap={
-    unsubmitted:'',
-    pending:'<span style="background:rgba(212,168,67,.12);color:var(--gold);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">⏳ Pending review</span>',
-    approved:'<span style="background:rgba(74,222,128,.12);color:var(--green);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">✅ '+badge+' badge active</span>',
-    rejected:'<span style="background:rgba(232,108,108,.12);color:var(--rose);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">❌ Rejected — resubmit</span>'
-  };
-  let inner='';
-  if(st==='approved'){
-    inner=statusMap.approved+'<div style="font-size:.8rem;color:var(--muted);margin-top:8px">Your '+badge+' badge is displayed on your profile.</div>';
-  } else if(st==='pending'){
-    inner=statusMap.pending+'<div style="font-size:.8rem;color:var(--muted);margin-top:8px">We will verify your certificate within 48 hours.</div>';
-  } else {
-    inner=`${st==='rejected'?statusMap.rejected+'<div style="font-size:.8rem;color:var(--muted);margin:8px 0 14px">Please resubmit with a clearer document.</div>':''}
-      <div style="font-size:.8rem;color:var(--muted);margin:8px 0 14px">Upload your ${label} certificate to get the ${badge} badge on your profile.</div>
-      <div class="fg"><label>${label} certificate</label>
-        <div class="upload-zone" onclick="document.getElementById('certFile').click()">
-          <input type="file" id="certFile" accept="image/*,.pdf" onchange="document.getElementById('certFileLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'">
-          <div style="font-size:1.3rem;margin-bottom:5px">📋</div>
-          <div style="font-size:.78rem;color:var(--muted)">Click to upload certificate</div>
-          <div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="certFileLbl">JPG, PNG or PDF</div>
-        </div>
-      </div>
-      <button class="btn btn-gold" onclick="submitCert()">Submit for verification →</button>`;
-  }
-  wrap.innerHTML=`<div class="kyc-box"><div class="ds-title">Professional Badge</div>${inner}</div>`;
-}
-
-async function submitCert(){
-  if(!currentUser)return;
-  const f=(document.getElementById('certFile')||{}).files?.[0];
-  if(!f){toast('Please upload your certificate','⚠️');return;}
-  const btn=document.querySelector('[onclick="submitCert()"]');
-  if(btn){btn.disabled=true;btn.textContent='Uploading…';}
-  try{
-    const blob=f.type.startsWith('image/')?await _resizeToBlob(f,1200,800,0.88):f;
-    const certUrl=await _uploadToR2(blob,'certs',f.type||'image/jpeg');
-    await apiFetch('/api/cert','POST',{
-      user_id:currentUser.id,user_name:currentUser.name,user_email:currentUser.email,
-      category:currentUser.category,cert_url:certUrl
-    });
-    currentUser.certStatus='pending';DB.set('user',currentUser);
-    toast('Certificate submitted! We will review within 48h','✅');
-    renderCertSection(currentUser);
-  }catch(e){
-    toast('Failed: '+e.message,'⚠️');
-    if(btn){btn.disabled=false;btn.textContent='Submit for verification →';}
-  }
-}
-
-function renderKycSection(u){
-  const wrap=document.getElementById('kycBoxWrap');if(!wrap)return;
-  const st=u.kycStatus||'unsubmitted';
-  const statMap={unsubmitted:'<span style="background:var(--bg3);color:var(--muted);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">Not submitted</span>',pending:'<span style="background:rgba(212,168,67,.12);color:var(--gold);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">⏳ Pending review</span>',approved:'<span style="background:rgba(74,222,128,.12);color:var(--green);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">✅ Verified</span>',rejected:'<span style="background:rgba(232,108,108,.12);color:var(--rose);border-radius:100px;padding:3px 10px;font-size:.73rem;font-weight:700">❌ Rejected</span>'};
-  const statusHtml=statMap[st]||'';
-  let inner='';
-  if(st==='approved'){inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin-top:8px">Identity verified. You can receive payouts and display the verified badge.</div>`;}
-  else if(st==='pending'){inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin-top:8px">Documents under review. We will notify you within 24 hours.</div>`;}
-  else{inner=`${statusHtml}<div style="font-size:.8rem;color:var(--muted);margin:8px 0 14px">Verify your identity to unlock payouts and the verified badge.</div>
-    <div class="fg"><label>Full legal name</label><input id="kycName" placeholder="As on your ID" value="${u.name||''}"></div>
-    <div class="fg"><label>Date of birth</label><input id="kycDob" type="date"></div>
-    <div class="fg"><label>Country</label><input id="kycCountry" placeholder="Country of residence"></div>
-    <div class="fg"><label>ID front</label><div class="upload-zone" onclick="document.getElementById('kycFront').click()"><input type="file" id="kycFront" accept="image/*,.pdf" onchange="document.getElementById('kycFrontLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload front of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycFrontLbl">JPG, PNG or PDF</div></div></div>
-    <div class="fg"><label>ID back</label><div class="upload-zone" onclick="document.getElementById('kycBack').click()"><input type="file" id="kycBack" accept="image/*,.pdf" onchange="document.getElementById('kycBackLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload back of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycBackLbl">JPG, PNG or PDF</div></div></div>
-    <div class="fg"><label>Selfie with ID</label><div class="upload-zone" onclick="document.getElementById('kycSelfie').click()"><input type="file" id="kycSelfie" accept="image/*" onchange="document.getElementById('kycSelfieLbl').textContent=this.files[0]?.name||'JPG or PNG'"><div style="font-size:1.3rem;margin-bottom:5px">🤳</div><div style="font-size:.78rem;color:var(--muted)">Selfie holding your ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycSelfieLbl">JPG or PNG</div></div></div>
-    <div class="fg"><label>Payout method</label><select id="kycPayoutMethod"><option value="bank">Bank transfer</option><option value="paypal">PayPal</option></select></div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--text)">Payout schedule:</strong><br>
-      💳 PayPal — minimum <strong style="color:var(--gold)">$100</strong>, processed within <strong style="color:var(--gold)">24 hours</strong><br>
-      🏦 Bank transfer — minimum <strong style="color:var(--gold)">$500</strong>, processed in <strong style="color:var(--gold)">21–28 business days</strong>
-    </div>
-    <div class="fg"><label>Payout details</label><input id="kycPayoutDetails" placeholder="IBAN / PayPal email"></div>
-    <button class="btn btn-gold" onclick="submitKyc()">Submit for verification →</button>`;}
-  wrap.innerHTML=`<div class="kyc-box"><div class="ds-title">Identity verification (KYC)</div>${inner}</div>`;
-}
-async function submitKyc(){
-  if(!currentUser)return;
-  const name=(document.getElementById('kycName')||{}).value?.trim()||'';
-  const dob=(document.getElementById('kycDob')||{}).value||'';
-  const country=(document.getElementById('kycCountry')||{}).value?.trim()||'';
-  const frontFile=(document.getElementById('kycFront')||{}).files?.[0];
-  const backFile=(document.getElementById('kycBack')||{}).files?.[0];
-  const selfieFile=(document.getElementById('kycSelfie')||{}).files?.[0];
-  if(!name||!dob||!country){toast('Please fill in name, date of birth and country','⚠️');return;}
-  if(!frontFile){toast('Please upload front of your ID','⚠️');return;}
-
-  const btn=document.querySelector('[onclick="submitKyc()"]');
-  if(btn){btn.disabled=true;btn.textContent='Uploading documents…';}
-  toast('Uploading documents…','⏳');
-
-  try{
-    // Upload ID documents to R2
-    let frontUrl='',backUrl='',selfieUrl='';
-    if(frontFile){
-      const blob=frontFile.type.startsWith('image/')?await _resizeToBlob(frontFile,1200,800,0.88):frontFile;
-      frontUrl=await _uploadToR2(blob,'kyc',frontFile.type||'image/jpeg');
-    }
-    if(backFile){
-      const blob=backFile.type.startsWith('image/')?await _resizeToBlob(backFile,1200,800,0.88):backFile;
-      backUrl=await _uploadToR2(blob,'kyc',backFile.type||'image/jpeg');
-    }
-    if(selfieFile){
-      const blob=selfieFile.type.startsWith('image/')?await _resizeToBlob(selfieFile,800,800,0.88):selfieFile;
-      selfieUrl=await _uploadToR2(blob,'kyc',selfieFile.type||'image/jpeg');
-    }
-
-    // Save to D1
-    const res=await fetch(WORKER_URL+'/api/kyc',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        user_id:currentUser.id,user_name:currentUser.name,user_email:currentUser.email,
-        legal_name:name,dob,country,
-        payout_method:(document.getElementById('kycPayoutMethod')||{}).value||'bank',
-        payout_details:(document.getElementById('kycPayoutDetails')||{}).value||'',
-        id_front_url:frontUrl,id_back_url:backUrl,selfie_url:selfieUrl
-      })
-    });
-    if(!res.ok)throw new Error('Server error: '+res.status);
-
-    // Update local state
-    currentUser.kycStatus='pending';DB.set('user',currentUser);
-    _saveProfile({kycStatus:'pending'});
-
-    toast('KYC submitted! We will review within 24h ✅','');
-    renderDashboard();
-  }catch(e){
-    toast('Submission failed: '+e.message,'⚠️');
-    if(btn){btn.disabled=false;btn.textContent='Submit for verification →';}
-  }
-}
-// Holds pending post media (image data URL or video data URL) until publish
-// Human-friendly time ago, since the DB stores ISO timestamps
-function _timeAgo(iso){
-  if(!iso) return 'just now';
-  const t=new Date(iso).getTime(), s=Math.max(1,Math.floor((Date.now()-t)/1000));
-  if(s<60) return 'just now';
-  if(s<3600) return Math.floor(s/60)+'m ago';
-  if(s<86400) return Math.floor(s/3600)+'h ago';
-  if(s<604800) return Math.floor(s/86400)+'d ago';
-  return new Date(iso).toLocaleDateString();
-}
-function requestPayout(){
-  if(!currentUser){openModal('login');return;}
-  const u=DB.get('user');
-  const bal=u.balance||0;
-  if(bal<100){toast('You need at least $100 to request a payout','⚠️');return;}
-  // Pre-fill from previously saved KYC payout details if any
-  const kycReq=(DB.get('kycRequests')||[]).find(r=>r.userEmail===u.email);
-  const savedMethod=kycReq?.payoutMethod||'paypal';
-  const savedDetails=kycReq?.payoutDetails||'';
-  const canBank=bal>=500;
-  const html=`
-    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.5rem;margin:0 0 4px">Request payout</h2>
-    <div style="color:var(--muted);font-size:.85rem;margin-bottom:18px">Available balance: <strong style="color:var(--gold)">$${bal.toFixed(2)}</strong></div>
-
-    <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">Choose method</div>
-    <div style="display:grid;gap:8px;margin-bottom:18px">
-      <label class="payout-opt" data-method="paypal">
-        <input type="radio" name="poMethod" value="paypal" ${savedMethod==='paypal'?'checked':''} onchange="_syncPayoutOpt()">
-        <div class="payout-opt-body">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>💳 PayPal</strong><span style="font-size:.7rem;color:var(--green);font-weight:600">Faster</span></div>
-          <div style="font-size:.76rem;color:var(--muted);margin-top:3px">Minimum $100 · Within 24 hours</div>
-        </div>
-      </label>
-      <label class="payout-opt ${canBank?'':'disabled'}" data-method="bank">
-        <input type="radio" name="poMethod" value="bank" ${savedMethod==='bank'&&canBank?'checked':''} ${canBank?'':'disabled'} onchange="_syncPayoutOpt()">
-        <div class="payout-opt-body">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>🏦 Bank transfer</strong>${canBank?'':'<span style="font-size:.7rem;color:var(--muted2)">Needs $500+</span>'}</div>
-          <div style="font-size:.76rem;color:var(--muted);margin-top:3px">Minimum $500 · 21–28 business days</div>
-        </div>
-      </label>
-    </div>
-
-    <div class="fg"><label>Amount ($)</label><input id="poAmt" type="number" min="100" max="${bal}" value="${Math.min(bal,100).toFixed(2)}" inputmode="decimal"></div>
-    <div class="fg"><label id="poDestLabel">PayPal email</label><input id="poDest" placeholder="${savedMethod==='bank'?'IBAN / account number':'paypal@example.com'}" value="${savedDetails.replace(/"/g,'&quot;')}"></div>
-    <div id="poSummary" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5"></div>
-
-    <button class="btn btn-gold" style="width:100%" onclick="submitPayout()">Submit request →</button>
-    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:12px">Need to change destination? Update under Identity verification.</div>`;
-  openModal('payout', html);
-  setTimeout(_syncPayoutOpt, 60);
-}
-
-function _syncPayoutOpt(){
-  const sel=document.querySelector('input[name="poMethod"]:checked');
-  if(!sel)return;
-  const m=sel.value;
-  document.querySelectorAll('.payout-opt').forEach(el=>el.classList.toggle('selected', el.dataset.method===m));
-  const lbl=document.getElementById('poDestLabel');
-  const inp=document.getElementById('poDest');
-  const amt=document.getElementById('poAmt');
-  const sum=document.getElementById('poSummary');
-  if(m==='paypal'){
-    if(lbl)lbl.textContent='PayPal email';
-    if(inp)inp.placeholder='paypal@example.com';
-    if(amt){amt.min=100; if(+amt.value<100)amt.value=100;}
-    if(sum)sum.innerHTML='💳 <strong style="color:var(--text)">PayPal</strong> · min <strong style="color:var(--text)">$100</strong> · within 24 hours';
-  } else {
-    if(lbl)lbl.textContent='IBAN / account number';
-    if(inp)inp.placeholder='e.g. GB29 NWBK 6016 1331 9268 19';
-    if(amt){amt.min=500; if(+amt.value<500)amt.value=500;}
-    if(sum)sum.innerHTML='🏦 <strong style="color:var(--text)">Bank transfer</strong> · min <strong style="color:var(--text)">$500</strong> · 21–28 business days';
-  }
-}
-
-function submitPayout(){
-  const u=DB.get('user');if(!u)return;
-  const method=(document.querySelector('input[name="poMethod"]:checked')||{}).value||'paypal';
-  const amt=parseFloat((document.getElementById('poAmt')||{}).value||'0');
-  const dest=((document.getElementById('poDest')||{}).value||'').trim();
-  const minAmt=method==='paypal'?100:500;
-  const schedule=method==='paypal'?'within 24 hours':'21–28 business days';
-  if(!amt||isNaN(amt)){toast('Enter a valid amount','⚠️');return;}
-  if(amt<minAmt){toast('Minimum for '+(method==='paypal'?'PayPal':'bank transfer')+' is $'+minAmt,'⚠️');return;}
-  if(amt>(u.balance||0)){toast('Insufficient balance','⚠️');return;}
-  if(!dest){toast('Enter your '+(method==='paypal'?'PayPal email':'IBAN / account number'),'⚠️');return;}
-  if(method==='paypal'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dest)){toast('That doesn\'t look like a valid email','⚠️');return;}
-  const requests=DB.get('payoutRequests')||[];
-  requests.push({id:'po_'+Date.now(),userId:u.id,userName:u.name,userEmail:u.email,amount:amt.toFixed(2),method,details:dest,status:'pending',requestedAt:new Date().toISOString(),schedule});
-  DB.set('payoutRequests',requests);
-  // Save to D1
-  fetch(WORKER_URL+'/api/payouts',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user_id:u.id,user_name:u.name,user_email:u.email,amount:amt.toFixed(2),method,details:dest})
-  }).catch(()=>{});
-  closeModal();
-  toast('Payout of $'+amt.toFixed(2)+' via '+(method==='paypal'?'PayPal':'bank')+' submitted — arrives in '+schedule,'💸');
-}
-
-// ADMIN
-function adminTab(tab,el){
-  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
-  if(el)el.classList.add('active');const panel=document.getElementById('ap-'+tab);if(panel)panel.classList.add('active');
-  if(tab==='kyc')renderAdminKyc();if(tab==='payouts')renderAdminPayouts();if(tab==='users')renderAdminUsers();if(tab==='overview')renderAdminOverview();if(tab==='refvideos')renderAdminRefVideos();
-}
-function renderAdmin(){if(!currentUser||currentUser.role!=='admin'){toast('Admin only','🔐');showPage('landing',null);return;}renderAdminOverview();}
-function renderAdminOverview(){
-  const el=document.getElementById('adminStats');
-  el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:10px">Loading…</div>';
-  Promise.all([
-    fetch(WORKER_URL+'/api/kyc').then(r=>r.json()).catch(()=>[]),
-    fetch(WORKER_URL+'/api/admin/payouts').then(r=>r.json()).catch(()=>({payouts:[]})),
-    fetch(WORKER_URL+'/api/admin/users').then(r=>r.json()).catch(()=>[]),
-    fetch(WORKER_URL+'/api/posts').then(r=>r.json()).catch(()=>[])
-  ]).then(([kycs,paysData,d1Users,d1Posts])=>{
-    const pays=paysData.payouts||paysData||[];
-    _renderAdmin(kycs||[],pays,d1Users||[],d1Posts||[]);
-  }).catch(()=>{el.innerHTML='<div style="color:var(--rose);padding:10px">Failed to load stats</div>';});
-}
-
-function _renderAdmin(kycs,pays,d1Users,d1Posts){
-  const pending=kycs.filter(k=>k.status==='pending').length;
-  const kb=document.getElementById('kycBadge');if(kb)kb.textContent=pending>0?pending:'';
-
-  // Stats grid
-  document.getElementById('adminStats').innerHTML=[
-    ['Total users',d1Users.length,''],
-    ['Total posts',d1Posts.length,''],
-    ['KYC pending',pending,'var(--gold)'],
-    ['Payouts pending',pays.filter(p=>p.status==='pending'||p.status==='processing').length,'var(--gold)'],
-  ].map(([l,v,c])=>`<div class="admin-stat-card"><div class="dash-card-label">${l}</div><div style="font-family:'Fraunces',serif;font-size:1.6rem;color:${c||'var(--text)'}">${v}</div></div>`).join('');
-
-  // Recent users
-  const recentEl=document.getElementById('adminRecentUsers');
-  if(recentEl){
-    const recent=d1Users.slice(0,8);
-    if(!recent.length){recentEl.innerHTML='<div style="color:var(--muted);font-size:.82rem">No users yet.</div>';return;}
-    recentEl.innerHTML=recent.map(u=>`
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c0392b,#d4a843);flex-shrink:0;overflow:hidden">
-          <img src="${u.avatar||''}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:.82rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px">
-            ${u.name||'—'}
-            ${u.verified?'<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1D9BF0"/><path d="M6 10.5L8.5 13L14 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
-          </div>
-          <div style="font-size:.7rem;color:var(--muted)">${u.email||''}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:.7rem;color:var(--muted)">${(u.created_at||'').slice(0,10)}</div>
-          <span style="font-size:.65rem;padding:2px 7px;border-radius:100px;background:${u.role==='admin'?'rgba(232,108,108,.15)':'rgba(255,255,255,.07)'};color:${u.role==='admin'?'var(--rose)':'var(--muted)'}">${u.role||'user'}</span>
-        </div>
-      </div>`).join('');
-  }
-
-  // KYC pending badge
-  const kycPendingEl=document.getElementById('adminKycPendingList');
-  if(kycPendingEl){
-    const pendingKycs=kycs.filter(k=>k.status==='pending').slice(0,5);
-    if(!pendingKycs.length){kycPendingEl.innerHTML='<div style="color:var(--muted);font-size:.82rem">No pending requests.</div>';return;}
-    kycPendingEl.innerHTML=pendingKycs.map(r=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:.82rem;font-weight:600;color:var(--text)">${r.user_name||'—'}</div>
-          <div style="font-size:.7rem;color:var(--muted)">${r.user_email||''} · ${(r.submitted_at||r.created_at||'').slice(0,10)}</div>
-        </div>
-        <button onclick="adminTab('kyc',null)" style="font-size:.72rem;padding:4px 10px;border-radius:8px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer">Review →</button>
-      </div>`).join('');
-  }
-}
-function renderAdminCerts(){
-  const el=document.getElementById('adminCertList');if(!el)return;
-  el.innerHTML='<div style="color:var(--muted);padding:10px;font-size:.82rem">Loading…</div>';
-  fetch(WORKER_URL+'/api/cert').then(r=>r.json()).then(list=>{
-    if(!list||!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>No certificate requests yet.</div>';return;}
-    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||s);
-    const catBadge={Doctor:'🩺 Doctor',Law:'⚖️ Lawyer','Real Estate':'🏠 Agent','Personal Trainer':'🏋️ PT','Therapist':'🧠 Therapist','Financial Advisor':'💰 Advisor','Police':'👮 Police'};
-    el.innerHTML=`<table class="admin-table">
-      <thead><tr><th>Name</th><th>Category</th><th>Certificate</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody>${list.map(r=>`<tr>
-        <td><div style="font-weight:600">${r.user_name||'—'}</div><div style="font-size:.72rem;color:var(--muted)">${r.user_email||''}</div></td>
-        <td>${catBadge[r.category]||r.category||'—'}</td>
-        <td><a href="${r.cert_url}" target="_blank" style="color:var(--gold);font-size:.78rem">📋 View certificate</a></td>
-        <td style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||'').slice(0,10)}</td>
-        <td>${badge(r.status)}</td>
-        <td>${r.status==='pending'
-          ?`<button class="action-btn approve" onclick="adminCertAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve</button>
-             <button class="action-btn reject" onclick="adminCertAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
-          :'—'}</td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-  }).catch(()=>{el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Failed to load.</div>';});
-}
-
-async function adminCertAction(id, userId, action){
-  if(!confirm((action==='approved'?'Approve':'Reject')+' this certificate?'))return;
-  try{
-    await apiFetch('/api/cert/review','POST',{id,user_id:userId,action});
-    toast(action==='approved'?'Certificate approved ✅':'Rejected ❌','');
-    renderAdminCerts();
-  }catch(e){toast('Error: '+e.message,'⚠️');}
-}
-
-function renderAdminRefVideos(){
-  const el=document.getElementById('adminRefVideoList');
-  if(!el)return;
-  el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:10px">Loading…</div>';
-  fetch(WORKER_URL+'/api/ref/video').then(r=>r.json()).then(list=>{
-    if(!list||!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>No video submissions yet.</div>';return;}
-    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||s);
-    el.innerHTML=`<table class="admin-table">
-      <thead><tr><th>Creator</th><th>Video URL</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody>${list.map(r=>`<tr>
-        <td><div style="font-weight:600">${r.user_name||'—'}</div></td>
-        <td><a href="${r.url}" target="_blank" style="color:var(--gold);font-size:.78rem;word-break:break-all">${r.url}</a></td>
-        <td style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||'').slice(0,10)}</td>
-        <td>${badge(r.status)}</td>
-        <td>${r.status==='pending'
-          ?`<button class="action-btn approve" onclick="adminRefVideoAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve 2%</button>
-             <button class="action-btn reject" onclick="adminRefVideoAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
-          :'—'}
-        </td>
-      </tr>`).join('')}</tbody>
-    </table>`;
-  }).catch(()=>{el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Failed to load.</div>';});
-}
-
-async function adminRefVideoAction(id, userId, action){
-  if(!confirm((action==='approved'?'Approve and set 2% referral rate':'Reject')+' this video?'))return;
-  try{
-    await apiFetch('/api/ref/video/review','POST',{id,user_id:userId,action});
-    toast(action==='approved'?'Approved — creator now earns 2% ✅':'Rejected ❌','');
-    renderAdminRefVideos();
-  }catch(e){toast('Error: '+e.message,'⚠️');}
-}
-
-function renderAdminKyc(){
-  const el=document.getElementById('adminKycList');
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading…</div>';
-  fetch(WORKER_URL+'/api/kyc')
-    .then(r=>r.json())
-    .then(requests=>{
-      if(!requests||!requests.length){
-        el.innerHTML='<div class="empty"><div class="empty-icon">🪪</div>No KYC requests yet.</div>';
-        return;
+        if (event.type === "invoice.payment_succeeded") {
+          const subId = data.subscription;
+          if (subId) {
+            // Use actual period end from Stripe, not +1 month estimate
+            const periodEnd = data.lines?.data?.[0]?.period?.end
+              ? new Date(data.lines.data[0].period.end * 1000).toISOString()
+              : null;
+            await env.DB.prepare(
+              `UPDATE subscriptions SET status='active'${periodEnd ? ", period_end='" + periodEnd + "'" : ", period_end=datetime('now', '+1 month')"} WHERE stripe_sub_id=?`
+            ).bind(subId).run();
+            // Credit creator — use stored price (original, before fee passthrough)
+            const sub = await env.DB.prepare(
+              `SELECT creator_id, price FROM subscriptions WHERE stripe_sub_id=?`
+            ).bind(subId).first();
+            if (sub?.creator_id) await creditBalance(env, sub.creator_id, Number(sub.price));
+          }
+        }
+        if (event.type === "invoice.payment_failed") {
+          const subId = data.subscription;
+          if (subId) {
+            await env.DB.prepare(
+              `UPDATE subscriptions SET status='past_due' WHERE stripe_sub_id=?`
+            ).bind(subId).run();
+          }
+        }
+        if (event.type === "customer.subscription.deleted") {
+          const subId = data.id;
+          await env.DB.prepare(
+            `UPDATE subscriptions SET status='cancelled' WHERE stripe_sub_id=?`
+          ).bind(subId).run();
+        }
+        if (event.type === "customer.subscription.updated") {
+          const subId = data.id;
+          const status = data.status;
+          const periodEnd = data.current_period_end ? new Date(data.current_period_end * 1e3).toISOString() : null;
+          await env.DB.prepare(
+            `UPDATE subscriptions SET status=?, period_end=? WHERE stripe_sub_id=?`
+          ).bind(status, periodEnd, subId).run();
+        }
+        return json({ received: true });
       }
-      const badge=s=>({
-        pending:'<span class="badge-gold">Pending</span>',
-        approved:'<span class="badge-green">Approved</span>',
-        rejected:'<span class="badge-rose">Rejected</span>'
-      }[s]||s);
-      el.innerHTML=`<table class="admin-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Legal name</th><th>DOB</th><th>Country</th><th>Documents</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>${requests.map(r=>`<tr>
-          <td data-label="Name"><div style="font-weight:600">${r.user_name||'—'}</div></td>
-          <td data-label="Email" style="font-size:.76rem;color:var(--muted)">${r.user_email||'—'}</td>
-          <td data-label="Legal name">${r.legal_name||'—'}</td>
-          <td data-label="DOB" style="font-size:.74rem">${r.dob||'—'}</td>
-          <td data-label="Country">${r.country||'—'}</td>
-          <td data-label="Documents" style="font-size:.74rem">
-            ${r.id_front_url?`<a href="${r.id_front_url}" target="_blank" style="color:var(--gold);display:block">📄 ID Front</a>`:'<span style="color:var(--muted)">—</span>'}
-            ${r.id_back_url?`<a href="${r.id_back_url}" target="_blank" style="color:var(--gold);display:block">📄 ID Back</a>`:''}
-            ${r.selfie_url?`<a href="${r.selfie_url}" target="_blank" style="color:var(--gold);display:block">🤳 Selfie</a>`:''}
-          </td>
-          <td data-label="Date" style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||r.created_at||'').slice(0,10)}</td>
-          <td data-label="Status">${badge(r.status)}</td>
-          <td data-label="Action">${r.status==='pending'?
-            `<button class="action-btn approve" onclick="adminKycAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve</button>
-             <button class="action-btn reject" onclick="adminKycAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
-            :'—'}</td>
-        </tr>`).join('')}</tbody>
-      </table>`;
-    }).catch(()=>{
-      el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Could not load KYC requests.</div>';
-    });
-}
-
-async function adminKycAction(kycId, userId, action){
-  if(!confirm((action==='approved'?'Approve':'Reject')+' this KYC request?'))return;
-  try{
-    const res=await fetch(WORKER_URL+'/api/kyc/review',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kyc_id:kycId,user_id:userId,action})
-    });
-    const data=await res.json();
-    if(!res.ok){toast(data.error||'Failed','⚠️');return;}
-    toast('KYC '+(action==='approved'?'approved ✅':'rejected ❌'),'');
-    renderAdminKyc();
-    renderAdminOverview();
-  }catch(e){toast('Error: '+e.message,'⚠️');}
-}
-function renderAdminPayouts(){
-  const el=document.getElementById('adminPayoutList');
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading…</div>';
-  fetch(WORKER_URL+'/api/admin/payouts')
-    .then(r=>r.json())
-    .then(data=>{
-      const requests=data.payouts||[];
-      if(!requests.length){
-        el.innerHTML='<div class="empty"><div class="empty-icon">💸</div>No payout requests yet.</div>';
-        return;
+      // ── Cancel subscription ──────────────────────────────────────────────
+      if (path === "/api/subscriptions/cancel" && method === "POST") {
+        const { user_id, creator_id } = body;
+        if (!user_id || !creator_id) return err("Missing fields");
+        // Find the active subscription
+        const sub = await env.DB.prepare(
+          `SELECT * FROM subscriptions WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1`
+        ).bind(user_id, creator_id).first();
+        if (!sub) return err("No active subscription found");
+        // Cancel in Stripe at period end (fan keeps access until end of billing period)
+        if (sub.stripe_sub_id) {
+          try {
+            await stripeReq(env, `/subscriptions/${sub.stripe_sub_id}`, "POST", {
+              cancel_at_period_end: "true"
+            });
+          } catch(e) {
+            console.warn("Stripe cancel failed:", e.message);
+          }
+        }
+        // Mark as cancelling in D1
+        await env.DB.prepare(
+          `UPDATE subscriptions SET status='cancelling' WHERE id=?`
+        ).bind(sub.id).run();
+        return json({ ok: true, message: "Subscription cancelled. You keep access until end of billing period." });
       }
-      const statusBadge=s=>({
-        pending:'<span class="badge-gold">Pending</span>',
-        paid:'<span class="badge-green">Paid</span>',
-        processing:'<span style="background:rgba(99,179,237,.15);color:#63b3ed;padding:2px 8px;border-radius:100px;font-size:.72rem;font-weight:700">Processing</span>',
-        failed:'<span class="badge-rose">Failed</span>',
-        rejected:'<span class="badge-rose">Rejected</span>'
-      }[s]||s);
 
-      const detailsFor=r=>{
-        if(r.method==='paypal') return r.paypal_email||'—';
-        const parts=[r.bank_name,r.bank_iban,r.bank_swift,r.bank_account,r.bank_routing,r.bank_sortcode,r.bank_bankname,r.bank_country].filter(Boolean);
-        return parts.join(' · ')||r.note||'—';
-      };
-
-      el.innerHTML=`<table class="admin-table">
-        <thead><tr><th>Creator</th><th>Amount</th><th>Method</th><th>Details</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>${requests.map(r=>`<tr>
-          <td><div style="font-weight:600">${r.creator_name||r.creator_id}</div><div style="font-size:.72rem;color:var(--muted)">${r.creator_email||''}</div></td>
-          <td style="font-weight:700;color:var(--gold)">$${Number(r.amount).toFixed(2)}</td>
-          <td>${r.method==='paypal'?'💰 PayPal':'🏦 Bank'}</td>
-          <td style="font-size:.74rem;max-width:200px;word-break:break-all">${detailsFor(r)}</td>
-          <td style="font-size:.74rem;color:var(--muted)">${(r.requested_at||'').slice(0,10)}</td>
-          <td>${statusBadge(r.status)}</td>
-          <td>${r.status==='pending'||r.status==='processing'?
-            `<button class="action-btn payout" onclick="adminPayoutAction('${r.id}','paid')" style="margin-right:4px">✓ Paid</button>
-             <button class="action-btn reject" onclick="adminPayoutAction('${r.id}','rejected')">✕</button>`
-            :'—'}</td>
-        </tr>`).join('')}</tbody>
-      </table>`;
-    }).catch(()=>{
-      el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Could not load payouts.</div>';
-    });
-}
-
-async function adminPayoutAction(pid, action){
-  if(!confirm((action==='paid'?'Mark as paid?':'Reject this payout?')))return;
-  try{
-    const res=await fetch(WORKER_URL+'/api/admin/payouts/mark-paid',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({payout_id:pid,reference:action==='paid'?'manual-'+Date.now():null,action})
-    });
-    const data=await res.json();
-    if(!res.ok){toast(data.error||'Failed','⚠️');return;}
-    toast(action==='paid'?'Marked as paid ✓':'Rejected','💸');
-    renderAdminPayouts();
-  }catch(e){toast('Error: '+e.message,'⚠️');}
-}
-function renderAdminUsers(){
-  const tbody=document.getElementById('adminUserBody');
-  tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:22px">Loading…</td></tr>`;
-  fetch(WORKER_URL+'/api/admin/users')
-    .then(r=>r.json())
-    .then(list=>{
-      if(!list||!list.length){
-        tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:22px">No users yet.</td></tr>`;
-        return;
+      if (path === "/api/balance" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const tips = await env.DB.prepare(
+          `SELECT COALESCE(SUM(amount),0) as total FROM tips WHERE creator_id=?`
+        ).bind(userId).first();
+        const subs = await env.DB.prepare(
+          `SELECT COALESCE(SUM(price),0) as total, COUNT(*) as count FROM subscriptions WHERE creator_id=? AND status='active'`
+        ).bind(userId).first();
+        const sales = await env.DB.prepare(
+          `SELECT COALESCE(SUM(pu.price),0) as total FROM purchases pu
+           LEFT JOIN products p ON pu.product_id = p.id
+           WHERE p.creator_id=?`
+        ).bind(userId).first();
+        const totalEarned = Number(tips.total || 0) + Number(subs.total || 0) + Number(sales.total || 0);
+        return json({
+          balance: Math.round(totalEarned * 100) / 100,
+          total_earned: Math.round(totalEarned * 100) / 100,
+          subscriber_count: Number(subs.count || 0),
+          tips_total: Math.round(Number(tips.total || 0) * 100) / 100,
+          sales_total: Math.round(Number(sales.total || 0) * 100) / 100
+        });
       }
-      const kycBadge=s=>({
-        pending:'<span class="badge-gold">Pending</span>',
-        approved:'<span class="badge-green">Verified</span>',
-        rejected:'<span class="badge-rose">Rejected</span>'
-      }[s]||'—');
-      tbody.innerHTML=list.map(u=>`<tr>
-        <td data-label="Name"><div style="font-weight:600">${u.name||'—'}</div></td>
-        <td data-label="Email" style="font-size:.76rem;color:var(--muted)">${u.email||'—'}</td>
-        <td data-label="Role"><span class="${u.role==='admin'?'badge-rose':'badge-blue'}">${u.role||'user'}</span></td>
-        <td data-label="KYC">${kycBadge(u.kyc_status||u.kycStatus)}</td>
-        <td data-label="Balance" style="color:var(--gold)">$${Number(u.balance||0).toFixed(2)}</td>
-        <td data-label="Joined" style="font-size:.74rem;color:var(--muted)">${(u.created_at||'').slice(0,10)||'—'}</td>
-        <td data-label="Action">
-          <button onclick="adminVerifyUser('${u.id}',${u.verified?0:1})" style="font-size:.72rem;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer">${u.verified?'Unverify':'Verify ✓'}</button>
-        </td>
-      </tr>`).join('');
-    }).catch(()=>{
-      tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--rose);padding:22px">Failed to load users.</td></tr>`;
-    });
-}
-
-async function adminVerifyUser(userId, verified){
-  try{
-    await fetch(WORKER_URL+'/api/admin/users/verify',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({user_id:userId,verified})
-    });
-    toast(verified?'User verified ✅':'User unverified','');
-    renderAdminUsers();
-  }catch(e){toast('Failed','⚠️');}
-}
-
-
-// ═══ SHOP ═══════════════════════════════════════════════════════
-function _seedProducts(){
-  if(DB.get('products')) return;
-  DB.set('products',[
-    {id:'pr1',creatorId:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',verified:true,title:'Lisbon Light — Lightroom Preset Pack',type:'preset',desc:'12 cinematic presets capturing the golden hour tones of Lisbon. One-click magic for travel photography.',includes:['12 .xmp Lightroom presets','Colour profile guide PDF','Mobile DNG versions included','Lifetime updates'],price:29,cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',sales:184,rating:4.8,reviews:62,trending:true,emoji:'🌇',preview:'These presets work on any RAW file. The "Alfama Glow" preset is the hero — warm shadows with lifted highlights.'},
-    {id:'pr2',creatorId:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',verified:true,title:'The Long-form Writing Masterclass',type:'course',desc:'8-week course covering research, structure, voice, and publishing. Used by 2,000+ writers.',includes:['8 weeks of video lessons (6+ hours)','Weekly writing assignments','Private community access','Certificate of completion','Lifetime access'],price:149,cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',sales:412,rating:4.9,reviews:187,bestseller:true,emoji:'✍️',preview:'Week 1 free preview: Why most long-form pieces fail in the first 200 words — and the structural fix.'},
-    {id:'pr3',creatorId:'c3',creatorName:'Yuki Tanaka',creatorAvatar:'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80',verified:true,title:'Ambient Composition Starter Kit',type:'audio',desc:'24 royalty-free ambient loops, 8 texture pads and 3 full stems from Coastal Drift.',includes:['24 ambient loops (WAV 48kHz)','8 texture pad samples','3 full production stems','Royalty-free commercial licence'],price:49,cover:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=600&q=80',sales:263,rating:4.7,reviews:94,emoji:'🎹',preview:'30-second preview of the "Fog Harbour" loop — flagship track from the kit.'},
-    {id:'pr4',creatorId:'c4',creatorName:'Adaeze Nwosu',creatorAvatar:'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80',verified:true,title:'African Pattern Brush Set — Procreate',type:'preset',desc:'60 hand-drawn brushes inspired by Kente, Adire and Ankara patterns. Compatible with Procreate 5+.',includes:['60 .brush files for Procreate','Pattern reference PDF (A4)','3 colour palette .swatches','Video tutorial: applying patterns'],price:39,cover:'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',sales:97,rating:4.6,reviews:41,emoji:'🎨',preview:'The Kente Weave brush is the most versatile — works at any opacity for fabric texture or standalone pattern.'},
-    {id:'pr5',creatorId:'c5',creatorName:'Marco Bellini',creatorAvatar:'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80',verified:true,title:'The Italian Home Cook E-book',type:'ebook',desc:'142 pages, 60 recipes from Bologna to Calabria. PDF + ePub included. No pasta machine required.',includes:['142-page PDF (print-ready)','ePub for e-readers','60 tested recipes','Regional ingredient sourcing guide','Metric + imperial measurements'],price:24,cover:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80',sales:731,rating:4.9,reviews:302,bestseller:true,emoji:'🍝',preview:'Chapter 1 free: The ragù that took 14 visits to Calabria — why slow beats fast every single time.'},
-    {id:'pr6',creatorId:'c6',creatorName:'Priya Sharma',creatorAvatar:'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?w=200&q=80',verified:true,title:'12-Week Functional Strength Programme',type:'course',desc:'Full training plan, nutrition guide and daily check-in tracker. All levels welcome.',includes:['12-week progressive training plan','Nutrition & macro guide','Printable daily tracker','24 video demonstrations','WhatsApp check-in group access'],price:89,cover:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',sales:1203,rating:5.0,reviews:541,bestseller:true,trending:true,emoji:'🏋️',preview:'Week 1 overview: Why progressive overload beats every fitness trend — and your exact starting point.'},
-    {id:'pr7',creatorId:'c2',creatorName:'Tom Hargreaves',creatorAvatar:'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',verified:true,title:'Newsletter Launch Templates',type:'template',desc:'10 Substack and Beehiiv templates for launch, onboarding, and monetisation. Copy-paste ready.',includes:['10 email templates (HTML + plain text)','Welcome sequence (5 emails)','Monetisation pitch templates','Subject line swipe file (50 lines)'],price:19,cover:'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80',sales:558,rating:4.5,reviews:178,emoji:'📄',preview:'Template 1 free: The welcome email that achieves 73% open rate — copy the exact structure.'},
-    {id:'pr8',creatorId:'c1',creatorName:'Elena Vasquez',creatorAvatar:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80',verified:true,title:'Travel Photography Masterclass',type:'course',desc:'From gear to editing: 6 hours of video lessons, assignments and community access.',includes:['6 hours of HD video lessons','Gear guide PDF (all budgets)','Editing workflow in Lightroom','Assignment feedback community','Lifetime access + updates'],price:119,cover:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',sales:329,rating:4.8,reviews:143,trending:true,emoji:'📷',preview:'Lesson 1 free: The single camera setting that will immediately improve 80% of your travel shots.'},
-  ]);
-}
-_seedProducts();
-
-function starsHtml(r){
-  const full=Math.floor(r),half=r%1>=0.5;
-  let s='';
-  for(let i=0;i<5;i++){
-    if(i<full) s+='★';
-    else if(i===full&&half) s+='½';
-    else s+='☆';
-  }
-  return s;
-}
-
-function shopCard(p){
-  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)'}[p.type]||'rgba(122,122,140,.9)';
-  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type;
-  const bought=(DB.get('purchases')||[]).some(b=>b.productId===p.id&&b.userId===currentUser?.id);
-  const isOwn=currentUser&&(currentUser.id===(p.creatorId||p.creator_id||p.creator)||currentUser.role==='admin');
-  const reviews=DB.get('reviews_'+p.id)||[];
-  const avgRating=reviews.length?((reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1)):(p.rating||0);
-  const reviewCount=reviews.length||(p.reviews||0);
-  return `<div class="shop-card">
-    <div class="shop-card-img" onclick="openProductPage('${p.id}')" style="cursor:pointer;position:relative">
-      ${_boostedProductIds&&_boostedProductIds.has(p.id)?'<div style="position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#d4a843,#b8902e);color:#0a0000;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:100px">⚡ Boosted</div>':''}
-      ${p.cover?`<img src="${p.cover}" alt="">`:''}
-      <span class="shop-card-emoji">${p.emoji||'📦'}</span>
-      <span class="shop-type-badge" style="background:${typeColor};color:#0a0a0b">${typeLabel}</span>
-      ${p.trending?`<span class="shop-momentum">🔥 Trending</span>`:''}
-      ${p.bestseller&&!p.trending?`<span class="shop-momentum" style="background:rgba(212,168,67,.9);color:#0a0a0b">⭐ Bestseller</span>`:''}
-      <span class="shop-instant">📥 Instant download</span>
-    </div>
-    <div class="shop-card-body">
-      <div class="shop-card-title" onclick="openProductPage('${p.id}')" style="cursor:pointer">${p.title}</div>
-      <div class="shop-card-creator">
-        <img src="${p.creatorAvatar}" alt="">
-        ${p.creatorName}${p.verified?'<svg width="14" height="14" viewBox="0 0 20 20" fill="none" style="vertical-align:middle;margin-left:2px"><circle cx="10" cy="10" r="10" fill="#1D9BF0"/><path d="M6 10.5L8.5 13L14 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
-        <span style="color:var(--muted2);margin-left:2px">· ${fmtNum(p.creatorSubs||0)} subs</span>
-      </div>
-      <div class="shop-rating">
-        <span class="shop-stars">${starsHtml(parseFloat(avgRating))}</span>
-        <span style="font-size:.78rem;font-weight:700;color:var(--text)">${avgRating}</span>
-        <span class="shop-rating-count">(${reviewCount} reviews)</span>
-      </div>
-      <div class="shop-includes">
-        <div class="shop-includes-title">What's included</div>
-        ${(p.includes||[]).slice(0,4).map(i=>`<div class="shop-include-item">${i}</div>`).join('')}
-      </div>
-      ${p.sample_url?`<button onclick="event.stopPropagation();openSample('${p.id}','${(p.title||'').replace(/'/g,"\'")}','${p.sample_url}')" style="display:flex;align-items:center;gap:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.3);border-radius:8px;padding:6px 10px;color:var(--gold);font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;width:100%">👁 Free preview</button>`:''}
-      ${p.preview?`<div style="background:var(--bg3);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5;font-style:italic">"${p.preview}"</div>`:''}
-      <div class="shop-card-footer">
-        <div>
-          <div class="shop-price">$${p.price}</div>
-          <div class="shop-sales-count">${(p.sales||0).toLocaleString()} sold</div>
-        </div>
-        <didisplay:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          ${isOwn
-            ?`<button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.4);background:rgba(212,168,67,.1);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openBoostModal('product','${p.id}','${(p.title||"").replace(/'/g,"")}')">⚡ Boost</button>
-             <button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openProductAnalytics('${p.id}')">📊 Analytics</button>
-             <button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="deleteProduct('${p.id}',this)">🗑 Delete</button>`
-            :bought
-              ?`<span style="font-size:.76rem;color:var(--green);font-weight:700">✓ Purchased</span>
-                 <button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">View</button>
-                 <button class="shop-preview-btn" onclick="leaveReview('${p.id}','${p.title.replace(/'/g,'')}')">Leave review</button>`
-              :`<button class="shop-buy-btn" onclick="buyProduct('${p.id}')">Buy now</button>
-                 <button class="shop-preview-btn" onclick="showReviews('${p.id}','${p.title.replace(/'/g,'')}')">Reviews (${reviewCount})</button>`}
-          ${!isOwn?`<button class="shop-preview-btn" style="margin-top:2px;color:var(--muted)" onclick="shareProduct('${p.id}','${(p.title||'').replace(/'/g,"\'")}','${(p.creatorName||'').replace(/'/g,"\'")}')">↗ Share</button>`:''}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── Product detail page ──────────────────────────────────────────────
-function openProductPage(id){
-  const prods=DB.get('products')||[];
-  const p=prods.find(x=>x.id===id);
-  if(!p)return;
-  const bought=(DB.get('purchases')||[]).some(b=>b.productId===id&&b.userId===currentUser?.id);
-  const isOwn=currentUser&&(currentUser.id===(p.creatorId||p.creator_id||p.creator)||currentUser.role==='admin');
-  const reviews=DB.get('reviews_'+id)||[];
-  const avgRating=reviews.length?(reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1):(p.rating||0);
-  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)'}[p.type]||'rgba(122,122,140,.9)';
-  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type||'Product';
-
-  const html=`
-    <div style="margin:-20px -20px 0;position:relative">
-      <div style="height:220px;background:linear-gradient(135deg,var(--bg3),var(--card2));position:relative;overflow:hidden">
-        ${p.cover?`<img src="${p.cover}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.7">`:''}
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.8))"></div>
-        <button onclick="closeModal()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center">×</button>
-        <span style="position:absolute;top:12px;left:12px;background:${typeColor};color:#0a0a0b;border-radius:100px;padding:3px 10px;font-size:.72rem;font-weight:700">${typeLabel}</span>
-        <div style="position:absolute;bottom:14px;left:16px;right:16px">
-          <div style="font-size:1.2rem;font-weight:800;color:#fff;line-height:1.3;margin-bottom:4px">${p.title}</div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <img src="${p.creatorAvatar||''}" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover">
-            <span style="font-size:.76rem;color:rgba(255,255,255,.7)">${p.creatorName||''}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="padding:16px 0 0">
-      <!-- Price & buy -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${p.price}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          ${isOwn
-            ?`<button style="font-size:.78rem;padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="closeModal();deleteProduct('${p.id}',this)">🗑 Delete</button>`
-            :bought
-              ?`<button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">View purchase</button>`
-              :`<button class="shop-buy-btn" onclick="closeModal();buyProduct('${p.id}')">Buy now →</button>`}
-          ${p.sample_url&&!bought?`<button onclick="openSample('${p.id}','${(p.title||'').replace(/'/g,'')}','${p.sample_url}')" style="font-size:.76rem;padding:6px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.3);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">👁 Free preview</button>`:''}
-        </div>
-      </div>
-
-      <!-- Rating -->
-      ${reviews.length?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-        <span style="font-size:1.3rem;font-weight:800;color:var(--text)">${avgRating}</span>
-        <div>${starsHtml(parseFloat(avgRating))}</div>
-        <span style="font-size:.78rem;color:var(--muted)">(${reviews.length} reviews)</span>
-      </div>`:''}
-
-      <!-- Description -->
-      ${p.description?`<div style="margin-bottom:14px">
-        <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">About this product</div>
-        <div style="font-size:.88rem;color:var(--text);line-height:1.7">${p.description}</div>
-      </div>`:''}
-
-      <!-- What's included -->
-      ${(p.includes||[]).length?`<div style="margin-bottom:14px">
-        <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">What's included</div>
-        ${(p.includes||[]).map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.84rem;color:var(--text)"><span style="color:var(--gold)">✓</span>${i}</div>`).join('')}
-      </div>`:''}
-
-      <!-- Creator -->
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:12px;cursor:pointer" onclick="closeModal();showProfile('${p.creatorId||p.creator_id||p.creator}')">
-        <img src="${p.creatorAvatar||''}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border2)">
-        <div>
-          <div style="font-size:.84rem;font-weight:700;color:var(--text)">${p.creatorName||''}</div>
-          <div style="font-size:.72rem;color:var(--muted)">View profile →</div>
-        </div>
-      </div>
-    </div>`;
-  openModal('productPage', html);
-}
-
-// ── Free sample viewer ─────────────────────────────────────────────────
-function openSample(id, title, sampleUrl){
-  const isImg=/\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(sampleUrl);
-  const isVid=/\.(mp4|webm|mov)(\?|$)/i.test(sampleUrl);
-  const isPdf=/\.pdf(\?|$)/i.test(sampleUrl);
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div>
-        <div style="font-weight:700;font-size:.95rem;color:var(--text)">👁 Free preview</div>
-        <div style="font-size:.74rem;color:var(--muted)">${title}</div>
-      </div>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    ${isImg?`<img src="${sampleUrl}" style="width:100%;border-radius:10px;margin-bottom:12px">`:''}
-    ${isVid?`<video src="${sampleUrl}" controls style="width:100%;border-radius:10px;margin-bottom:12px"></video>`:''}
-    ${isPdf?`<iframe src="${sampleUrl}" style="width:100%;height:300px;border:none;border-radius:10px;margin-bottom:12px"></iframe>`:''}
-    ${!isImg&&!isVid&&!isPdf?`<div style="background:var(--bg3);border-radius:10px;padding:20px;text-align:center;margin-bottom:12px"><a href="${sampleUrl}" target="_blank" style="color:var(--gold);font-weight:600">📄 Open preview file →</a></div>`:''}
-    <div style="font-size:.76rem;color:var(--muted);text-align:center">This is a free preview. Purchase to get full access.</div>`;
-  openModal('sampleView', html);
-}
-
-// ── Product analytics ─────────────────────────────────────────────────
-function openProductAnalytics(id){
-  if(!currentUser)return;
-  const prods=DB.get('products')||[];
-  const p=prods.find(x=>x.id===id);
-  if(!p)return;
-  const html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <div style="font-weight:700;font-size:.95rem;color:var(--text)">📊 Analytics</div>
-        <div style="font-size:.74rem;color:var(--muted)">${p.title}</div>
-      </div>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">${p.sales||0}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Total sales</div>
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${((p.sales||0)*p.price*0.71).toFixed(0)}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Your earnings</div>
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--text)">${(p.reviews||0)}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Reviews</div>
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--text)">$${p.price}</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Price</div>
-      </div>
-    </div>
-    <div id="analyticsDetail" style="color:var(--muted);font-size:.82rem;text-align:center">Loading recent sales…</div>`;
-  openModal('analytics', html);
-  // Load recent purchases from Worker
-  fetch(WORKER_URL+'/api/products/'+id+'/analytics')
-    .then(r=>r.json())
-    .then(d=>{
-      const el=document.getElementById('analyticsDetail');if(!el)return;
-      if(!d.recent||!d.recent.length){el.innerHTML='<div style="color:var(--muted);font-size:.82rem">No sales yet.</div>';return;}
-      el.innerHTML='<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Recent sales</div>'+
-        d.recent.map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:.82rem;color:var(--text)">${s.buyer_name||'Anonymous'}</div>
-          <div style="font-size:.78rem;color:var(--gold);font-weight:700">$${s.amount}</div>
-        </div>`).join('');
-    }).catch(()=>{
-      const el=document.getElementById('analyticsDetail');
-      if(el)el.innerHTML='';
-    });
-}
-
-async function deleteProduct(id, btn){
-  if(!confirm('Delete this product?'))return;
-  if(btn){btn.disabled=true;btn.textContent='Deleting…';}
-  try{
-    await fetch(WORKER_URL+'/api/products/'+id,{method:'DELETE'});
-    // Remove from local cache
-    const prods=DB.get('products')||[];
-    DB.set('products',prods.filter(p=>p.id!==id));
-    toast('Product deleted','🗑️');
-    renderShop();
-  }catch(e){toast('Could not delete: '+e.message,'⚠️');if(btn){btn.disabled=false;btn.textContent='Delete';}}
-}
-
-function filterShopByCat(cat, el){
-  document.querySelectorAll('.page-shop .cat,.page#page-shop .cat,[onclick*="renderShop"],[onclick*="filterShopByCat"]').forEach(e=>e.classList.remove('active'));
-  if(el)el.classList.add('active');
-  const prods=DB.get('products')||[];
-  const filtered=cat==='all'?prods:prods.filter(p=>(p.category||p.cat||'')===cat);
-  const grid=document.getElementById('shopGrid');
-  if(!grid)return;
-  grid.innerHTML=filtered.length?filtered.map(shopCard).join(''):`<div class="empty"><div class="empty-icon">🛍️</div>No products in this category yet.</div>`;
-}
-
-let _shopCat='all';
-let _boostedProductIds=new Set();
-
-function renderShop(cat){
-  if(cat!==undefined) _shopCat=cat;
-  // Load boosted products
-  fetch(WORKER_URL+'/api/boost/active?type=product')
-    .then(r=>r.json())
-    .then(boosts=>{_boostedProductIds=new Set((boosts||[]).map(b=>b.target_id));renderShopGrid();})
-    .catch(()=>renderShopGrid());
-}
-function renderShopGrid(){
-  const q=(document.getElementById('shopSearch')||{}).value?.toLowerCase()||'';
-  // Load from D1 then render
-  fetch(WORKER_URL+'/api/products')
-    .then(r=>r.json())
-    .then(serverProducts=>{
-      if(serverProducts&&serverProducts.length){
-        // Normalise snake_case from Worker to camelCase
-        const normalised=serverProducts.map(p=>({
-          ...p,
-          creatorId:    p.creatorId    ?? p.creator_id ?? '',
-          creatorName:  p.creatorName  ?? p.creator_name ?? '',
-          creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
-          desc:         p.desc         ?? p.description ?? '',
-          includes:     p.includes     ?? (p.deliverables ? JSON.parse(typeof p.deliverables==='string'?p.deliverables:'{}').lessons?.map(l=>l.title)||[] : []),
-          sales:        p.sales        ?? p.sales_count ?? 0,
-        }));
-        const seeded=DB.get('products')||[];
-        const ids=new Set(normalised.map(p=>p.id));
-        DB.set('products',[...normalised,...seeded.filter(p=>!ids.has(p.id))]);
+      if (path === "/api/notifications" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50`
+        ).bind(userId).all();
+        return json(results || []);
       }
-      _renderShopLocal();
-    }).catch(()=>_renderShopLocal());
-}
-function _renderShopLocal(){
-  const q=(document.getElementById('shopSearch')||{}).value?.toLowerCase()||'';
-  let all=DB.get('products')||[];
-  if(_shopCat!=='all') all=all.filter(p=>p.type===_shopCat);
-  if(q) all=all.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.desc||'').toLowerCase().includes(q)||(p.creatorName||'').toLowerCase().includes(q));
-  const sort=(document.getElementById('shopSort')||{}).value||'popular';
-  if(sort==='popular') all=[...all].sort((a,b)=>(b.sales||0)-(a.sales||0));
-  else if(sort==='newest') all=[...all].reverse();
-  else if(sort==='price_asc') all=[...all].sort((a,b)=>a.price-b.price);
-  else if(sort==='price_desc') all=[...all].sort((a,b)=>b.price-a.price);
-  else if(sort==='rating') all=[...all].sort((a,b)=>(b.rating||0)-(a.rating||0));
-  document.getElementById('shopGrid').innerHTML=all.length?all.map(shopCard).join(''):`<div class="empty"><div class="empty-icon">🛒</div>No products found.</div>`;
-}
-function filterShop(cat,el){
-  document.querySelectorAll('#shopCatTabs .cat').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');renderShop(cat);
-}
-
-function buyProduct(id){
-  if(!currentUser){openModal('login');return;}
-  const products=DB.get('products')||[],p=products.find(x=>x.id===id);
-  if(!p) return;
-  const purchases=DB.get('purchases')||[];
-  if(purchases.some(b=>b.productId===id&&b.userId===currentUser.id)){viewPurchase(id);return;}
-  toast('Opening PayPal...','🅿️');
-  sessionStorage.setItem('pp_pending',JSON.stringify({type:'purchase',productId:id,productTitle:p.title,price:p.price,userId:currentUser.id,userName:currentUser.name}));
-  fetch(WORKER_URL+'/api/paypal/order',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({amount:p.price,description:p.title,user_id:currentUser.id,product_id:id,plan:'purchase',user_name:currentUser.name})
-  }).then(r=>r.json()).then(order=>{
-    sessionStorage.setItem('pp_order_id',order.id);
-    window.location.href='https://www.paypal.com/checkoutnow?token='+order.id+'&useraction=commit';
-  }).catch(()=>toast('PayPal error, try again','⚠️'));
-}
-
-// Show the deliverable contents the creator uploaded — what the buyer paid for
-function viewPurchase(id){
-  if(!currentUser){openModal('login');return;}
-  const products=DB.get('products')||[];
-  // Include seeded + user-created products
-  let p=products.find(x=>x.id===id);
-  if(!p){toast('Product not found','⚠️');return;}
-  const owned=(DB.get('purchases')||[]).some(b=>b.productId===id&&b.userId===currentUser.id);
-  if(!owned){toast('Purchase this product first','🔒');return;}
-  const d=p.deliverables||{};
-  let body='';
-  if(p.type==='course'){
-    body=`${d.intro?`<p style="color:var(--muted);line-height:1.55;margin:0 0 16px">${_esc(d.intro)}</p>`:''}
-      <div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">📚 ${(d.lessons||[]).length} Lessons</div>
-      ${(d.lessons||[]).map((l,i)=>`<a class="lesson-link" href="${_esc(l.url)}" target="_blank" rel="noopener"><span style="background:var(--gold);color:#0a0a0b;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0">${i+1}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(l.title)}</span><span style="color:var(--muted);font-size:.85rem">▶</span></a>`).join('')||'<div style="color:var(--muted);font-size:.85rem">No lessons available yet.</div>'}`;
-  } else if(d.fileUrl){
-    const meta=[];
-    if(d.pages)meta.push(d.pages+' pages');
-    if(d.count)meta.push(d.count+' items');
-    if(d.duration)meta.push(d.duration+' min');
-    if(d.format)meta.push(d.format);
-    if(d.compat)meta.push(d.compat);
-    body=`${meta.length?`<div style="color:var(--muted);font-size:.82rem;margin-bottom:14px">${meta.join(' · ')}</div>`:''}
-      ${d.contents?`<p style="color:var(--text);line-height:1.55;margin:0 0 16px;font-size:.9rem">${_esc(d.contents)}</p>`:''}
-      <a class="modal-btn" href="${_esc(d.fileUrl)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">⬇ Download</a>
-      ${d.install?`<div style="margin-top:16px;padding:12px;background:var(--bg2);border-radius:10px;font-size:.82rem;color:var(--muted);line-height:1.5"><strong style="color:var(--text);display:block;margin-bottom:4px">How to use</strong>${_esc(d.install)}</div>`:''}`;
-  } else {
-    body=`<div style="color:var(--muted);text-align:center;padding:20px 0">${p.includes&&p.includes.length?'<div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">What\'s included</div>'+p.includes.map(i=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);text-align:left">✓ ${_esc(i)}</div>`).join(''):'Delivery details will be emailed by the creator.'}</div>`;
-  }
-  const html=`
-    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.4rem;margin:0 0 4px;display:flex;align-items:center;gap:8px"><span>${p.emoji||'📦'}</span>${_esc(p.title)}</h2>
-    <div style="color:var(--muted);font-size:.82rem;margin-bottom:18px">by ${_esc(p.creatorName||'')}</div>
-    ${body}
-    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:14px">🔒 Access stays in your Library forever</div>`;
-  openModal('purchase', html);
-}
-function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-
-function renderLibrary(){
-  const wrap=document.getElementById('libraryList');if(!wrap)return;
-  if(!currentUser){wrap.innerHTML='<div class="empty">Sign in to view your library.</div>';return;}
-  const purchases=DB.get('purchases')||[];
-  const mine=purchases.filter(b=>b.userId===currentUser.id).reverse();
-  if(!mine.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">📚</div>No purchases yet. Browse the <a onclick="showPage(\'shop\',null)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Shop</a> to find courses, e-books, presets and more.</div>';return;}
-  const products=DB.get('products')||[];
-  wrap.innerHTML=mine.map(pur=>{
-    const p=products.find(x=>x.id===pur.productId);
-    if(!p) return `<div class="lib-card"><h3>${_esc(pur.productTitle||'Product')}</h3><div class="lib-meta">No longer available · paid $${pur.price}</div></div>`;
-    const d=p.deliverables||{};
-    let summary='';
-    if(p.type==='course') summary=(d.lessons||[]).length+' lessons';
-    else if(d.fileUrl) summary=[d.pages&&d.pages+' pages',d.count&&d.count+' items',d.format].filter(Boolean).join(' · ')||'Download ready';
-    else summary='Delivery details available';
-    const date=new Date(pur.boughtAt).toLocaleDateString();
-    return `<div class="lib-card">
-      <div style="display:flex;gap:14px;align-items:flex-start">
-        ${p.cover?`<div style="width:64px;height:64px;border-radius:10px;background:url('${_esc(p.cover)}') center/cover;flex-shrink:0"></div>`:`<div style="width:64px;height:64px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">${p.emoji||'📦'}</div>`}
-        <div style="flex:1;min-width:0">
-          <h3 style="overflow:hidden;text-overflow:ellipsis">${_esc(p.title)}</h3>
-          <div class="lib-meta">${_esc(p.creatorName||'')} · ${summary} · bought ${date}</div>
-          <button class="btn btn-gold btn-sm" onclick="viewPurchase('${p.id}')">Open →</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function showReviews(productId, title){
-  const reviews=DB.get('reviews_'+productId)||[];
-  const products=DB.get('products')||[];
-  const p=products.find(x=>x.id===productId);
-  const baseRating=p?.rating||4.5,baseCount=p?.reviews||0;
-  const allRevs=[...reviews];
-  // show seed reviews for demo products
-  if(productId.startsWith('pr')&&!reviews.length){
-    allRevs.push({author:'Sarah M.',rating:5,text:'Absolutely worth every penny. The quality is incredible.',at:'2 weeks ago'});
-    allRevs.push({author:'James K.',rating:4,text:'Really solid. Would love even more content but great value.',at:'1 month ago'});
-    allRevs.push({author:'Lena P.',rating:5,text:'Changed how I approach this completely. Highly recommend.',at:'3 weeks ago'});
-  }
-  openModal('reviews',`
-    <h2>Reviews — ${title}</h2>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
-      <div style="font-family:'Fraunces',serif;font-size:3rem;font-weight:400;color:var(--gold);line-height:1">${baseRating}</div>
-      <div>
-        <div style="color:var(--gold);font-size:1.1rem;letter-spacing:2px">${starsHtml(baseRating)}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${(reviews.length+baseCount).toLocaleString()} reviews</div>
-      </div>
-    </div>
-    <div class="review-list">
-      ${allRevs.map(r=>`<div class="review-item">
-        <div class="review-author">${r.author||'Anonymous'}</div>
-        <div class="review-stars">${starsHtml(r.rating)}</div>
-        <div class="review-text">${r.text}</div>
-        <div style="font-size:.68rem;color:var(--muted2);margin-top:4px">${r.at||''}</div>
-      </div>`).join('')}
-    </div>
-    <button class="modal-btn outline" onclick="closeModal()">Close</button>
-  `);
-}
-
-function leaveReview(productId, title){
-  if(!currentUser){openModal('login');return;}
-  openModal('review',`
-    <h2>Leave a review</h2>
-    <p>${title}</p>
-    <div class="fg"><label>Rating</label>
-      <select id="revRating">
-        <option value="5">★★★★★ Excellent</option>
-        <option value="4">★★★★☆ Good</option>
-        <option value="3">★★★☆☆ Average</option>
-        <option value="2">★★☆☆☆ Poor</option>
-        <option value="1">★☆☆☆☆ Terrible</option>
-      </select></div>
-    <div class="fg"><label>Your review</label>
-      <textarea id="revText" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;resize:vertical;min-height:80px;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" placeholder="What did you think?"></textarea></div>
-    <div class="err-msg" id="rev-err"></div>
-    <button class="modal-btn" onclick="submitReview('${productId}')">Submit review</button>
-    <button class="modal-btn outline" style="margin-top:8px" onclick="closeModal()">Cancel</button>
-  `);
-}
-
-function submitReview(productId){
-  const rating=parseInt((document.getElementById('revRating')||{}).value||'5');
-  const text=(document.getElementById('revText')||{}).value.trim();
-  if(!text){document.getElementById('rev-err').textContent='Please write a review.';return;}
-  const reviews=DB.get('reviews_'+productId)||[];
-  reviews.unshift({author:currentUser.name,rating,text,at:'just now',userId:currentUser.id});
-  DB.set('reviews_'+productId,reviews);
-  closeModal();toast('Review submitted!','⭐');renderShop();
-}
-
-// ─── Dashboard: add product form + list creator products ───
-function _renderProfileProducts(){
-  const el=document.getElementById('profileProductsArea');if(!el)return;
-  // Fetch fresh from Worker so newly added products appear
-  fetch(WORKER_URL+'/api/products?creator_id='+encodeURIComponent(currentUser.id))
-    .then(r=>r.json())
-    .then(serverProds=>{
-      if(serverProds&&serverProds.length){
-        const normalised=serverProds.map(p=>({
-          ...p,
-          creatorId:    p.creatorId    ?? p.creator_id ?? '',
-          creatorName:  p.creatorName  ?? p.creator_name ?? '',
-          creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
-          desc:         p.desc         ?? p.description ?? '',
-          sales:        p.sales        ?? p.sales_count ?? 0,
-        }));
-        const all=DB.get('products')||[];
-        const ids=new Set(normalised.map(p=>p.id));
-        DB.set('products',[...normalised,...all.filter(p=>!ids.has(p.id))]);
+      if (path === "/api/notifications" && method === "POST") {
+        const { user_id, icon, text, time } = body;
+        if (!user_id || !text) return err("Missing fields");
+        const id = "notif_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+        ).bind(id, user_id, icon || "🔔", text, time || "just now").run();
+        return json({ id, success: true });
       }
-      _doRenderProfileProducts();
-    }).catch(()=>_doRenderProfileProducts());
-}
-function _doRenderProfileProducts(){
-  const el=document.getElementById('profileProductsArea');if(!el)return;
-  const all=DB.get('products')||[];
-  const mine=all.filter(p=>p.creatorId===currentUser?.id);
-  if(!mine.length){
-    el.innerHTML='<div style="font-size:.84rem;color:var(--muted);padding:10px 0">No products yet. Tap "+ Add product" to list your first one.</div>';
-    return;
-  }
-  el.innerHTML=mine.map(p=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
-      ${p.cover?`<div style="width:52px;height:52px;border-radius:10px;background:url('${p.cover}') center/cover;flex-shrink:0"></div>`
-               :`<div style="width:52px;height:52px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">${p.emoji||'📦'}</div>`}
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${({course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type)} · $${p.price} · ${p.sales||0} sold</div>
-      </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button style="background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="shareProduct('${p.id}','${(p.title||'').replace(/'/g,"\\'")}','${(currentUser.name||'').replace(/'/g,"\\'")}')">↗</button>
-        <button style="background:none;border:1px solid var(--rose);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="deleteProduct('${p.id}');_renderProfileProducts()">✕</button>
-      </div>
-    </div>`).join('');
-}
+      if (path === "/api/notifications/read" && method === "POST") {
+        const { user_id } = body;
+        if (!user_id) return err("Missing user_id");
+        await env.DB.prepare(`UPDATE notifications SET read=1 WHERE user_id=?`).bind(user_id).run();
+        return json({ success: true });
+      }
+      if (path === "/api/messages" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const { results } = await env.DB.prepare(
+          `SELECT m.*, 
+            u1.name as from_name, u1.avatar as from_avatar,
+            u2.name as to_name, u2.avatar as to_avatar
+           FROM messages m
+           LEFT JOIN users u1 ON m.from_id = u1.id
+           LEFT JOIN users u2 ON m.to_id = u2.id
+           WHERE m.from_id=? OR m.to_id=?
+           ORDER BY m.created_at DESC LIMIT 100`
+        ).bind(userId, userId).all();
+        return json(results || []);
+      }
+      if (path === "/api/messages" && method === "POST") {
+        const { from_id, to_id, text } = body;
+        if (!from_id || !to_id || !text) return err("Missing fields");
+        const id = "msg_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO messages (id, from_id, to_id, text) VALUES (?, ?, ?, ?)`
+        ).bind(id, from_id, to_id, text).run();
+        const sender = await env.DB.prepare("SELECT name FROM users WHERE id=?").bind(from_id).first();
+        const notifId = "notif_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+        ).bind(notifId, to_id, "💬", (sender?.name || "Someone") + ": " + text.slice(0, 50), "just now").run();
+        return json({ id, success: true });
+      }
+      if (path === "/api/kyc" && method === "POST") {
+        const { user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url } = body;
+        if (!user_id) return err("Missing user_id");
+        const id = "kyc_" + Date.now();
+        // Check if columns exist, if not use basic insert
+        try {
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url, status, submitted_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', datetime('now'))`
+          ).bind(id, user_id, user_name||'', user_email||'', legal_name||'', dob||'', country||'', payout_method||'bank', payout_details||'', id_front_url||'', id_back_url||'', selfie_url||'').run();
+        } catch(e) {
+          // Fallback without doc columns if they don't exist yet
+          await env.DB.prepare(
+            `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
+          ).bind(id, user_id, user_name||'', user_email||'', legal_name||'', dob||'', country||'', payout_method||'bank', payout_details||'').run();
+        }
+        await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
+        return json({ id, success: true });
+      }
+      if (path === "/api/kyc" && method === "GET") {
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM kyc_requests ORDER BY COALESCE(submitted_at, created_at) DESC`
+        ).all();
+        return json(results || []);
+      }
+      if (path === "/api/kyc/review" && method === "POST") {
+        const { kyc_id, user_id, action } = body;
+        if (!kyc_id || !action) return err("Missing fields");
+        await env.DB.prepare(`UPDATE kyc_requests SET status=? WHERE id=?`).bind(action, kyc_id).run();
+        if (user_id) {
+          const verified = action === "approved" ? 1 : 0;
+          await env.DB.prepare(`UPDATE users SET kyc_status=?, verified=? WHERE id=?`).bind(action, verified, user_id).run();
+          const notifId = "notif_" + Date.now();
+          const msg = action === "approved" ? "Your KYC is approved! You are now verified ✅" : "Your KYC was rejected. Please resubmit with clearer documents.";
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+          ).bind(notifId, user_id, action === "approved" ? "✅" : "❌", msg, "just now").run();
+        }
+        return json({ success: true });
+      }
+      if (path === "/api/payouts" && method === "POST") {
+        const { user_id, user_name, user_email, amount, method: payMethod, details } = body;
+        if (!user_id || !amount) return err("Missing fields");
+        const id = "payout_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO payout_requests (id, user_id, user_name, user_email, amount, method, details, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`
+        ).bind(id, user_id, user_name, user_email, amount, payMethod, details).run();
+        return json({ id, success: true });
+      }
+      if (path === "/api/payouts" && method === "GET") {
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM payout_requests ORDER BY created_at DESC`
+        ).all();
+        return json(results || []);
+      }
+      if (path === "/api/payouts/review" && method === "POST") {
+        const { payout_id, user_id, action, amount } = body;
+        if (!payout_id || !action) return err("Missing fields");
+        await env.DB.prepare(`UPDATE payout_requests SET status=? WHERE id=?`).bind(action, payout_id).run();
+        if (user_id && action === "paid") {
+          await env.DB.prepare(`UPDATE users SET balance=MAX(0,balance-?) WHERE id=?`).bind(amount, user_id).run();
+          const notifId = "notif_" + Date.now();
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?, ?, ?, ?, ?)`
+          ).bind(notifId, user_id, "💸", "Your payout of $" + amount + " has been sent!", "just now").run();
+        }
+        return json({ success: true });
+      }
+      if (path === "/api/reviews" && method === "GET") {
+        const productId = url.searchParams.get("product_id");
+        if (!productId) return err("Missing product_id");
+        const { results } = await env.DB.prepare(
+          `SELECT r.*, u.name as user_name, u.avatar as user_avatar
+           FROM reviews r LEFT JOIN users u ON r.user_id = u.id
+           WHERE r.product_id=? ORDER BY r.created_at DESC`
+        ).bind(productId).all();
+        return json(results || []);
+      }
+      if (path === "/api/reviews" && method === "POST") {
+        const { user_id, product_id, rating, text } = body;
+        if (!user_id || !product_id || !rating) return err("Missing fields");
+        const id = "rev_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO reviews (id, user_id, product_id, rating, text) VALUES (?, ?, ?, ?, ?)`
+        ).bind(id, user_id, product_id, rating, text || "").run();
+        return json({ id, success: true });
+      }
+      // ── Admin: list all payouts ──────────────────────────────────────────
+      if (path === "/api/admin/payouts" && method === "GET") {
+        const { results } = await env.DB.prepare(`
+          SELECT p.*, ps.paypal_email, ps.bank_name, ps.bank_iban, ps.bank_swift,
+            ps.bank_account, ps.bank_routing, ps.bank_sortcode, ps.bank_bankname, ps.bank_country,
+            u.name as creator_name, u.email as creator_email
+          FROM payouts p
+          LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
+          LEFT JOIN users u ON p.creator_id = u.id
+          ORDER BY p.requested_at DESC LIMIT 200
+        `).all();
+        return json({ payouts: results || [] });
+      }
 
-function _openCreatorShop(creator){
-  if(!creator) return;
-  showPage('shop', null);
-  // Filter shop to this creator's products
-  setTimeout(()=>{
-    const search=document.getElementById('shopSearch');
-    if(search){search.value=creator.name||'';renderShop();}
-  }, 150);
-}
+      // ── Admin: mark payout paid or rejected ─────────────────────────────
+      if (path === "/api/admin/payouts/mark-paid" && method === "POST") {
+        const { payout_id, reference, action } = body;
+        if (!payout_id) return err("Missing payout_id");
+        const payout = await env.DB.prepare("SELECT * FROM payouts WHERE id=?").bind(payout_id).first();
+        if (!payout) return err("Payout not found", 404);
+        const newStatus = action === "rejected" ? "rejected" : "paid";
+        const now = new Date().toISOString();
+        await env.DB.prepare(
+          "UPDATE payouts SET status=?, reference=?, paid_at=? WHERE id=?"
+        ).bind(newStatus, reference||"manual", now, payout_id).run();
+        if (newStatus === "paid") {
+          // Zero creator balance
+          await env.DB.prepare(
+            "UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?"
+          ).bind(now, payout.creator_id).run();
+          // Notify creator
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+          ).bind("notif_"+Date.now(), payout.creator_id, "💸",
+            `Your payout of $${Number(payout.amount).toFixed(2)} has been sent!`, "just now").run();
+        } else {
+          await env.DB.prepare(
+            `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+          ).bind("notif_"+Date.now(), payout.creator_id, "❌",
+            `Your payout request of $${Number(payout.amount).toFixed(2)} was rejected. Please contact support.`, "just now").run();
+        }
+        return json({ ok: true });
+      }
 
-function renderCreatorProducts(){
-  const el=document.getElementById('creatorProductsWrap');if(!el)return;
-  const all=DB.get('products')||[];
-  const mine=all.filter(p=>p.creatorId===currentUser?.id);
-  el.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;margin-bottom:8px"><div class="ds-title" style="margin:0">My products (${mine.length})</div><button class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:5px 10px" onclick="openAddProductModal()">+ Add</button></div>`+
-    (mine.length?mine.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:1.3rem">${p.emoji||'📦'}</span>
-      <div style="flex:1"><div style="font-weight:600;font-size:.88rem">${p.title}</div><div style="font-size:.74rem;color:var(--muted)">${p.type} · $${p.price} · ${p.sales||0} sold</div></div>
-      <button style="background:none;border:1px solid var(--rose);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif" onclick="deleteProduct('${p.id}')">Remove</button>
-    </div>`).join(''):'<div style="font-size:.82rem;color:var(--muted);padding:8px 0">No products yet. Tap the gold ➕ button in the bottom bar to upload your first one.</div>');
-}
+      // ── Admin: verify/unverify user ─────────────────────────────────────
+      if (path === "/api/admin/users/verify" && method === "POST") {
+        const { user_id, verified } = body;
+        if (!user_id) return err("Missing user_id");
+        await env.DB.prepare("UPDATE users SET verified=? WHERE id=?").bind(verified?1:0, user_id).run();
+        if (verified) {
+          await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+            .bind("notif_"+Date.now(), user_id, "✅", "Your account has been verified!", "just now").run();
+        }
+        return json({ ok: true });
+      }
 
-// Add Product form lives in a modal opened by the + Upload bottom-nav button
-function openAddProductModal(){
-  if(!currentUser){openModal('login');return;}
-  const inp="width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 13px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;box-sizing:border-box;transition:border-color .2s";
-  const lbl="display:block;font-size:.72rem;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em";
-  const html=`
-    <div style="padding:16px 20px 14px;border-bottom:1px solid rgba(255,255,255,.1);border-radius:16px 16px 0 0;margin:-16px -16px 0;background:#0d0000">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#c0392b,#d4a843);display:flex;align-items:center;justify-content:center;font-size:1.2rem">📦</div>
-        <div>
-          <div style="font-weight:700;font-size:1rem;color:#fff">Add Product</div>
-          <div style="font-size:.72rem;color:rgba(255,255,255,.35)">List something for sale in your shop</div>
-        </div>
-        <button onclick="closeModal()" style="margin-left:auto;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);border-radius:50%;width:28px;height:28px;color:rgba(255,255,255,.6);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
-      </div>
-    </div>
-    <div style="background:#0d0000;margin:-16px -16px 0;padding:0 16px 16px">
-    <div style="padding-top:16px">
-      <div style="margin-bottom:12px"><label style="${lbl}">Title</label><input id="prodTitle" placeholder="e.g. Lightroom Preset Pack" maxlength="60" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div><label style="${lbl}">Type</label><select id="prodType" onchange="_renderDeliverables()" style="${inp};cursor:pointer">
-          <option value="course">🎓 Course</option><option value="ebook">📖 E-book</option>
-          <option value="preset">Presets</option><option value="template">📄 Template</option><option value="audio">Audio</option>
-        </select></div>
-        <div><label style="${lbl}">Price (USD)</label><input id="prodPrice" type="number" min="0.5" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      </div>
-      <div style="margin-bottom:12px"><label style="${lbl}">Category tag</label>
-        <select id="prodCategory" style="${inp};cursor:pointer">
-  <option value="">— Select category —</option><option>Photography & Film</option><option>Visual Art & Design</option><option>Music & Audio</option><option>Writing & Blogging</option><option>Fashion & Style</option><option>Interior Design</option><option>Fitness & Training</option><option>Yoga & Meditation</option><option>Nutrition & Diet</option><option>Mental Health</option><option>Business & Entrepreneurship</option><option>Finance & Investing</option><option>Law & Legal</option><option>Real Estate</option><option>Marketing & Sales</option><option>Technology & Coding</option><option>Travel & Adventure</option><option>Cooking & Food</option><option>Parenting</option><option>Relationships</option><option>Spirituality</option><option>Beauty & Skincare</option><option>Language Learning</option><option>Science & Math</option><option>History & Culture</option><option>Online Courses</option><option>Comedy</option><option>Gaming</option><option>Podcasting</option><option>Sports & Athletics</option><option>Doctor</option><option>Personal Trainer</option><option>Therapist</option><option>Financial Advisor</option><option>Police</option><option>Other</option>
-        </select>
-      </div>
-      <div style="margin-bottom:12px"><label style="${lbl}">Description</label><textarea id="prodDesc" maxlength="180" placeholder="One-line pitch: what do buyers get?" oninput="_charCount('prodDesc','prodDescCount',180)" style="${inp};resize:vertical;min-height:64px"></textarea><div style="font-size:.68rem;color:#9ca3af;text-align:right;margin-top:3px"><span id="prodDescCount">0</span>/180</div></div>
-      <div style="margin-bottom:12px">
-        <label style="${lbl}">Cover image <span style="font-weight:400;color:#9ca3af;text-transform:none">— optional</span></label>
-        <input id="prodCoverFile" type="file" accept="image/*" style="display:none" onchange="_handleCoverUpload(event)">
-        <div id="prodCoverPreview" onclick="document.getElementById('prodCoverFile').click()" style="width:100%;min-height:110px;border:2px dashed rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(212,168,67,.8)'" onmouseout="this.style.borderColor='rgba(255,255,255,.18)'">
-          <div style="text-align:center;padding:16px">
-            <div style="font-size:1.6rem;margin-bottom:6px">📷</div>
-            <div style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.7)">Tap to upload cover</div>
-            <div style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:3px">PNG, JPG or WebP</div>
-          </div>
-        </div>
-      </div>
-      <div id="prodDeliverables" style="margin-bottom:14px;padding:14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);border-radius:12px"><div style="font-size:.72rem;color:rgba(212,168,67,.8);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">📦 What buyers receive</div><div style="color:rgba(255,255,255,.35);font-size:.8rem">Loading…</div></div>
-      <div style="margin-bottom:14px">
-        <label style="${lbl}">Free sample <span style="font-weight:400;color:#9ca3af;text-transform:none">— optional, shown to non-buyers</span></label>
-        <input id="prodSampleFile" type="file" accept="image/*,video/*,.pdf" style="display:none" onchange="_handleSampleUpload(event)">
-        <div id="prodSamplePreview" onclick="document.getElementById('prodSampleFile').click()" style="width:100%;min-height:80px;border:2px dashed rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(212,168,67,.8)'" onmouseout="this.style.borderColor='rgba(255,255,255,.18)'">
-          <div style="text-align:center;padding:14px">
-            <div style="font-size:1.2rem;margin-bottom:4px">👁</div>
-            <div style="font-size:.78rem;color:var(--muted)">Tap to upload a free preview</div>
-            <div style="font-size:.68rem;color:var(--muted2);margin-top:2px">Image, video or PDF</div>
-          </div>
-        </div>
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="${lbl}">Preview text <span style="font-weight:400;color:#9ca3af;text-transform:none">— teaser quote shown on card</span></label>
-        <input id="prodPreview" maxlength="100" placeholder="e.g. The first chapter is free..." style="${inp};border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff">
-      </div>
-      <button style="width:100%;padding:13px;font-size:.92rem;font-weight:700;border:none;border-radius:100px;background:linear-gradient(135deg,#d4a843,#f0c84a,#b8902e);color:#0a0000;font-family:'DM Sans',sans-serif;cursor:pointer" onclick="addProduct()">Add to shop →</button>
-    </div>`;
-  openModal('addProduct', html);
-  document.getElementById('modalContent').style.background='#0d0000';
-  setTimeout(()=>{_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
-}
+      if (path === "/api/admin/users" && method === "GET") {
+        const { results } = await env.DB.prepare(
+          `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
+        ).all();
+        return json(results || []);
+      }
+      if (path === "/api/users/profile" && method === "PUT") {
+        const { id, name, bio, avatar, cover, category, price, payout_method, payout_details } = body;
+        if (!id) return err("Missing id");
+        await env.DB.prepare(
+          `UPDATE users SET name=?, bio=?, avatar=?, cover=?, category=?, price=?, payout_method=?, payout_details=? WHERE id=?`
+        ).bind(name || "", bio || "", avatar || "", cover || "", category || "Other", price || 9, payout_method || "", payout_details || "", id).run();
+        const updated = await env.DB.prepare(
+          `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
+        ).bind(id).first();
+        return json({ success: true, user: updated });
+      }
+      if (path === "/api/users/profile" && method === "GET") {
+        const id = url.searchParams.get("id");
+        if (!id) return err("Missing id");
+        const user = await env.DB.prepare(
+          `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
+        ).bind(id).first();
+        if (!user) return err("User not found", 404);
+        return json(user);
+      }
+      if (path.startsWith("/media/") && method === "GET") {
+        const key = path.slice(7);
+        const obj = await env.MEDIA.get(key);
+        if (!obj) return err("Not found", 404);
+        const headers = { ...CORS };
+        if (obj.httpMetadata?.contentType) headers["Content-Type"] = obj.httpMetadata.contentType;
+        headers["Cache-Control"] = "public, max-age=31536000";
+        return new Response(obj.body, { headers });
+      }
+      // ── Professional certification ──────────────────────────────────────
+      // Debug: check cert table
+      if (path === "/api/cert/check" && method === "GET") {
+        try {
+          const {results} = await env.DB.prepare("SELECT COUNT(*) as cnt FROM cert_requests").all();
+          return json({ table_exists: true, count: results?.[0]?.cnt||0 });
+        } catch(e) {
+          return json({ table_exists: false, error: e.message });
+        }
+      }
 
-// Style for consistent inputs across .fg (textarea was inconsistent before)
-(function(){
-  if(document.getElementById('_fgTextareaFix'))return;
-  const s=document.createElement('style');s.id='_fgTextareaFix';
-  s.textContent=".fg textarea{resize:vertical;min-height:72px;line-height:1.5}.del-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}.del-row input{flex:1;min-width:0}.del-rm{background:none;border:1px solid var(--border2);color:var(--muted);width:34px;height:38px;border-radius:8px;cursor:pointer;font-size:1rem;flex-shrink:0}.del-rm:hover{border-color:var(--rose);color:var(--rose)}.del-add{background:none;border:1px dashed var(--border2);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:'DM Sans',sans-serif;width:100%;transition:all .2s}.del-add:hover{border-color:var(--gold);color:var(--gold)}.cover-up{width:100%;min-height:140px;border:2px dashed rgba(99,179,237,.45);border-radius:12px;background:linear-gradient(135deg,rgba(99,179,237,.08),rgba(212,168,67,.07));display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .25s,background .25s,box-shadow .25s}.cover-up:hover{border-color:var(--gold);background:linear-gradient(135deg,rgba(99,179,237,.14),rgba(212,168,67,.13));box-shadow:0 0 0 3px rgba(212,168,67,.08)}.cover-up-empty{text-align:center;color:var(--text);font-size:.85rem;padding:24px 16px;line-height:1.6;opacity:.85}.cover-up-empty .cup-icon{font-size:2rem;margin-bottom:8px;display:block}.cover-up img{width:100%;height:100%;min-height:140px;max-height:220px;object-fit:cover;display:block}.cover-up .cover-rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);border:1.5px solid rgba(255,255,255,.15);color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:background .15s}.cover-up .cover-rm:hover{background:var(--rose)}.add-prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.add-prod-grid{grid-template-columns:1fr;gap:0}.del-row{flex-wrap:wrap}.del-row input{flex:1 1 100%}.del-row .del-rm{margin-left:auto}}.tip-btn:hover{color:var(--gold)!important}.tip-quick{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:12px 6px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}.tip-quick:hover{border-color:var(--gold);color:var(--gold)}.tip-quick.active{background:var(--gold);border-color:var(--gold);color:#0a0a0b}.pay-btn{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:14px 6px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;-webkit-tap-highlight-color:transparent}.pay-btn:hover{border-color:var(--gold);transform:translateY(-1px)}.pay-btn:active{transform:translateY(0)}.lib-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}.lib-card h3{margin:0 0 4px;font-size:1.05rem}.lib-meta{color:var(--muted);font-size:.78rem;margin-bottom:12px}.lesson-link{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;margin-bottom:6px;transition:border-color .15s;font-size:.85rem}.lesson-link:hover{border-color:var(--gold);color:var(--gold)}.payout-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--card);border:1.5px solid var(--border2);border-radius:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}.payout-opt input{margin-top:3px;accent-color:var(--gold);cursor:pointer}.payout-opt-body{flex:1;min-width:0}.payout-opt:hover:not(.disabled){border-color:var(--gold)}.payout-opt.selected{border-color:var(--gold);background:rgba(212,168,67,.06)}.payout-opt.disabled{opacity:.5;cursor:not-allowed}";
-  document.head.appendChild(s);
-})();
+      if (path === "/api/cert" && method === "POST") {
+        const { user_id, user_name, user_email, category, cert_url } = body;
+        if (!user_id || !cert_url) return err("Missing fields");
+        // Ensure table exists
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS cert_requests (
+          id TEXT PRIMARY KEY, user_id TEXT, user_name TEXT, user_email TEXT,
+          category TEXT, cert_url TEXT, status TEXT DEFAULT 'pending', submitted_at TEXT
+        )`).run().catch(()=>{});
+        const id = "cert_" + Date.now();
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO cert_requests (id,user_id,user_name,user_email,category,cert_url,status,submitted_at)
+           VALUES (?,?,?,?,?,?,'pending',datetime('now'))`
+        ).bind(id, user_id, user_name||'', user_email||'', category||'', cert_url).run();
+        // Update user cert status
+        try {
+          await env.DB.prepare("ALTER TABLE users ADD COLUMN cert_status TEXT DEFAULT 'unsubmitted'").run();
+        } catch(e) {} // column may already exist
+        await env.DB.prepare("UPDATE users SET cert_status='pending' WHERE id=?").bind(user_id).run();
+        // Notify admin
+        const admin = await env.DB.prepare("SELECT id FROM users WHERE role='admin' LIMIT 1").first();
+        if (admin) {
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_cert_req_"+Date.now(), admin.id, "📋",
+              (user_name||'A user')+" submitted a "+( category||'professional')+" certificate for verification", "just now").run().catch(()=>{});
+        }
+        return json({ id, success: true });
+      }
 
-function _charCount(srcId,tgtId,max){
-  const src=document.getElementById(srcId),tgt=document.getElementById(tgtId);
-  if(src&&tgt)tgt.textContent=src.value.length;
-}
+      if (path === "/api/cert" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (userId) {
+          const row = await env.DB.prepare("SELECT * FROM cert_requests WHERE user_id=? ORDER BY submitted_at DESC LIMIT 1").bind(userId).first();
+          return json(row || { status: null });
+        }
+        const { results } = await env.DB.prepare("SELECT * FROM cert_requests ORDER BY submitted_at DESC").all().catch(()=>({results:[]}));
+        return json(results || []);
+      }
 
-// Type-aware deliverable fields — this is what the buyer actually receives.
-// Values are read by addProduct() and stored on the product for later Supabase delivery.
-function _renderDeliverables(){
-  const wrap=document.getElementById('prodDeliverables');if(!wrap)return;
-  const type=(document.getElementById('prodType')||{}).value||'course';
-  const lbl=`<div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">📦 What buyers receive</div>`;
-  if(type==='course'){
-    wrap.innerHTML=lbl+
-      `<div class="fg"><label>Course intro / what's included</label><textarea id="delIntro" maxlength="400" placeholder="e.g. 8 video lessons covering portrait retouching from scratch, with downloadable practice files."></textarea></div>
-       <div class="fg"><label>Lessons</label><div id="delLessons"></div><button type="button" class="del-add" onclick="_addLesson()">+ Add lesson</button></div>`;
-    _addLesson();_addLesson();
-  } else if(type==='ebook'){
-    wrap.innerHTML=lbl+
-      `<div class="fg"><label>PDF download URL</label><input id="delFileUrl" placeholder="https://… link to your PDF (Drive, Dropbox, S3)"></div>
-       <div class="add-prod-grid">
-         <div class="fg"><label>Pages</label><input id="delPages" type="number" min="1" placeholder="120"></div>
-         <div class="fg"><label>Format</label><select id="delFormat"><option value="PDF">PDF</option><option value="EPUB">EPUB</option><option value="PDF+EPUB">PDF + EPUB</option></select></div>
-       </div>
-       <div class="fg"><label>What's inside</label><textarea id="delContents" maxlength="300" placeholder="Brief overview of chapters or topics covered."></textarea></div>`;
-  } else if(type==='preset'){
-    wrap.innerHTML=lbl+
-      `<div class="fg"><label>Download URL (.zip)</label><input id="delFileUrl" placeholder="https://… link to the preset pack"></div>
-       <div class="add-prod-grid">
-         <div class="fg"><label>Number of presets</label><input id="delCount" type="number" min="1" placeholder="12"></div>
-         <div class="fg"><label>Compatible with</label><select id="delCompat"><option>Lightroom Mobile + Desktop</option><option>Lightroom Mobile only</option><option>Lightroom Desktop only</option><option>Photoshop</option><option>Capture One</option></select></div>
-       </div>
-       <div class="fg"><label>Install instructions</label><textarea id="delInstall" maxlength="300" placeholder="Step-by-step on how to install. Buyers will see this with their download."></textarea></div>`;
-  } else if(type==='template'){
-    wrap.innerHTML=lbl+
-      `<div class="fg"><label>Template URL or download link</label><input id="delFileUrl" placeholder="https://… Figma share link, Notion duplicate link, or file URL"></div>
-       <div class="fg"><label>Format</label><select id="delFormat"><option>Figma</option><option>Notion</option><option>Canva</option><option>Google Docs</option><option>Google Sheets</option><option>Keynote</option><option>PowerPoint</option><option>Other</option></select></div>
-       <div class="fg"><label>How to use it</label><textarea id="delInstall" maxlength="300" placeholder="e.g. Click the link, duplicate to your workspace, edit freely."></textarea></div>`;
-  } else if(type==='audio'){
-    wrap.innerHTML=lbl+
-      `<div class="fg"><label>Audio download URL (.zip or single file)</label><input id="delFileUrl" placeholder="https://… link to your audio files"></div>
-       <div class="add-prod-grid">
-         <div class="fg"><label>Number of tracks</label><input id="delCount" type="number" min="1" placeholder="10"></div>
-         <div class="fg"><label>Total length (min)</label><input id="delDuration" type="number" min="1" placeholder="45"></div>
-       </div>
-       <div class="fg"><label>Format</label><select id="delFormat"><option>WAV</option><option>MP3</option><option>WAV + MP3</option><option>FLAC</option><option>Stems (multitrack)</option></select></div>
-       <div class="fg"><label>Track list / description</label><textarea id="delContents" maxlength="400" placeholder="List the tracks or describe what's included."></textarea></div>`;
-  }
-}
+      if (path === "/api/cert/review" && method === "POST") {
+        const { id, user_id, action } = body;
+        if (!id || !action) return err("Missing fields");
+        await env.DB.prepare("UPDATE cert_requests SET status=? WHERE id=?").bind(action, id).run();
+        if (user_id) {
+          await env.DB.prepare("UPDATE users SET cert_status=?, verified=? WHERE id=?")
+            .bind(action, action==='approved'?1:0, user_id).run().catch(()=>{});
+          const msg = action === 'approved'
+            ? "Your professional certificate is verified! Your badge is now active on your profile. ✅"
+            : "Your certificate was rejected. Please resubmit with a clearer document.";
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_cert_"+Date.now(), user_id, action==='approved'?"🏅":"❌", msg, "just now").run();
+        }
+        return json({ success: true });
+      }
 
-let _lessonIdx=0;
-function _addLesson(){
-  const wrap=document.getElementById('delLessons');if(!wrap)return;
-  _lessonIdx++;const i=_lessonIdx;
-  const row=document.createElement('div');row.className='del-row';
-  row.innerHTML=`<input data-lesson-title placeholder="Lesson ${wrap.children.length+1} title">
-    <input data-lesson-url placeholder="Video URL (YouTube, Vimeo, etc.)">
-    <button type="button" class="del-rm" title="Remove" onclick="this.parentElement.remove()">×</button>`;
-  wrap.appendChild(row);
-}
-function _val(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+      // ── Referral video submissions ──────────────────────────────────────
+      // ── Boost ────────────────────────────────────────────────────────────
+      // ── Boost Stripe payment intent ──────────────────────────────────────
+      if (path === "/api/stripe/boost" && method === "POST") {
+        const { amount, user_id, boost_type, target_id } = body;
+        if (!amount || !user_id) return err("Missing fields");
+        // amount comes in cents already (Math.round(dollars*100))
+        const amountCents = typeof amount === 'number' ? Math.round(amount) : parseInt(amount);
+        if (!amountCents || amountCents < 100) return err("Minimum boost is $1");
+        // Ensure boosts table exists
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS boosts (
+          id TEXT PRIMARY KEY, user_id TEXT, type TEXT, target_id TEXT,
+          amount REAL, created_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1
+        )`).run().catch(()=>{});
+        const pi = await stripeReq(env, "/payment_intents", "POST", {
+          amount: String(amountCents),
+          currency: "usd",
+          metadata: { type: "boost", boost_type: boost_type||"profile", target_id: target_id||"", user_id }
+        });
+        return json({ client_secret: pi.client_secret });
+      }
 
-// Holds the uploaded cover — data URL for preview
-let _pendingCover='';
-let _pendingCoverPublicUrl='';
-// _pendingCoverFile declared globally
+      if (path === "/api/boost" && method === "POST") {
+        const { user_id, type, target_id, amount } = body; // type: profile|product
+        if (!user_id || !type || !target_id || !amount) return err("Missing fields");
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS boosts (
+          id TEXT PRIMARY KEY, user_id TEXT, type TEXT, target_id TEXT,
+          amount REAL, created_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1
+        )`).run().catch(()=>{});
+        const id = "boost_" + Date.now();
+        const expires = new Date(Date.now() + 7*24*60*60*1000).toISOString();
+        await env.DB.prepare(
+          `INSERT INTO boosts (id,user_id,type,target_id,amount,created_at,expires_at,active)
+           VALUES (?,?,?,?,?,datetime('now'),?,1)`
+        ).bind(id, user_id, type, target_id, amount, expires).run();
+        // Credit platform (dabarey24) — boost payment goes to platform
+        return json({ id, success: true, expires_at: expires });
+      }
 
-function _handleSampleUpload(ev){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  _prodSampleUrl='';
-  const prev=document.getElementById('prodSamplePreview');
-  // Preview
-  const r=new FileReader();
-  r.onload=e=>{
-    const src=e.target.result;
-    if(f.type.startsWith('image/')){
-      prev.innerHTML=`<img src="${src}" style="width:100%;max-height:120px;object-fit:cover;border-radius:10px">`;
-    } else if(f.type.startsWith('video/')){
-      prev.innerHTML=`<video src="${src}" style="width:100%;max-height:120px;border-radius:10px" controls></video>`;
-    } else {
-      prev.innerHTML=`<div style="padding:16px;text-align:center;font-size:.82rem;color:var(--gold)">📄 ${f.name}</div>`;
+      if (path === "/api/boost/active" && method === "GET") {
+        const type = url.searchParams.get("type") || "profile";
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS boosts (
+          id TEXT PRIMARY KEY, user_id TEXT, type TEXT, target_id TEXT,
+          amount REAL, created_at TEXT, expires_at TEXT, active INTEGER DEFAULT 1
+        )`).run().catch(()=>{});
+        const { results } = await env.DB.prepare(
+          `SELECT b.*, u.name as user_name, u.avatar as user_avatar, u.category as user_category
+           FROM boosts b LEFT JOIN users u ON b.user_id=u.user_id
+           WHERE b.type=? AND b.active=1 AND b.expires_at > datetime('now')
+           ORDER BY b.amount DESC`
+        ).bind(type).all().catch(()=>({results:[]}));
+        return json(results || []);
+      }
+
+      // ── Referral stats ───────────────────────────────────────────────────
+      if (path === "/api/ref/stats" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const user = await env.DB.prepare("SELECT name, handle FROM users WHERE id=?").bind(userId).first();
+        const handle = (user?.handle || user?.name || '').toLowerCase().replace(/\s+/g, '_');
+        // Find all users who were referred by this user
+        const { results: referred } = await env.DB.prepare(
+          `SELECT id, name, avatar, created_at FROM users WHERE ref_code=?`
+        ).bind(userId).all(); // ref_code stores referrer's user ID
+        // Get notifications to calculate earned amount
+        const { results: notifs } = await env.DB.prepare(
+          `SELECT text FROM notifications WHERE user_id=? AND icon='🎉' AND text LIKE 'Referral bonus%'`
+        ).bind(userId).all();
+        let totalEarned = 0;
+        notifs.forEach(n => {
+          const m = (n.text||'').match(/\$([0-9.]+)/);
+          if (m) totalEarned += parseFloat(m[1]) || 0;
+        });
+        // Build user list with earned per user (approximate from notifications)
+        const users = (referred||[]).map(u => ({ ...u, earned: 0 }));
+        return json({ count: users.length, earned: totalEarned, users });
+      }
+
+      if (path === "/api/ref/video" && method === "POST") {
+        const { user_id, user_name, url } = body;
+        if (!user_id || !url) return err("Missing fields");
+        const id = "refvid_" + Date.now();
+        await env.DB.prepare(
+          `INSERT OR REPLACE INTO ref_videos (id, user_id, user_name, url, status, submitted_at)
+           VALUES (?, ?, ?, ?, 'pending', datetime('now'))`
+        ).bind(id, user_id, user_name||'', url).run();
+        return json({ id, success: true });
+      }
+
+      if (path === "/api/ref/video" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (userId) {
+          const row = await env.DB.prepare("SELECT * FROM ref_videos WHERE user_id=? ORDER BY submitted_at DESC LIMIT 1").bind(userId).first();
+          return json(row || { status: null });
+        }
+        // Admin — get all
+        const { results } = await env.DB.prepare("SELECT * FROM ref_videos ORDER BY submitted_at DESC").all();
+        return json(results || []);
+      }
+
+      if (path === "/api/ref/video/review" && method === "POST") {
+        const { id, user_id, action } = body;
+        if (!id || !action) return err("Missing fields");
+        await env.DB.prepare("UPDATE ref_videos SET status=? WHERE id=?").bind(action, id).run();
+        if (action === "approved" && user_id) {
+          // Set ref_rate to 2% on user
+          await env.DB.prepare("UPDATE users SET ref_rate=2 WHERE id=?").bind(user_id).run();
+          await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+            .bind("notif_refvid_"+Date.now(), user_id, "🎉",
+              "Your promotional video was verified! You now earn 2% referral commission.", "just now").run();
+        }
+        return json({ success: true });
+      }
+
+      // ── Stories ──────────────────────────────────────────────────────────
+      if (path === "/api/stories" && method === "GET") {
+        const { results } = await env.DB.prepare(`
+          SELECT s.*, u.name as creator_name, u.avatar as creator_avatar
+          FROM stories s LEFT JOIN users u ON s.creator_id = u.id
+          WHERE s.expires_at > datetime('now')
+          ORDER BY s.created_at DESC LIMIT 200
+        `).all();
+        return json(results || []);
+      }
+
+      if (path === "/api/stories" && method === "POST") {
+        const { creator_id, creator_name, creator_avatar, media_url, media_type, caption } = body;
+        if (!creator_id || !media_url) return err("Missing fields");
+        const id = "story_" + Date.now();
+        await env.DB.prepare(`
+          INSERT INTO stories (id, creator_id, creator_name, creator_avatar, media_url, media_type, caption, created_at, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now', '+24 hours'))
+        `).bind(id, creator_id, creator_name||'', creator_avatar||'', media_url, media_type||'image', caption||'').run();
+        return json({ id, success: true });
+      }
+
+      // ── Post view count ────────────────────────────────────────────────
+      if (path.match(/^\/api\/posts\/[^/]+\/view$/) && method === "POST") {
+        const postId = path.split("/")[3];
+        try {
+          await env.DB.prepare("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0").run();
+        } catch(e) {}
+        await env.DB.prepare("UPDATE posts SET views=COALESCE(views,0)+1 WHERE id=?").bind(postId).run().catch(()=>{});
+        return json({ ok: true });
+      }
+
+      if (path === "/api/comments" && method === "GET") {
+        const postId = url.searchParams.get("post_id");
+        if (!postId) return err("Missing post_id");
+        const { results } = await env.DB.prepare(
+          `SELECT * FROM comments WHERE post_id=? ORDER BY created_at ASC LIMIT 100`
+        ).bind(postId).all();
+        return json(results || []);
+      }
+      if (path === "/api/comments" && method === "POST") {
+        const { post_id, user_id, user_name, avatar, text } = body;
+        if (!post_id || !text) return err("Missing fields");
+        const id = "cmt_" + Date.now();
+        await env.DB.prepare(
+          `INSERT INTO comments (id, post_id, user_id, user_name, avatar, text) VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(id, post_id, user_id || "", user_name || "", avatar || "", text).run();
+        await env.DB.prepare(`UPDATE posts SET comments_count = comments_count + 1 WHERE id=?`).bind(post_id).run();
+        return json({ id, success: true });
+      }
+      return err("Not found", 404);
+    } catch (e) {
+      console.error(e);
+      return err(e.message || "Server error", 500);
     }
-  };
-  r.readAsDataURL(f);
-  // Upload to R2
-  const mime=f.type||'application/octet-stream';
-  const folder='samples';
-  const uploadBlob=f.type.startsWith('image/')?_resizeToBlob(f,1200,800,0.85).then(b=>_uploadToR2(b,folder,'image/jpeg')):_uploadToR2(f,folder,mime);
-  uploadBlob.then(url=>{_prodSampleUrl=url;toast('Sample uploaded ✓','👁');}).catch(e=>console.warn('sample upload failed:',e));
-}
-
-function _handleCoverUpload(ev){
-  const f=ev.target.files&&ev.target.files[0];if(!f)return;
-  if(!f.type.startsWith('image/')){toast('Please pick an image file','⚠️');return;}
-  if(f.size>20*1024*1024){toast('Image is too large — max 20 MB','⚠️');return;}
-  _pendingCoverPublicUrl='';
-  _pendingCoverFile=f;
-  // Preview immediately
-  _resizeToDataURL(f,1200,600,0.82).then(src=>{
-    _pendingCover=src;
-    const box=document.getElementById('prodCoverPreview');
-    if(box) box.innerHTML=`<img src="${src}" alt="cover preview"><button type="button" class="cover-rm" title="Remove" onclick="event.stopPropagation();_clearCover()">×</button>`;
-  });
-  // Upload to R2 in background
-  _resizeToBlob(f,1200,600,0.82).then(blob=>_uploadToR2(blob,'covers','image/jpeg')).then(url=>{
-    _pendingCoverPublicUrl=url;
-    _pendingCover=url;
-    toast('Cover uploaded ✓','🖼️');
-  }).catch(e=>console.warn('Cover R2 upload failed:',e));
-}
-function _clearCover(){
-  _pendingCover='';
-  _pendingCoverPublicUrl='';
-  _pendingCoverFile=null;
-  const fi=document.getElementById('prodCoverFile');if(fi)fi.value='';
-  const box=document.getElementById('prodCoverPreview');
-  if(box) box.innerHTML='<div class="cover-up-empty"><span class="cup-icon">📷</span>Tap to upload cover<div style="font-size:.72rem;color:var(--muted);margin-top:4px;opacity:.7">PNG, JPG or WebP</div></div>';
-}
-
-// Accept a real shareable URL (http/https) — rejects junk like "google drive link please"
-function _isUrl(s){
-  if(!s) return false;
-  try{const u=new URL(s);return u.protocol==='http:'||u.protocol==='https:';}catch(e){return false;}
-}
-
-async function addProduct(){
-  if(!currentUser) return;
-  const title=_val('prodTitle');
-  const type=(document.getElementById('prodType')||{}).value||'ebook';
-  const desc=_val('prodDesc');
-  const price=parseFloat((document.getElementById('prodPrice')||{}).value||'0');
-  if(!title||!desc||!price||price<0.5){toast('Fill in title, description and price (min $0.50)','⚠️');return;}
-
-  // Gather what buyers actually receive based on type
-  const deliverables={};
-  if(type==='course'){
-    const rows=[...document.querySelectorAll('#delLessons .del-row')];
-    const lessons=rows.map(r=>({
-      title:r.querySelector('[data-lesson-title]').value.trim(),
-      url:r.querySelector('[data-lesson-url]').value.trim()
-    })).filter(l=>l.title&&l.url);
-    if(!lessons.length){toast('Add at least one lesson with title and video URL','⚠️');return;}
-    const bad=lessons.find(l=>!_isUrl(l.url));
-    if(bad){toast('Lesson URL must start with https:// — check "'+bad.title+'"','⚠️');return;}
-    deliverables.intro=_val('delIntro');
-    deliverables.lessons=lessons;
-    deliverables.lessonCount=lessons.length;
-  } else if(type==='ebook'){
-    const url=_val('delFileUrl');
-    if(!_isUrl(url)){toast('Paste a valid PDF link (https://…)','⚠️');return;}
-    deliverables.fileUrl=url;
-    deliverables.pages=parseInt(_val('delPages'))||null;
-    deliverables.format=_val('delFormat')||'PDF';
-    deliverables.contents=_val('delContents');
-  } else if(type==='preset'){
-    const url=_val('delFileUrl');
-    if(!_isUrl(url)){toast('Paste a valid download link (https://…)','⚠️');return;}
-    deliverables.fileUrl=url;
-    deliverables.count=parseInt(_val('delCount'))||null;
-    deliverables.compat=_val('delCompat');
-    deliverables.install=_val('delInstall');
-  } else if(type==='template'){
-    const url=_val('delFileUrl');
-    if(!_isUrl(url)){toast('Paste a valid template link (https://…)','⚠️');return;}
-    deliverables.fileUrl=url;
-    deliverables.format=_val('delFormat');
-    deliverables.install=_val('delInstall');
-  } else if(type==='audio'){
-    const url=_val('delFileUrl');
-    if(!_isUrl(url)){toast('Paste a valid audio download link (https://…)','⚠️');return;}
-    deliverables.fileUrl=url;
-    deliverables.count=parseInt(_val('delCount'))||null;
-    deliverables.duration=parseInt(_val('delDuration'))||null;
-    deliverables.format=_val('delFormat');
-    deliverables.contents=_val('delContents');
   }
+};
+// ── AUTO PAYOUT CRON ────────────────────────────────────────────────────
+// Runs on the 1st of every month at 6am UTC
+// Add to wrangler.toml:
+//   [triggers]
+//   crons = ["0 6 1 * *"]
 
-  const emoji={course:'🎓',ebook:'📖',preset:'🎨',template:'📄',audio:'🎵'}[type]||'📦';
-  const cover=_pendingCoverPublicUrl||_pendingCover||currentUser.cover||'';
-  const sampleUrl=_prodSampleUrl||'';
-  const previewText=(document.getElementById('prodPreview')||{}).value?.trim()||'';
-  const description=(document.getElementById('prodDesc')||{}).value?.trim()||desc;
+async function processMonthlyPayouts(env) {
+  const now = new Date().toISOString();
+  // Get all pending payout requests
+  const { results: pending } = await env.DB.prepare(
+    `SELECT p.*,
+      ps.paypal_email, ps.stripe_account_id, ps.bank_name, ps.bank_iban, ps.bank_swift,
+      ps.bank_account, ps.bank_routing, ps.bank_sortcode, ps.bank_bankname, ps.bank_country
+     FROM payouts p
+     LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
+     WHERE p.status = 'pending'`
+  ).all();
 
-  const productId='pr'+Date.now();
-  const newProd={
-    id:productId,creatorId:currentUser.id,creator_id:currentUser.id,
-    creatorName:currentUser.name,creator_name:currentUser.name,
-    creatorAvatar:currentUser.avatar||'',creator_avatar:currentUser.avatar||'',
-    title,type,desc:description,description,price,cover,sales:0,emoji,
-    deliverables,sample_url:sampleUrl,preview:previewText,
-    category:(document.getElementById('prodCategory')||{}).value||'',
-    verified:currentUser.verified||false,creatorSubs:currentUser.subs_count||0
-  };
+  for (const payout of pending) {
+    try {
+      if (payout.method === 'paypal' && payout.paypal_email) {
+        // ── PayPal Payout (automatic) ─────────────────────────────────
+        const token = await getPayPalToken(env);
+        const batchId = 'GALAXY_' + payout.id;
+        const res = await fetch('https://api-m.paypal.com/v1/payments/payouts', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender_batch_header: {
+              sender_batch_id: batchId,
+              email_subject: 'Your GALAXY payout is here!',
+              email_message: `You've received a payout of $${payout.amount.toFixed(2)} from GALAXY.`
+            },
+            items: [{
+              recipient_type: 'EMAIL',
+              amount: { value: payout.amount.toFixed(2), currency: 'USD' },
+              receiver: payout.paypal_email,
+              note: 'GALAXY creator payout',
+              sender_item_id: payout.id
+            }]
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+        const batchStatus = data.batch_header?.payout_batch_id || batchId;
 
-  // Save to D1
-  try{
-    const saved=await apiFetch('/api/products','POST',{
-      id:productId,creator_id:currentUser.id,creator_name:currentUser.name,
-      creator_avatar:currentUser.avatar||'',title,type,description,price,
-      cover_url:cover,emoji,deliverables:JSON.stringify(deliverables),
-      sample_url:sampleUrl,preview:previewText,
-      category:(document.getElementById('prodCategory')||{}).value||''
-    });
-    if(saved?.id) newProd.id=saved.id;
-  }catch(e){console.warn('product save to D1 failed:',e);}
+        await env.DB.prepare(
+          `UPDATE payouts SET status='paid', reference=?, paid_at=? WHERE id=?`
+        ).bind(batchStatus, now, payout.id).run();
 
-  // Save locally
-  const products=DB.get('products')||[];
-  products.unshift(newProd);
-  DB.set('products',products);
+        // Zero out balance
+        await env.DB.prepare(
+          `UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?`
+        ).bind(now, payout.creator_id).run();
 
-  _pendingCover='';_pendingCoverFile=null;_pendingCoverPublicUrl='';_prodSampleUrl='';
-  closeModal();
-  toast('Product added to shop! 🛒','');renderCreatorProducts();renderShop();
-}
+        // Notify creator
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '💸',
+          `Your payout of $${payout.amount.toFixed(2)} has been sent to your PayPal!`, 'just now').run();
 
-async function deleteProduct(id){
-  const products=DB.get('products')||[];
-  DB.set('products',products.filter(p=>p.id!==id));
-  toast('Product removed','🗑️');renderCreatorProducts();renderShop();
-}
+      } else if (payout.method === 'stripe' && payout.bank_iban) {
+        // ── Bank transfer — mark as processing, admin sends manually ──
+        // (Auto bank transfer requires Stripe Connect onboarding)
+        await env.DB.prepare(
+          `UPDATE payouts SET status='processing', note=?, paid_at=? WHERE id=?`
+        ).bind(
+          `Bank: ${payout.bank_name} | IBAN: ${payout.bank_iban} | Bank: ${payout.bank_bankname} | Country: ${payout.bank_country}`,
+          now, payout.id
+        ).run();
 
-// DISCOVER
-function renderDiscover(){
-  const all=DB.get('creators')||[];
-  // Trending: sort by subs desc
-  const trending=[...all].sort((a,b)=>(b.subs||0)-(a.subs||0)).slice(0,3);
-  // New: last 3 (reverse order)
-  const newCreators=[...all].reverse().slice(0,3);
-  // Curated: middle ones
-  const curated=all.slice(1,4);
-  const el1=document.getElementById('discoverTrending');
-  const el2=document.getElementById('discoverNew');
-  const el3=document.getElementById('discoverCurated');
-  if(el1)el1.innerHTML=trending.map(creatorCard).join('');
-  if(el2)el2.innerHTML=newCreators.map(creatorCard).join('');
-  if(el3)el3.innerHTML=curated.map(creatorCard).join('');
-}
+        // Notify creator
+        await env.DB.prepare(
+          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
+        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '🏦',
+          `Your bank transfer of $${payout.amount.toFixed(2)} is being processed. Allow 3–5 business days.`, 'just now').run();
 
-
-// ═══ MOBILE NAV ══════════════════════════════════════════════════
-function mobileNav(page, btn){
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  showPage(page, null);
-  closeMobileMenu();
-}
-function mobileNavAuth(page, btn){
-  if(!currentUser){openModal('login');return;}
-  mobileNav(page, btn);
-}
-// Home button: feed when logged in, landing when not
-function mobileHome(btn){
-  if(currentUser){
-    mobileNav('feed', btn);
-  } else {
-    mobileNav('landing', btn);
-  }
-}
-// Center upload button: takes creator straight to "Add new product" on the dashboard
-function mobileUpload(){
-  if(!currentUser){openModal('login');return;}
-  closeMobileMenu();
-  openCreateSheet();
-}
-
-function openCreateSheet(){
-  // Remove any existing sheet
-  const existing=document.getElementById('createSheet');if(existing)existing.remove();
-  const sheet=document.createElement('div');
-  sheet.id='createSheet';
-  sheet.style.cssText='position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;justify-content:flex-end';
-  sheet.innerHTML=`
-    <div onclick="closeCreateSheet()" style="flex:1;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)"></div>
-    <div style="background:var(--bg2);border-radius:24px 24px 0 0;padding:20px 20px 36px;border-top:1.5px solid rgba(99,179,237,.25)">
-      <div style="width:40px;height:4px;border-radius:4px;background:rgba(255,255,255,.18);margin:0 auto 20px"></div>
-      <div style="font-weight:700;font-size:1rem;margin-bottom:16px;padding:0 4px">Create</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button onclick="closeCreateSheet();showPage('feed',null);setTimeout(()=>{const t=document.getElementById('postContent');if(t){t.scrollIntoView({behavior:'smooth'});t.focus();}},350)"
-          style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,rgba(192,57,43,.15),rgba(212,168,67,.12));cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;width:100%">
-          <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#c0392b,#d4a843);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">✏️</div>
-          <div>
-            <div style="font-weight:700;font-size:.95rem;color:var(--text)">New Post</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Share a photo, video or text update</div>
-          </div>
-        </button>
-        <button onclick="closeCreateSheet();openAddProductModal()"
-          style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;border:none;background:linear-gradient(135deg,rgba(212,168,67,.15),rgba(99,179,237,.12));cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;width:100%">
-          <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#c8a93a);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">📦</div>
-          <div>
-            <div style="font-weight:700;font-size:.95rem;color:var(--text)">Add Product</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Sell a course, e-book, preset or template</div>
-          </div>
-        </button>
-      </div>
-    </div>`;
-  document.body.appendChild(sheet);
-  document.body.style.overflow='hidden';
-  requestAnimationFrame(()=>{sheet.querySelector('div+div').style.transform='translateY(0)';});
-}
-
-function closeCreateSheet(){
-  const sheet=document.getElementById('createSheet');
-  if(sheet){sheet.remove();}
-  document.body.style.overflow='';
-}
-// Highlight the right bottom-nav slot based on current page
-function _syncBnavActive(page){
-  const homePages=['landing','feed'];
-  const map={shop:'bnav-shop',messages:'bnav-messages',library:'bnav-library',feed:'bnav-home'};
-  const id=homePages.indexOf(page)>=0?'bnav-home':(map[page]||null);
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  if(id){const el=document.getElementById(id);if(el)el.classList.add('active');}
-}
-function toggleMobileMenu(){
-  const m=document.getElementById('mobileMenu');
-  if(m) m.style.display=m.style.display==='none'?'block':'none';
-}
-function closeMobileMenu(){
-  const m=document.getElementById('mobileMenu');
-  if(m) m.style.display='none';
-}
-function _syncMobileNav(){
-  // Sync bottom nav badge
-  if(!currentUser) return;
-  const msgs=DB.get('messages')||[];
-  const unread=msgs.filter(m=>m.to===currentUser.id&&!m.read).length;
-  const bb=document.getElementById('bnavMsgBadge');
-  if(bb){bb.textContent=unread;bb.classList.toggle('show',unread>0);}
-  // Show auth-only menu items
-  ['mmDash','mmNotifs','mmSignout','mmMessages','mmLibrary','mmProfile','mmReferrals'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){el.style.display='flex';}
-  });
-  const mmsi=document.getElementById('mmSignin');if(mmsi)mmsi.style.display='none';
-  if(currentUser.role==='admin'){
-    const ma=document.getElementById('mmAdmin');if(ma)ma.style.display='flex';
-  }
-}
-// Close mobile menu when tapping outside
-document.addEventListener('click',function(e){
-  const menu=document.getElementById('mobileMenu');
-  const moreBtn=document.getElementById('bnav-more');
-  if(menu&&menu.style.display==='block'&&!menu.contains(e.target)&&e.target!==moreBtn&&!moreBtn.contains(e.target)){
-    closeMobileMenu();
-  }
-});
-
-// UTILS
-let _tt;
-function toast(msg,icon='ℹ️'){const el=document.getElementById('toast');el.innerHTML=icon+' '+msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
-function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return String(n);}
-
-// INIT
-// Single session restore — runs once after all functions defined
-if(currentUser){
-  _loginUser(currentUser);
-  showPage('feed', null);
-  _silentRefreshUser();
-}
-
-// ═══ PRODUCT DEEP LINK — act after full init ════════════════════════════
-(function openPendingProduct(){
-  const productId=sessionStorage.getItem('pending_product');
-  if(!productId) return;
-  sessionStorage.removeItem('pending_product');
-  // Load shop page, then once products are loaded open the buy modal
-  showPage('shop',null);
-  // Give the shop a moment to load products from Worker, then trigger purchase
-  function tryOpen(attempts){
-    const products=DB.get('products')||[];
-    const p=products.find(x=>x.id===productId);
-    if(p){
-      // Scroll to top so modal is visible
-      window.scrollTo({top:0});
-      if(!currentUser){
-        // Not logged in — show login, re-queue product for after login
-        sessionStorage.setItem('pending_product',productId);
-        openModal('login');
-        toast('Sign in to purchase this product','🔐');
       } else {
-        buyProduct(productId);
+        await env.DB.prepare(
+          `UPDATE payouts SET status='failed', note='Missing payout destination' WHERE id=?`
+        ).bind(payout.id).run();
       }
-    } else if(attempts>0){
-      setTimeout(()=>tryOpen(attempts-1),600);
+    } catch (e) {
+      console.error('Payout failed for', payout.id, e.message);
+      await env.DB.prepare(
+        `UPDATE payouts SET status='failed', note=? WHERE id=?`
+      ).bind(e.message || 'Unknown error', payout.id).run();
     }
   }
-  setTimeout(()=>tryOpen(8),400);
-})();
 
-// ═══ 90-DAY POST PRUNING ══════════════════════════════════════════════
-// Runs on every page load — removes posts older than 90 days from local cache.
-// The Worker should also enforce this server-side via expires_at.
-(function pruneOldPosts(){
-  const cutoff=Date.now()-90*24*60*60*1000;
-  const posts=DB.get('posts')||[];
-  const fresh=posts.filter(p=>{
-    if(!p.created_at) return true; // keep if no date (seeded content)
-    return new Date(p.created_at).getTime()>cutoff;
-  });
-  if(fresh.length!==posts.length) DB.set('posts',fresh);
-})();
-
-
-
-</script>
-
-<!-- STORY VIEWER -->
-<div id="storyViewer" class="story-viewer" style="display:none">
-  <div class="story-tap-left" onclick="_storyPrev()"></div>
-  <div class="story-tap-right" onclick="_storyNext()"></div>
-  <div class="story-progress" id="storyProgress"></div>
-  <div class="story-head">
-    <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex:1" onclick="closeStoryViewer();showProfile(_storyCreators[_currentCreatorIdx]?.creator_id)">
-      <img id="storyViewerAvatar" src="" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.4)">
-      <div>
-        <div id="storyViewerName" style="color:#fff;font-size:.88rem;font-weight:700"></div>
-        <div id="storyViewerTime" style="color:rgba(255,255,255,.5);font-size:.7rem"></div>
-      </div>
-    </div>
-    <button onclick="closeStoryViewer()" style="background:rgba(0,0,0,.3);border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:6px 10px;border-radius:50%;line-height:1">×</button>
-  </div>
-  <div class="story-content" id="storyContent"></div>
-  <div class="story-text-overlay" id="storyCaption"></div>
-  <div id="storyTipBar" style="position:absolute;bottom:20px;left:0;right:0;padding:12px 16px;display:none;justify-content:center;z-index:4">
-    <button onclick="_tipStoryCreator()" style="background:linear-gradient(135deg,#d4a843,#b8902e);border:none;border-radius:100px;color:#0a0000;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;padding:9px 22px;display:flex;align-items:center;gap:6px">💰 Send tip</button>
-  </div>
-</div>
-
-<!-- BOTTOM NAV (mobile) -->
-<div class="bottom-nav" id="bottomNav">
-  <button class="bnav-btn active" id="bnav-home" onclick="mobileHome(this)">
-    <span class="bnav-icon">📰</span>Feed
-  </button>
-  <button class="bnav-btn" id="bnav-shop" onclick="mobileNav('shop',this)">
-    <span class="bnav-icon">🛒</span>Shop
-  </button>
-  <button class="bnav-fab" id="bnav-upload" onclick="mobileUpload()" aria-label="Create">
-    <span class="bnav-fab-icon" style="font-size:1.8rem;font-weight:300;line-height:1;letter-spacing:-1px">＋</span>
-  </button>
-  <button class="bnav-btn" id="bnav-explore" onclick="mobileNavAuth('explore',this)">
-    <span class="bnav-icon">🔍</span>Explore
-  </button>
-  <button class="bnav-btn" id="bnav-more" onclick="toggleMobileMenu()">
-    <span class="bnav-icon">☰</span>More
-  </button>
-</div>
-
-<!-- Mobile More Menu -->
-<div id="mobileMenu" style="display:none;position:fixed;bottom:62px;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);z-index:999;padding:12px 16px 16px">
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-    <button id="mmMessages" onclick="mobileNavAuth('messages',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">💬</span>Messages</button>
-    <button id="mmLibrary" onclick="mobileNavAuth('library',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">📚</span>Library</button>
-    <button id="mmDash" onclick="mobileNavAuth('dashboard',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:none;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">📊</span>Dashboard</button>
-    <button id="mmNotifs" onclick="mobileNavAuth('notifs',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:none;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🔔</span>Alerts</button>
-    <button id="mmAdmin" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent" onclick="goAdmin(null);toggleMobileMenu()"><span style="font-size:1.3rem">⚙️</span>Admin</button>
-    <button id="mmReferrals" onclick="mobileNavAuth('referrals',null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🔗</span>Referrals</button>
-    <button id="mmSignin" onclick="openModal('login');toggleMobileMenu()" style="background:var(--gold);border:none;border-radius:12px;padding:14px 8px;color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">👤</span>Sign in</button>
-    <button id="mmProfile" onclick="openOwnProfile(null);toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">👤</span>Profile</button>
-    <button id="mmSignout" onclick="logout();toggleMobileMenu()" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent"><span style="font-size:1.3rem">🚪</span>Sign out</button>
-  </div>
-</div>
-
-
-<!-- STRIPE PAYMENT MODAL -->
-<div id="stripeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(14px);z-index:9999;align-items:center;justify-content:center;padding:16px">
-  <div style="background:#0d0000;border:1px solid rgba(192,57,43,.3);border-radius:20px;padding:28px;max-width:420px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.7)">
-    <button onclick="closeStripeModal()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.08);border:none;font-size:1.1rem;cursor:pointer;color:rgba(255,255,255,.6);line-height:1;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</button>
-    <div id="stripeModalTitle" style="font-size:1rem;font-weight:700;margin-bottom:4px;color:#fff"></div>
-    <div id="stripeModalSub" style="font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:18px"></div>
-    <div id="stripeCardMount" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 16px;margin-bottom:10px"></div>
-    <div id="stripeCardError" style="color:#e86c6c;font-size:.8rem;min-height:18px;margin-bottom:8px"></div>
-    <button id="stripePayBtn" onclick="stripeDoCharge()" style="width:100%;padding:13px;background:linear-gradient(135deg,#d4a843,#f0c84a,#b8902e);color:#0a0000;border:none;border-radius:100px;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center">
-      <span id="stripePayBtnText">🔒 Pay</span>
-    </button>
-    <div style="font-size:.68rem;color:rgba(255,255,255,.25);text-align:center;margin-top:10px">Secured by Stripe · Card info never stored here</div>
-  </div>
-</div>
-
-<script>
-// ═══ STRIPE ═══
-const STRIPE_PK='pk_live_51TU56a3nYJqGuN7ThxiSW7OQrTNGs5iPcbr7tNU8XOUCbSg3agNLr5iKMvWp6J1nKP6atT827UqeJRyoJ8G2dqUv006rg0OcXs';
-let _stripe=null,_stripeCard=null,_stripeCtx={};
-function getStripe(){if(!_stripe&&window.Stripe)_stripe=Stripe(STRIPE_PK);return _stripe;}
-
-// Calculate gross charge passing Stripe fee to fan
-// Formula: (price + 0.25) / (1 - 0.015), rounded to 2dp
-function _addStripeFee(price){
-  return Math.ceil(((price + 0.25) / (1 - 0.015)) * 100) / 100;
+  console.log(`Processed ${pending.length} payouts`);
 }
 
-function openStripeModal(title,sub,amountUsd,meta){
-  const grossCharge=_addStripeFee(Number(amountUsd));
-  _stripeCtx={amountUsd:grossCharge, originalPrice:Number(amountUsd), meta};
-  document.getElementById('stripeModalTitle').textContent=title;
-  document.getElementById('stripeModalSub').textContent=sub+' (incl. $'+( grossCharge - Number(amountUsd) ).toFixed(2)+' processing fee)';
-  document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+grossCharge.toFixed(2);
-  document.getElementById('stripeCardError').textContent='';
-  document.getElementById('stripeOverlay').style.display='flex';
-  const stripe=getStripe();
-  if(!stripe){alert('Stripe failed to load — please refresh.');return;}
-  if(_stripeCard){_stripeCard.destroy();_stripeCard=null;}
-  const els=stripe.elements({appearance:{theme:'stripe'}});
-  _stripeCard=els.create('card',{style:{base:{fontSize:'15px',color:'#0f172a'}}});
-  _stripeCard.mount('#stripeCardMount');
-  _stripeCard.on('change',e=>{document.getElementById('stripeCardError').textContent=e.error?e.error.message:'';});
-}
-
-function closeStripeModal(){
-  document.getElementById('stripeOverlay').style.display='none';
-  if(_stripeCard){_stripeCard.destroy();_stripeCard=null;}
-}
-
-async function stripeDoCharge(){
-  const stripe=getStripe();
-  const btn=document.getElementById('stripePayBtn');
-  const errEl=document.getElementById('stripeCardError');
-  const amt=Number(_stripeCtx.amountUsd); // gross charge (fan pays)
-  const originalPrice=Number(_stripeCtx.originalPrice||amt); // creator's price
-  // Handle boost payment separately
-  const meta=_stripeCtx.meta||{};
-  if(meta.type==='boost'){
-    btn.disabled=true;document.getElementById('stripePayBtnText').textContent='Processing…';
-    try{
-      // Create payment intent via Worker
-      const pi=await apiFetch('/api/stripe/boost','POST',{
-        amount:Math.round(amt*100),
-        user_id:meta.userId,
-        boost_type:meta.boostType,
-        target_id:meta.targetId
-      });
-      const {error:cfmErr}=await stripe.confirmCardPayment(pi.client_secret,{
-        payment_method:{card:_stripeCard}
-      });
-      if(cfmErr){errEl.textContent=cfmErr.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);return;}
-      closeStripeModal();
-      toast('Boost activated! ⚡ You are now featured for 7 days','');
-    }catch(e){errEl.textContent=e.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);}
-    return;
-  }
-  btn.disabled=true;
-  document.getElementById('stripePayBtnText').textContent='Processing…';
-  errEl.textContent='';
-  try{
-    const {paymentMethod,error:pmErr}=await stripe.createPaymentMethod({
-      type:'card',card:_stripeCard,
-      billing_details:{name:currentUser?.name||'User',email:currentUser?.email||''}
-    });
-    if(pmErr){errEl.textContent=pmErr.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);return;}
-
-    const res=await fetch(WORKER_URL+'/api/pay',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        payment_method_id:paymentMethod.id,
-        user_email:currentUser?.email||'',
-        user_name:currentUser?.name||'User',
-        price_usd:amt,           // gross charge — what Stripe actually charges
-        original_price:originalPrice, // original price — for creator balance credit
-        ..._stripeCtx.meta
-      })
-    });
-    const result=await res.json();
-    if(!res.ok||result.error)throw new Error(result.error||'Payment failed');
-
-    if(result.requires_action&&result.client_secret){
-      const {error:ce}=await stripe.confirmCardPayment(result.client_secret);
-      if(ce){errEl.textContent=ce.message;btn.disabled=false;document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);return;}
-    }
-
-    closeStripeModal();
-    closeModal();
-    const m=_stripeCtx.meta;
-    if(m.plan==='tip'){
-      const posts=DB.get('posts')||[];
-      const p=posts.find(x=>x.id===m.post_id);
-      if(p){p.tips=(p.tips||0)+1;DB.set('posts',posts);}
-      toast('Tip sent! 💰','✅');
-      // Update tip count in-place
-      const tc=document.getElementById('tcount-'+m.post_id);
-      if(tc) tc.textContent=Number(tc.textContent||0)+1;
-    } else if(m.plan==='purchase'){
-      const purchases=DB.get('purchases')||[];
-      purchases.push({id:'pur_'+Date.now(),productId:m.product_id,userId:currentUser.id,productTitle:m.product_title,price:amt,boughtAt:new Date().toISOString()});
-      DB.set('purchases',purchases);
-      const products=DB.get('products')||[];
-      const prod=products.find(x=>x.id===m.product_id);
-      if(prod){prod.sales=(prod.sales||0)+1;DB.set('products',products);}
-      toast('Purchase complete!','✅');
-      renderShop();
-      setTimeout(()=>viewPurchase(m.product_id),400);
-    } else {
-      const subs=currentUser.subscriptions||[];
-      subs.push({id:m.creator_id,name:m.creator_name,plan:m.plan,price:amt,since:new Date().toLocaleDateString()});
-      currentUser.subscriptions=subs;
-      DB.set('user',currentUser);
-      toast('Subscribed! ⭐','✅');
-    }
-  }catch(e){
-    errEl.textContent=e.message||'Payment failed. Please try again.';
-    btn.disabled=false;
-    document.getElementById('stripePayBtnText').textContent='🔒 Pay $'+amt.toFixed(2);
-  }
-}
-
-// Override sendTip with real Stripe + PayPal
-function sendTip(postId,creatorId,method){
-  const amt=parseFloat((document.getElementById('tipAmt')||{}).value||'0');
-  if(!amt||amt<1){toast('Tip must be at least $1','⚠️');return;}
-  if(amt>500){toast('Max tip is $500','⚠️');return;}
-  if(method==='paypal'){
-    closeModal();
-    toast('Opening PayPal...','🅿️');
-    sessionStorage.setItem('pp_pending',JSON.stringify({type:'tip',postId,creatorId,amt,userId:currentUser.id,userName:currentUser.name}));
-    fetch(WORKER_URL+'/api/paypal/order',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amount:amt,description:'Tip',user_id:currentUser.id,creator_id:creatorId,post_id:postId,plan:'tip',user_name:currentUser.name})
-    }).then(r=>r.json()).then(order=>{
-      console.log('PayPal order response:',JSON.stringify(order));
-      if(!order.id){toast('PayPal error: '+(order.error||'no order id'),'⚠️');return;}
-      sessionStorage.setItem('pp_order_id',order.id);
-      window.location.href='https://www.paypal.com/checkoutnow?token='+order.id+'&useraction=commit';
-    }).catch(e=>{console.error('PayPal fetch error:',e);toast('PayPal error, try again','⚠️');});
-    return;
-  }
-  openStripeModal('Send a tip 💰','Supporting this creator — thank you!',amt,
-    {plan:'tip',creator_id:creatorId,creator_name:creatorId,post_id:postId,price_usd:amt});
-}
-
-// Override buyProduct with Stripe + PayPal choice
-function buyProduct(id){
-  if(!currentUser){openModal('login');return;}
-  const products=DB.get('products')||[],p=products.find(x=>x.id===id);
-  if(!p){toast('Product not found','⚠️');return;}
-  const purchases=DB.get('purchases')||[];
-  if(purchases.some(b=>(b.productId===id||b.product_id===id)&&(b.userId===currentUser.id||b.user_id===currentUser.id))){viewPurchase(id);return;}
-  // Show payment method choice
-  const html=`<div style="text-align:center;margin-bottom:16px"><div style="font-size:1.5rem">${p.emoji||'📦'}</div><div style="font-weight:700;margin:6px 0">${p.title}</div><div style="color:var(--gold);font-weight:700;font-size:1.1rem">$${Number(p.price).toFixed(2)}</div></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <button type="button" onclick="closeModal();openStripeModal('Buy · ${p.title}','${p.desc||''}',${parseFloat(p.price)||0},{plan:'purchase',creator_id:'${p.creatorId||p.creator_id||p.creator||''}',creator_name:'${p.creatorName||p.creator_name||''}',product_id:'${id}',product_title:'${p.title}',price_usd:${parseFloat(p.price)||0}})"
-      style="padding:16px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-      <span style="font-size:1.5rem">💳</span>Card
-    </button>
-    <button type="button" onclick="closeModal();_paypalBuy('${id}',${parseFloat(p.price)||0},'${p.title}',currentUser)"
-      style="padding:16px;background:#0070ba;color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-      <span style="font-size:1.5rem">🅿️</span>PayPal
-    </button>
-  </div>`;
-  openModal('pay', html);
-}
-function _paypalBuy(id, price, title, user){
-  toast('Opening PayPal...','🅿️');
-  sessionStorage.setItem('pp_pending',JSON.stringify({type:'purchase',productId:id,productTitle:title,price,userId:user.id,userName:user.name}));
-  fetch(WORKER_URL+'/api/paypal/order',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({amount:price,description:title,user_id:user.id,product_id:id,plan:'purchase',user_name:user.name})
-  }).then(r=>r.json()).then(order=>{
-    console.log('PayPal order response:',JSON.stringify(order));
-    if(!order.id){toast('PayPal error: '+(order.error||'no order id'),'⚠️');return;}
-    sessionStorage.setItem('pp_order_id',order.id);
-    window.location.href='https://www.paypal.com/checkoutnow?token='+order.id+'&useraction=commit';
-  }).catch(e=>{console.error('PayPal fetch error:',e);toast('PayPal error, try again','⚠️');});
-}
-
-document.addEventListener('click',e=>{if(e.target===document.getElementById('stripeOverlay'))closeStripeModal();});
-
-// Handle ?reset=TOKEN for password reset
-(function(){
-  const params=new URLSearchParams(window.location.search);
-  const token=params.get('reset');
-  if(token){
-    history.replaceState({},'',window.location.pathname);
-    setTimeout(()=>{
-      const html=_authStyles+`<div class="auth-wrap">
-        <div class="auth-logo">G<span>ALAXY</span></div>
-        <div class="auth-sub">Set a new password</div>
-        <div class="auth-field"><label>New password</label><input id="rp-pw" type="password" placeholder="Min. 6 characters"></div>
-        <div class="auth-field"><label>Confirm password</label><input id="rp-pw2" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doResetPw('${token}')"></div>
-        <div class="auth-err" id="rp-err"></div>
-        <button class="auth-btn" onclick="doResetPw('${token}')">Set new password →</button>
-      </div>`;
-      openModal('resetpw', html);
-    },300);
-  }
-})();
-
-async function doResetPw(token){
-  const pw=(document.getElementById('rp-pw')||{}).value||'';
-  const pw2=(document.getElementById('rp-pw2')||{}).value||'';
-  const errEl=document.getElementById('rp-err');
-  if(pw.length<6){if(errEl)errEl.textContent='Password must be at least 6 characters';return;}
-  if(pw!==pw2){if(errEl)errEl.textContent='Passwords do not match';return;}
-  const btn=document.querySelector('#modalContent .auth-btn');
-  if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  try{
-    const res=await fetch(WORKER_URL+'/api/auth/reset-password',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({token,password:pw})
-    });
-    const data=await res.json();
-    if(!res.ok){if(errEl)errEl.textContent=data.error||'Link expired';if(btn){btn.disabled=false;btn.textContent='Set new password →';}return;}
-    closeModal();
-    toast('Password updated! Sign in with your new password.','✅');
-    setTimeout(()=>openModal('login'),800);
-  }catch(e){
-    if(errEl)errEl.textContent='Error: '+e.message;
-    if(btn){btn.disabled=false;btn.textContent='Set new password →';}
-  }
-}
-
-// Direct URL links: galaxyvy.com/?page=privacy  or  ?page=terms
-(function(){
-  const p=new URLSearchParams(window.location.search).get('page');
-  if(p==='privacy'||p==='terms'){
-    history.replaceState({},'',window.location.pathname);
-    const open=function(){
-      document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-      const t=document.getElementById('page-'+p);
-      if(t){t.classList.add('active');window.scrollTo({top:0});}
-    };
-    open();
-    setTimeout(open,200);
-  }
-})();
-</script>
-</body>
-</html>
+export { worker_default as default };
