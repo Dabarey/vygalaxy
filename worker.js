@@ -833,6 +833,11 @@ var worker_default = {
             ).bind("sub_" + Date.now(), user_id||'', creator_id||'', creator_name||'Creator', plan||'subscription', Number(price_usd)||0, sub.status||'active', sub.id||'', customerId||'', periodEnd||null).run();
             if (pi?.status === "requires_action") return json({ requires_action: true, client_secret: pi.client_secret, subscription_id: sub.id });
             try { await creditReferrer(env, user_id, price_usd, 'sub'); } catch(e) {}
+            // Update creator subs_count
+            await env.DB.prepare("UPDATE users SET subs_count = COALESCE(subs_count,0)+1 WHERE id=?").bind(creator_id||'').run().catch(()=>{});
+            // Notify creator
+            await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+              .bind("notif_sub_"+Date.now(), creator_id||'', "⭐", (user_name||"Someone")+" subscribed to you!", "just now").run().catch(()=>{});
             return json({ success: true, subscription_id: sub.id, period_end: periodEnd });
           } catch(subErr) {
             return err("Subscription failed: " + (subErr.message || String(subErr)), 500);
@@ -911,28 +916,30 @@ var worker_default = {
       }
       // ── Cancel subscription ──────────────────────────────────────────────
       if (path === "/api/subscriptions/cancel" && method === "POST") {
-        const { user_id, creator_id } = body;
+        const { user_id, creator_id, stripe_sub_id } = body;
         if (!user_id || !creator_id) return err("Missing fields");
         // Find the active subscription
         const sub = await env.DB.prepare(
-          `SELECT * FROM subscriptions WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1`
+          `SELECT * FROM subscriptions WHERE user_id=? AND creator_id=? LIMIT 1`
         ).bind(user_id, creator_id).first();
-        if (!sub) return err("No active subscription found");
-        // Cancel in Stripe at period end (fan keeps access until end of billing period)
-        if (sub.stripe_sub_id) {
+        // Cancel in Stripe
+        const subIdToCancel = stripe_sub_id || sub?.stripe_sub_id;
+        if (subIdToCancel) {
           try {
-            await stripeReq(env, `/subscriptions/${sub.stripe_sub_id}`, "POST", {
+            await stripeReq(env, `/subscriptions/${subIdToCancel}`, "POST", {
               cancel_at_period_end: "true"
             });
-          } catch(e) {
-            console.warn("Stripe cancel failed:", e.message);
-          }
+          } catch(e) { console.warn("Stripe cancel failed:", e.message); }
         }
-        // Mark as cancelling in D1
-        await env.DB.prepare(
-          `UPDATE subscriptions SET status='cancelling' WHERE id=?`
-        ).bind(sub.id).run();
-        return json({ ok: true, message: "Subscription cancelled. You keep access until end of billing period." });
+        // Update D1 if record exists
+        if (sub) {
+          await env.DB.prepare(`UPDATE subscriptions SET status='cancelling' WHERE id=?`).bind(sub.id).run();
+        } else {
+          // Insert cancelling record so UI reflects state
+          await env.DB.prepare(`INSERT OR IGNORE INTO subscriptions (id,user_id,creator_id,status,created_at) VALUES (?,?,?,'cancelling',datetime('now'))`)
+            .bind('sub_'+Date.now(), user_id, creator_id).run().catch(()=>{});
+        }
+        return json({ ok: true, message: "Subscription cancelled." });
       }
 
       if (path === "/api/balance" && method === "GET") {
