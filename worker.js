@@ -127,6 +127,22 @@ var worker_default = {
     if (event.cron === '0 6 1 * *') {
       ctx.waitUntil(processMonthlyPayouts(env));
     }
+    // Daily: clean up expired stories from R2
+    if (event.cron === '0 3 * * *') {
+      ctx.waitUntil((async () => {
+        const { results: expired } = await env.DB.prepare(
+          "SELECT media_url FROM stories WHERE expires_at < datetime('now')"
+        ).all().catch(()=>({results:[]}));
+        for (const s of (expired||[])) {
+          if (!s.media_url) continue;
+          try {
+            const key = s.media_url.replace(/^https?:\/\/[^/]+\//, '');
+            if (key) await env.MEDIA.delete(key);
+          } catch(e) {}
+        }
+        await env.DB.prepare("DELETE FROM stories WHERE expires_at < datetime('now')").run().catch(()=>{});
+      })());
+    }
   },
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -412,8 +428,23 @@ var worker_default = {
         return json({ id, success: true });
       }
       if (path.startsWith("/api/posts/") && method === "DELETE") {
-        const postId = path.split("/").pop();
-        await env.DB.prepare(`DELETE FROM posts WHERE id=?`).bind(postId).run();
+        const postId = path.split("/")[3];
+        // Get media_url before deleting so we can remove from R2
+        const post = await env.DB.prepare("SELECT media_url FROM posts WHERE id=?").bind(postId).first();
+        await env.DB.prepare("DELETE FROM posts WHERE id=?").bind(postId).run();
+        // Delete from R2 if media exists
+        if (post?.media_url) {
+          try {
+            // Extract R2 key from public URL
+            // e.g. https://pub-xxx.r2.dev/posts/filename.jpg -> posts/filename.jpg
+            const r2Key = post.media_url.replace(/^https?:\/\/[^/]+\//, '');
+            if (r2Key && !r2Key.startsWith('http')) {
+              await env.MEDIA.delete(r2Key);
+            }
+          } catch(e) {
+            console.warn('R2 delete failed:', e.message);
+          }
+        }
         return json({ success: true });
       }
       
@@ -689,8 +720,17 @@ var worker_default = {
       }
 
       if (path.startsWith("/api/products/") && method === "DELETE") {
-        const productId = path.split("/").pop();
+        const productId = path.split("/")[3];
+        const prod = await env.DB.prepare("SELECT cover_url, sample_url FROM products WHERE id=?").bind(productId).first();
         await env.DB.prepare("DELETE FROM products WHERE id=?").bind(productId).run();
+        // Delete cover and sample from R2
+        for (const url of [prod?.cover_url, prod?.sample_url]) {
+          if (!url) continue;
+          try {
+            const key = url.replace(/^https?:\/\/[^/]+\//, '');
+            if (key && !key.startsWith('http')) await env.MEDIA.delete(key);
+          } catch(e) {}
+        }
         return json({ success: true });
       }
 
