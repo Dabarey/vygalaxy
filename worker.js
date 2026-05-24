@@ -915,6 +915,20 @@ var worker_default = {
         return json({ received: true });
       }
       // ── Cancel subscription ──────────────────────────────────────────────
+      // ── Confirm subscription — update subs_count + notify creator ────────
+      if (path === "/api/subscriptions/confirm" && method === "POST") {
+        const { user_id, user_name, creator_id } = body;
+        if (!creator_id) return err("Missing creator_id");
+        // Increment subs_count
+        await env.DB.prepare("UPDATE users SET subs_count=COALESCE(subs_count,0)+1 WHERE id=?")
+          .bind(creator_id).run().catch(()=>{});
+        // Notify creator
+        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+          .bind("notif_sub_"+Date.now(), creator_id, "⭐", (user_name||"Someone")+" subscribed to you!", "just now")
+          .run().catch(()=>{});
+        return json({ ok: true });
+      }
+
       if (path === "/api/subscriptions/cancel" && method === "POST") {
         const { user_id, creator_id, stripe_sub_id } = body;
         if (!user_id || !creator_id) return err("Missing fields");
