@@ -757,20 +757,25 @@ var worker_default = {
           payment_method_id, user_id, user_email, user_name, plan, price_usd,
           creator_id, creator_name, product_id, product_title, post_id
         } = body;
-        if (!payment_method_id || !user_email || !price_usd) return err("Missing payment fields");
-        const amountUsd = Number(price_usd); // gross charge including Stripe fee passthrough
-        const originalPrice = Number(body.original_price || price_usd); // original price before fee
-        // Enforce minimum $0.50 — Stripe minimum charge
+        if (!payment_method_id || !price_usd) return err("Missing payment fields");
+        const amountUsd = Number(price_usd);
+        const originalPrice = Number(body.original_price || price_usd);
         if (amountUsd < 0.5) return err("Minimum payment is $0.50.");
-        const amountCents = Math.round(Number(amountUsd) * 100); // gross charge incl. Stripe fee
-        // Creator earns 71% of original price (not gross charge)
+        const amountCents = Math.round(Number(amountUsd) * 100);
         const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
-        const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(user_email)}&limit=1`, "GET");
+        // Get real email from D1 if not provided
+        let resolvedEmail = user_email;
+        if (!resolvedEmail && user_id) {
+          const u = await env.DB.prepare("SELECT email FROM users WHERE id=?").bind(user_id).first().catch(()=>null);
+          resolvedEmail = u?.email || '';
+        }
+        if (!resolvedEmail) return err("Could not find user email for Stripe");
+        const existing = await stripeReq(env, `/customers?email=${encodeURIComponent(resolvedEmail)}&limit=1`, "GET");
         let customerId;
         if (existing.data?.length > 0) {
           customerId = existing.data[0].id;
         } else {
-          const c = await stripeReq(env, "/customers", "POST", { email: user_email, name: user_name || user_email });
+          const c = await stripeReq(env, "/customers", "POST", { email: resolvedEmail, name: user_name || resolvedEmail });
           customerId = c.id;
         }
         await stripeReq(env, `/payment_methods/${payment_method_id}/attach`, "POST", { customer: customerId });
