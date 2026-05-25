@@ -921,6 +921,89 @@ var worker_default = {
       }
       // ── Cancel subscription ──────────────────────────────────────────────
       // ── Confirm subscription — update subs_count + notify creator ────────
+      // ── Stripe Connect ───────────────────────────────────────────────────
+      // Start onboarding — returns a Stripe Connect onboarding URL
+      if (path === "/api/stripe/connect/onboard" && method === "POST") {
+        const { user_id, email } = body;
+        if (!user_id) return err("Missing user_id");
+        // Check if already has an account
+        let settings = await env.DB.prepare("SELECT stripe_account_id FROM payout_settings WHERE creator_id=?").bind(user_id).first().catch(()=>null);
+        let accountId = settings?.stripe_account_id;
+        if (!accountId) {
+          // Create Express account
+          const acct = await stripeReq(env, "/accounts", "POST", {
+            type: "express",
+            email: email || "",
+            capabilities: { transfers: { requested: "true" } },
+            business_type: "individual",
+          });
+          if (!acct?.id) return err("Could not create Stripe account");
+          accountId = acct.id;
+          await env.DB.prepare("INSERT INTO payout_settings (id,creator_id,stripe_account_id) VALUES (?,?,?) ON CONFLICT(creator_id) DO UPDATE SET stripe_account_id=?")
+            .bind("ps_"+user_id, user_id, accountId, accountId).run().catch(async ()=>{
+              await env.DB.prepare("UPDATE payout_settings SET stripe_account_id=? WHERE creator_id=?").bind(accountId, user_id).run().catch(()=>{});
+            });
+          await env.DB.prepare("UPDATE users SET stripe_account_id=? WHERE id=?").bind(accountId, user_id).run().catch(()=>{});
+        }
+        // Create account link for onboarding
+        const link = await stripeReq(env, "/account_links", "POST", {
+          account: accountId,
+          refresh_url: "https://galaxyvy.com/?stripe_connect=refresh",
+          return_url: "https://galaxyvy.com/?stripe_connect=success",
+          type: "account_onboarding",
+        });
+        return json({ url: link.url, account_id: accountId });
+      }
+
+      // Check Stripe Connect status
+      if (path === "/api/stripe/connect/status" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const settings = await env.DB.prepare("SELECT stripe_account_id, stripe_onboarded FROM payout_settings WHERE creator_id=?").bind(userId).first().catch(()=>null);
+        if (!settings?.stripe_account_id) return json({ connected: false });
+        // Check with Stripe
+        try {
+          const acct = await stripeReq(env, `/accounts/${settings.stripe_account_id}`, "GET");
+          const onboarded = acct.details_submitted && acct.charges_enabled;
+          if (onboarded) {
+            await env.DB.prepare("UPDATE payout_settings SET stripe_onboarded=1 WHERE creator_id=?").bind(userId).run().catch(()=>{});
+          }
+          return json({ connected: true, onboarded, account_id: settings.stripe_account_id });
+        } catch(e) {
+          return json({ connected: !!settings.stripe_account_id, onboarded: !!settings.stripe_onboarded });
+        }
+      }
+
+      // Auto payout via Stripe Connect
+      if (path === "/api/payout/stripe" && method === "POST") {
+        const { user_id, amount } = body;
+        if (!user_id || !amount) return err("Missing fields");
+        const settings = await env.DB.prepare("SELECT stripe_account_id, stripe_onboarded FROM payout_settings WHERE creator_id=?").bind(user_id).first().catch(()=>null);
+        if (!settings?.stripe_account_id) return err("No Stripe account connected. Please complete onboarding first.");
+        if (!settings.stripe_onboarded) return err("Stripe account not fully verified yet.");
+        const bal = await env.DB.prepare("SELECT balance FROM balances WHERE creator_id=?").bind(user_id).first().catch(()=>null);
+        const available = bal?.balance || 0;
+        if (amount > available) return err(`Insufficient balance. Available: $${available.toFixed(2)}`);
+        // Transfer to connected account
+        const amountCents = Math.round(amount * 100);
+        const transfer = await stripeReq(env, "/transfers", "POST", {
+          amount: String(amountCents),
+          currency: "usd",
+          destination: settings.stripe_account_id,
+          description: "Galaxy creator payout",
+        });
+        if (!transfer?.id) return err("Transfer failed");
+        // Deduct balance
+        await env.DB.prepare("UPDATE balances SET balance=balance-? WHERE creator_id=?").bind(amount, user_id).run();
+        // Record payout
+        await env.DB.prepare("INSERT INTO payouts (id,creator_id,amount,method,status,created_at) VALUES (?,?,?,'stripe','paid',datetime('now'))")
+          .bind("pay_"+Date.now(), user_id, amount).run().catch(()=>{});
+        // Notify creator
+        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+          .bind("notif_pay_"+Date.now(), user_id, "💸", "$"+amount.toFixed(2)+" sent to your Stripe account!", "just now").run().catch(()=>{});
+        return json({ success: true, transfer_id: transfer.id });
+      }
+
       if (path === "/api/subscriptions/confirm" && method === "POST") {
         const { user_id, user_name, creator_id } = body;
         if (!creator_id) return err("Missing creator_id");
@@ -1148,10 +1231,10 @@ var worker_default = {
           "UPDATE payouts SET status=?, reference=?, paid_at=? WHERE id=?"
         ).bind(newStatus, reference||"manual", now, payout_id).run();
         if (newStatus === "paid") {
-          // Zero creator balance
+          // Deduct only the payout amount from balance
           await env.DB.prepare(
-            "UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?"
-          ).bind(now, payout.creator_id).run();
+            "UPDATE balances SET balance=MAX(0, balance-?), updated_at=? WHERE creator_id=?"
+          ).bind(Number(payout.amount)||0, now, payout.creator_id).run();
           // Notify creator
           await env.DB.prepare(
             `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
