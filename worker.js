@@ -761,6 +761,7 @@ var worker_default = {
         const amountUsd = Number(price_usd);
         const originalPrice = Number(body.original_price || price_usd);
         if (amountUsd < 0.5) return err("Minimum payment is $0.50.");
+        if ((plan === "subscription" || plan === "purchase") && Number(body.original_price || price_usd) < 2) return err("Minimum price is $2.");
         const amountCents = Math.round(Number(amountUsd) * 100);
         const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
         // Get real email from D1 if not provided
