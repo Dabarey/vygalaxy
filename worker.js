@@ -1122,7 +1122,7 @@ var worker_default = {
         if (!user_id) return err("Missing user_id");
         const id = "kyc_" + Date.now();
 
-        // Ensure all columns exist (safe to run repeatedly — errors silently if column already exists)
+        // Ensure all columns exist — safe to run repeatedly
         for (const col of [
           "id_front_url TEXT DEFAULT ''",
           "id_back_url TEXT DEFAULT ''",
@@ -1141,7 +1141,6 @@ var worker_default = {
 
         await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
 
-        // Mirror payout details to payout_settings
         if (payout_method && payout_details) {
           await env.DB.prepare(`
             INSERT INTO payout_settings (creator_id, method, paypal_email, updated_at)
