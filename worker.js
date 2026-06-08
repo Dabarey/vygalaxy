@@ -1122,13 +1122,17 @@ var worker_default = {
         if (!user_id) return err("Missing user_id");
         const id = "kyc_" + Date.now();
 
-        // Ensure document URL columns exist (safe to run repeatedly)
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN id_front_url TEXT DEFAULT ''").run().catch(()=>{});
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN id_back_url TEXT DEFAULT ''").run().catch(()=>{});
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN selfie_url TEXT DEFAULT ''").run().catch(()=>{});
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN submitted_at TEXT").run().catch(()=>{});
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN payout_method TEXT DEFAULT 'bank'").run().catch(()=>{});
-        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN payout_details TEXT DEFAULT ''").run().catch(()=>{});
+        // Ensure all columns exist (safe to run repeatedly — errors silently if column already exists)
+        for (const col of [
+          "id_front_url TEXT DEFAULT ''",
+          "id_back_url TEXT DEFAULT ''",
+          "selfie_url TEXT DEFAULT ''",
+          "submitted_at TEXT",
+          "payout_method TEXT DEFAULT 'bank'",
+          "payout_details TEXT DEFAULT ''"
+        ]) {
+          await env.DB.prepare(`ALTER TABLE kyc_requests ADD COLUMN ${col}`).run().catch(()=>{});
+        }
 
         await env.DB.prepare(
           `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url, status, submitted_at)
@@ -1137,7 +1141,7 @@ var worker_default = {
 
         await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
 
-        // Mirror payout details to payout_settings table
+        // Mirror payout details to payout_settings
         if (payout_method && payout_details) {
           await env.DB.prepare(`
             INSERT INTO payout_settings (creator_id, method, paypal_email, updated_at)
@@ -1153,7 +1157,7 @@ var worker_default = {
       }
       if (path === "/api/kyc" && method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT * FROM kyc_requests ORDER BY COALESCE(submitted_at, created_at) DESC`
+          `SELECT * FROM kyc_requests ORDER BY submitted_at DESC`
         ).all();
         return json(results || []);
       }
