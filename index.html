@@ -1849,7 +1849,7 @@ function _resizeToBlob(file, maxW, maxH, quality){
         if(w>maxW||h>maxH){const ratio=Math.min(maxW/w,maxH/h);w=Math.round(w*ratio);h=Math.round(h*ratio);}
         const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
         canvas.getContext('2d').drawImage(img,0,0,w,h);
-        canvas.toBlob(blob=>resolve(blob),'image/jpeg',quality||0.82);
+        canvas.toBlob(function(b){resolve(b||file);},'image/jpeg',quality||0.85);
       };
       img.src=e.target.result;
     };
@@ -3602,9 +3602,9 @@ function renderKycSection(u){
     <div class="fg"><label>Full legal name</label><input id="kycName" placeholder="As on your ID" value="${u.name||''}"></div>
     <div class="fg"><label>Date of birth</label><input id="kycDob" type="date"></div>
     <div class="fg"><label>Country</label><input id="kycCountry" placeholder="Country of residence"></div>
-    <div class="fg"><label>ID front</label><div class="upload-zone" onclick="document.getElementById('kycFront').click()"><input type="file" id="kycFront" accept="image/*,.pdf" onchange="document.getElementById('kycFrontLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload front of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycFrontLbl">JPG, PNG or PDF</div></div></div>
-    <div class="fg"><label>ID back</label><div class="upload-zone" onclick="document.getElementById('kycBack').click()"><input type="file" id="kycBack" accept="image/*,.pdf" onchange="document.getElementById('kycBackLbl').textContent=this.files[0]?.name||'JPG, PNG or PDF'"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload back of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycBackLbl">JPG, PNG or PDF</div></div></div>
-    <div class="fg"><label>Selfie with ID</label><div class="upload-zone" onclick="document.getElementById('kycSelfie').click()"><input type="file" id="kycSelfie" accept="image/*" onchange="document.getElementById('kycSelfieLbl').textContent=this.files[0]?.name||'JPG or PNG'"><div style="font-size:1.3rem;margin-bottom:5px">🤳</div><div style="font-size:.78rem;color:var(--muted)">Selfie holding your ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycSelfieLbl">JPG or PNG</div></div></div>
+    <div class="fg"><label>ID front</label><div class="upload-zone" id="kycFrontZone" onclick="document.getElementById('kycFront').click()"><input type="file" id="kycFront" accept="image/*,.pdf" onchange="_kycPreview(this,'kycFrontZone','kycFrontLbl')"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload front of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycFrontLbl">JPG, PNG or PDF</div></div></div>
+    <div class="fg"><label>ID back</label><div class="upload-zone" id="kycBackZone" onclick="document.getElementById('kycBack').click()"><input type="file" id="kycBack" accept="image/*,.pdf" onchange="_kycPreview(this,'kycBackZone','kycBackLbl')"><div style="font-size:1.3rem;margin-bottom:5px">📄</div><div style="font-size:.78rem;color:var(--muted)">Click to upload back of ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycBackLbl">JPG, PNG or PDF</div></div></div>
+    <div class="fg"><label>Selfie with ID</label><div class="upload-zone" id="kycSelfieZone" onclick="document.getElementById('kycSelfie').click()"><input type="file" id="kycSelfie" accept="image/*" onchange="_kycPreview(this,'kycSelfieZone','kycSelfieLbl')"><div style="font-size:1.3rem;margin-bottom:5px">🤳</div><div style="font-size:.78rem;color:var(--muted)">Selfie holding your ID</div><div style="font-size:.7rem;color:var(--muted2);margin-top:3px" id="kycSelfieLbl">JPG or PNG</div></div></div>
     <div class="fg"><label>Payout method</label><select id="kycPayoutMethod"><option value="bank">Bank transfer</option><option value="paypal">PayPal</option></select></div>
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.7">
       <strong style="color:var(--text)">Payout schedule:</strong><br>
@@ -3614,6 +3614,62 @@ function renderKycSection(u){
     <div class="fg"><label>Payout details</label><input id="kycPayoutDetails" placeholder="IBAN / PayPal email"></div>
     <button class="btn btn-gold" onclick="submitKyc()">Submit for verification →</button>`;}
   wrap.innerHTML=`<div class="kyc-box"><div class="ds-title">Identity verification (KYC)</div>${inner}</div>`;
+}
+
+function _kycPreview(input,zoneId,lblId){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var zone=document.getElementById(zoneId);
+  if(!zone)return;
+  zone.style.borderColor='var(--gold)';
+  if(file.type.startsWith('image/')){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      while(zone.firstChild)zone.removeChild(zone.firstChild);
+      var wrap=document.createElement('div');
+      wrap.style.cssText='position:relative;width:100%;line-height:0';
+      var img=document.createElement('img');
+      img.src=e.target.result;
+      img.style.cssText='width:100%;max-height:220px;object-fit:cover;display:block;border-radius:8px';
+      var badge=document.createElement('div');
+      badge.style.cssText='position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;padding:4px 8px;border-radius:0 0 8px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      badge.textContent=file.name+' ('+Math.round(file.size/1024)+'KB)';
+      var rm=document.createElement('button');
+      rm.type='button';rm.textContent='x';rm.title='Remove';
+      rm.style.cssText='position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;line-height:28px;text-align:center;padding:0';
+      rm.onclick=function(ev){ev.stopPropagation();_kycClear(input.id,zoneId,lblId);};
+      wrap.appendChild(img);wrap.appendChild(badge);wrap.appendChild(rm);
+      zone.appendChild(wrap);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    while(zone.firstChild)zone.removeChild(zone.firstChild);
+    var pad=document.createElement('div');pad.style.cssText='padding:18px;text-align:center';
+    var ic=document.createElement('div');ic.style.fontSize='2rem';ic.textContent='PDF';
+    var nm=document.createElement('div');nm.style.cssText='font-size:.82rem;color:var(--gold);font-weight:600;margin-top:6px';nm.textContent=file.name;
+    var sz=document.createElement('div');sz.style.cssText='font-size:.7rem;color:var(--muted);margin-top:3px';sz.textContent=Math.round(file.size/1024)+'KB';
+    var rb=document.createElement('button');rb.type='button';rb.textContent='Remove';
+    rb.style.cssText='margin-top:10px;background:none;border:1px solid var(--border2);color:var(--muted);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.74rem;font-family:"DM Sans",sans-serif';
+    rb.onclick=function(ev){ev.stopPropagation();_kycClear(input.id,zoneId,lblId);};
+    pad.appendChild(ic);pad.appendChild(nm);pad.appendChild(sz);pad.appendChild(rb);
+    zone.appendChild(pad);
+  }
+}
+function _kycClear(inputId,zoneId,lblId){
+  var input=document.getElementById(inputId);
+  var zone=document.getElementById(zoneId);
+  if(input)input.value='';
+  if(!zone)return;
+  zone.style.borderColor='';
+  while(zone.firstChild)zone.removeChild(zone.firstChild);
+  var isSelfie=inputId==='kycSelfie',isBack=inputId==='kycBack';
+  var ic=document.createElement('div');ic.style.cssText='font-size:1.3rem;margin-bottom:5px';
+  ic.textContent=isSelfie?'[selfie]':'[doc]';
+  var tx=document.createElement('div');tx.style.cssText='font-size:.78rem;color:var(--muted)';
+  tx.textContent=isSelfie?'Selfie holding your ID':isBack?'Click to upload back of ID':'Click to upload front of ID';
+  var lb=document.createElement('div');lb.id=lblId;lb.style.cssText='font-size:.7rem;color:var(--muted2);margin-top:3px';
+  lb.textContent=isSelfie?'JPG or PNG':'JPG, PNG or PDF';
+  zone.appendChild(ic);zone.appendChild(tx);zone.appendChild(lb);
 }
 async function submitKyc(){
   if(!currentUser)return;
@@ -3635,15 +3691,15 @@ async function submitKyc(){
     let frontUrl='',backUrl='',selfieUrl='';
     if(frontFile){
       const blob=frontFile.type.startsWith('image/')?await _resizeToBlob(frontFile,1200,800,0.88):frontFile;
-      frontUrl=await _uploadToR2(blob,'kyc',frontFile.type||'image/jpeg');
+      frontUrl=await _uploadToR2(blob,'kyc',frontFile.type.startsWith('image/')?'image/jpeg':(frontFile.type||'image/jpeg'));
     }
     if(backFile){
       const blob=backFile.type.startsWith('image/')?await _resizeToBlob(backFile,1200,800,0.88):backFile;
-      backUrl=await _uploadToR2(blob,'kyc',backFile.type||'image/jpeg');
+      backUrl=await _uploadToR2(blob,'kyc',backFile.type.startsWith('image/')?'image/jpeg':(backFile.type||'image/jpeg'));
     }
     if(selfieFile){
       const blob=selfieFile.type.startsWith('image/')?await _resizeToBlob(selfieFile,800,800,0.88):selfieFile;
-      selfieUrl=await _uploadToR2(blob,'kyc',selfieFile.type||'image/jpeg');
+      selfieUrl=await _uploadToR2(blob,'kyc',selfieFile.type.startsWith('image/')?'image/jpeg':(selfieFile.type||'image/jpeg'));
     }
 
     // Save to D1
@@ -3913,12 +3969,12 @@ async function adminRefVideoAction(id, userId, action){
 
 function renderAdminKyc(){
   const el=document.getElementById('adminKycList');
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading…</div>';
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading\u2026</div>';
   fetch(WORKER_URL+'/api/kyc')
     .then(r=>r.json())
     .then(requests=>{
       if(!requests||!requests.length){
-        el.innerHTML='<div class="empty"><div class="empty-icon">🪪</div>No KYC requests yet.</div>';
+        el.innerHTML='<div class="empty"><div class="empty-icon">\ud83e\udeca</div>No KYC requests yet.</div>';
         return;
       }
       const badge=s=>({
@@ -3926,31 +3982,57 @@ function renderAdminKyc(){
         approved:'<span class="badge-green">Approved</span>',
         rejected:'<span class="badge-rose">Rejected</span>'
       }[s]||s);
-      el.innerHTML=`<table class="admin-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Legal name</th><th>DOB</th><th>Country</th><th>Documents</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody>${requests.map(r=>`<tr>
-          <td data-label="Name"><div style="font-weight:600">${r.user_name||'—'}</div></td>
-          <td data-label="Email" style="font-size:.76rem;color:var(--muted)">${r.user_email||'—'}</td>
-          <td data-label="Legal name">${r.legal_name||'—'}</td>
-          <td data-label="DOB" style="font-size:.74rem">${r.dob||'—'}</td>
-          <td data-label="Country">${r.country||'—'}</td>
-          <td data-label="Documents" style="font-size:.74rem">
-            ${r.id_front_url?`<a href="${r.id_front_url}" target="_blank" style="color:var(--gold);display:block">📄 ID Front</a>`:'<span style="color:var(--muted)">—</span>'}
-            ${r.id_back_url?`<a href="${r.id_back_url}" target="_blank" style="color:var(--gold);display:block">📄 ID Back</a>`:''}
-            ${r.selfie_url?`<a href="${r.selfie_url}" target="_blank" style="color:var(--gold);display:block">🤳 Selfie</a>`:''}
-          </td>
-          <td data-label="Date" style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||r.created_at||'').slice(0,10)}</td>
-          <td data-label="Status">${badge(r.status)}</td>
-          <td data-label="Action">${r.status==='pending'?
-            `<button class="action-btn approve" onclick="adminKycAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve</button>
-             <button class="action-btn reject" onclick="adminKycAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
-            :'—'}</td>
-        </tr>`).join('')}</tbody>
-      </table>`;
+      const proxyUrl=url=>{
+        if(!url)return '';
+        const key=url.replace(/^https?:\/\/[^/]+\//,'');
+        return WORKER_URL+'/api/kyc/doc?uid='+(currentUser&&currentUser.id||'')+'&key='+encodeURIComponent(key);
+      };
+      const imgThumb=(url,label)=>{
+        if(!url)return '';
+        const p=proxyUrl(url);
+        return '<div style="display:inline-block;margin:3px;cursor:pointer;text-align:center" onclick="_kycLightbox(\''+p+'\',\''+label+'\')" title="Click to enlarge">'
+          +'<img src="'+p+'" alt="'+label+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border2);display:block" '
+          +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'" onerror="this.closest(\'div\').style.display=\'none\'">'
+          +'<div style="font-size:.6rem;color:var(--muted);margin-top:2px">'+label+'</div>'
+          +'</div>';
+      };
+      const kycDate=r=>{
+        if(r.submitted_at&&r.submitted_at.length>=10)return r.submitted_at.slice(0,10);
+        const ts=parseInt((r.id||'').replace('kyc_',''));
+        if(ts>1000000000000)return new Date(ts).toISOString().slice(0,10);
+        return '\u2014';
+      };
+      el.innerHTML='<div style="overflow-x:auto"><table class="admin-table" style="min-width:800px">'
+        +'<thead><tr><th>Name</th><th>Email</th><th>Details</th><th>Documents</th><th>Payout</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>'
+        +'<tbody>'+requests.map(r=>'<tr>'
+          +'<td data-label="Name"><div style="font-weight:600;color:var(--gold);cursor:pointer" onclick="showProfile(\''+r.user_id+'\')">'+( r.user_name||'\u2014')+'</div></td>'
+          +'<td data-label="Email" style="font-size:.76rem;color:var(--muted)">'+(r.user_email||'\u2014')+'</td>'
+          +'<td data-label="Details" style="font-size:.76rem;line-height:1.8">'
+            +'<span style="color:var(--muted)">Legal:</span> '+(r.legal_name||'\u2014')+'<br>'
+            +'<span style="color:var(--muted)">DOB:</span> '+(r.dob||'\u2014')+'<br>'
+            +'<span style="color:var(--muted)">Country:</span> '+(r.country||'\u2014')
+          +'</td>'
+          +'<td data-label="Documents" style="white-space:nowrap">'
+            +((r.id_front_url||r.id_back_url||r.selfie_url)
+              ? imgThumb(r.id_front_url,'ID Front')+imgThumb(r.id_back_url,'ID Back')+imgThumb(r.selfie_url,'Selfie')
+              : '<span style="color:var(--muted);font-size:.74rem">No docs</span>')
+          +'</td>'
+          +'<td data-label="Payout" style="font-size:.74rem;max-width:130px;word-break:break-all">'
+            +'<span style="color:var(--muted)">'+(r.payout_method||'\u2014')+'</span><br>'+(r.payout_details||'')
+          +'</td>'
+          +'<td data-label="Date" style="font-size:.74rem;color:var(--muted);white-space:nowrap">'+kycDate(r)+'</td>'
+          +'<td data-label="Status">'+badge(r.status)+'</td>'
+          +'<td data-label="Action" style="white-space:nowrap">'+(r.status==='pending'
+            ? '<button class="action-btn approve" onclick="adminKycAction(\''+r.id+'\',\''+r.user_id+'\',\'approved\')" style="display:block;margin-bottom:4px">\u2705 Approve</button>'
+              +'<button class="action-btn reject" onclick="adminKycAction(\''+r.id+'\',\''+r.user_id+'\',\'rejected\')">\u274c Reject</button>'
+            : '\u2014')+'</td>'
+        +'</tr>').join('')+'</tbody>'
+        +'</table></div>';
     }).catch(()=>{
-      el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>Could not load KYC requests.</div>';
+      el.innerHTML='<div class="empty"><div class="empty-icon">\u26a0\ufe0f</div>Could not load KYC requests.</div>';
     });
 }
+
 
 async function adminKycAction(kycId, userId, action){
   if(!confirm((action==='approved'?'Approve':'Reject')+' this KYC request?'))return;
@@ -5510,6 +5592,26 @@ async function confirmDeleteAccount(){
   showPage('landing',document.getElementById('tab-landing'));
   setTimeout(function(){location.reload();},800);
 }
+</script>
+
+<div id="kycLightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;cursor:zoom-out">
+  <div id="kycLightboxLabel" style="color:var(--muted);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase"></div>
+  <img id="kycLightboxImg" src="" alt="" style="max-width:92vw;max-height:82vh;border-radius:12px;box-shadow:0 8px 60px rgba(0,0,0,.9);object-fit:contain">
+  <div style="color:var(--muted2);font-size:.73rem">Click anywhere or press Esc to close</div>
+</div>
+<script>
+function _kycLightbox(url,label){
+  var lb=document.getElementById('kycLightbox');
+  var img=document.getElementById('kycLightboxImg');
+  var lbl=document.getElementById('kycLightboxLabel');
+  if(!lb||!img)return;
+  img.src=url;
+  if(lbl)lbl.textContent=label||'';
+  lb.style.display='flex';
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){var lb=document.getElementById('kycLightbox');if(lb)lb.style.display='none';}
+});
 </script>
 </body>
 </html>
