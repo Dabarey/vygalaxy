@@ -127,9 +127,10 @@ var worker_default = {
     if (event.cron === '0 6 1 * *') {
       ctx.waitUntil(processMonthlyPayouts(env));
     }
-    // Daily: clean up expired stories from R2
+    // Daily: clean up expired stories from R2 + messages older than 60 days
     if (event.cron === '0 3 * * *') {
       ctx.waitUntil((async () => {
+        // Delete expired stories
         const { results: expired } = await env.DB.prepare(
           "SELECT media_url FROM stories WHERE expires_at < datetime('now')"
         ).all().catch(()=>({results:[]}));
@@ -141,6 +142,11 @@ var worker_default = {
           } catch(e) {}
         }
         await env.DB.prepare("DELETE FROM stories WHERE expires_at < datetime('now')").run().catch(()=>{});
+
+        // Delete messages older than 60 days
+        await env.DB.prepare(
+          "DELETE FROM messages WHERE created_at < datetime('now', '-60 days')"
+        ).run().catch(()=>{});
       })());
     }
   },
