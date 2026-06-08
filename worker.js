@@ -1122,11 +1122,13 @@ var worker_default = {
         if (!user_id) return err("Missing user_id");
         const id = "kyc_" + Date.now();
 
-        // Ensure document URL columns exist (run once, idempotent)
+        // Ensure document URL columns exist (safe to run repeatedly)
         await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN id_front_url TEXT DEFAULT ''").run().catch(()=>{});
         await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN id_back_url TEXT DEFAULT ''").run().catch(()=>{});
         await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN selfie_url TEXT DEFAULT ''").run().catch(()=>{});
         await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN submitted_at TEXT").run().catch(()=>{});
+        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN payout_method TEXT DEFAULT 'bank'").run().catch(()=>{});
+        await env.DB.prepare("ALTER TABLE kyc_requests ADD COLUMN payout_details TEXT DEFAULT ''").run().catch(()=>{});
 
         await env.DB.prepare(
           `INSERT OR REPLACE INTO kyc_requests (id, user_id, user_name, user_email, legal_name, dob, country, payout_method, payout_details, id_front_url, id_back_url, selfie_url, status, submitted_at)
@@ -1135,7 +1137,7 @@ var worker_default = {
 
         await env.DB.prepare(`UPDATE users SET kyc_status='pending' WHERE id=?`).bind(user_id).run();
 
-        // Save payout details to payout_settings so payout flow can use them
+        // Mirror payout details to payout_settings table
         if (payout_method && payout_details) {
           await env.DB.prepare(`
             INSERT INTO payout_settings (creator_id, method, paypal_email, updated_at)

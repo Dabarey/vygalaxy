@@ -497,8 +497,6 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
     <button class="nav-tab" onclick="requireAuth('dashboard',this)" id="tab-dash" style="display:none">Dashboard</button>
     <button class="nav-tab" onclick="openOwnProfile(this)" id="tab-profile" style="display:none">👤 Profile</button>
     <button class="nav-tab" onclick="goAdmin(this)" id="tab-admin" style="display:none">⚙️ Admin</button>
-    <button class="nav-tab" onclick="showPage('privacy',this)" id="tab-privacy">Privacy</button>
-    <button class="nav-tab" onclick="showPage('terms',this)" id="tab-terms">Terms</button>
   </div>
   <div class="nav-right" id="navGuest">
     <button class="nav-btn" onclick="openModal('login')">Sign in</button>
@@ -1895,7 +1893,7 @@ async function _uploadToR2(blob, folder, mimeType){
   const file=blob instanceof File?blob:new File([blob],filename,{type:mime});
   fd.append('file', file, filename);
   fd.append('folder', folder||'misc');
-  if(currentUser?.id) fd.append('user_id', currentUser.id);
+  if(typeof currentUser!=='undefined'&&currentUser?.id) fd.append('user_id', currentUser.id);
   const res=await fetch(WORKER_URL+'/api/upload',{method:'POST',body:fd});
   if(!res.ok){
     const txt=await res.text().catch(()=>'');
@@ -5460,17 +5458,7 @@ setTimeout(function(){
   if(!_gdprConsent()){var b=document.getElementById('cookieBanner');if(b)b.style.display='block';}
 },1200);
 
-// Privacy + Terms in mobile More menu
-(function(){
-  var grid=document.querySelector('#mobileMenu > div');if(!grid)return;
-  ['Privacy','Terms'].forEach(function(p){
-    var b=document.createElement('button');
-    b.style.cssText="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent";
-    b.innerHTML='<span style="font-size:1.3rem">'+(p==='Privacy'?'🔏':'📋')+'</span>'+p;
-    b.onclick=function(){showPage(p.toLowerCase(),null);toggleMobileMenu();};
-    grid.appendChild(b);
-  });
-})();
+
 
 // Footer links on landing page
 (function(){
