@@ -1526,6 +1526,61 @@ var worker_default = {
         await env.DB.prepare(`UPDATE posts SET comments_count = comments_count + 1 WHERE id=?`).bind(post_id).run();
         return json({ id, success: true });
       }
+
+      // ── GDPR: Export user data ────────────────────────────────────────────
+      if (path === "/api/gdpr/export" && method === "GET") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId) return err("Missing user_id");
+        const user = await env.DB.prepare(
+          "SELECT id,email,name,bio,avatar,cover,category,price,role,created_at FROM users WHERE id=?"
+        ).bind(userId).first();
+        const { results: gPosts } = await env.DB.prepare(
+          "SELECT id,title,content,tier,created_at FROM posts WHERE creator_id=?"
+        ).bind(userId).all();
+        const { results: gPurchases } = await env.DB.prepare(
+          "SELECT id,product_id,price,created_at FROM purchases WHERE user_id=?"
+        ).bind(userId).all();
+        const { results: gMessages } = await env.DB.prepare(
+          "SELECT id,from_id,to_id,text,created_at FROM messages WHERE from_id=? OR to_id=?"
+        ).bind(userId, userId).all();
+        return new Response(JSON.stringify({
+          profile: user,
+          posts: gPosts || [],
+          purchases: gPurchases || [],
+          messages: gMessages || [],
+          exported_at: new Date().toISOString()
+        }, null, 2), {
+          headers: {
+            ...CORS,
+            "Content-Type": "application/json",
+            "Content-Disposition": `attachment; filename="galaxy-data-export.json"`
+          }
+        });
+      }
+
+      // ── GDPR: Delete account ──────────────────────────────────────────────
+      if (path === "/api/gdpr/delete" && method === "POST") {
+        const { user_id, email } = body;
+        if (!user_id) return err("Missing user_id");
+        const gUser = await env.DB.prepare(
+          "SELECT id FROM users WHERE id=? AND email=?"
+        ).bind(user_id, email || '').first();
+        if (!gUser) return err("User not found or email mismatch", 404);
+        const anon = "deleted_" + Date.now();
+        await env.DB.prepare(
+          "UPDATE users SET email=?, name='Deleted User', bio='', avatar='', password_hash='', role='deleted' WHERE id=?"
+        ).bind(anon + "@deleted.galaxy", user_id).run();
+        await env.DB.prepare(
+          "DELETE FROM messages WHERE from_id=? OR to_id=?"
+        ).bind(user_id, user_id).run();
+        await env.DB.prepare(
+          "UPDATE posts SET content='[deleted]', title='[deleted]', media_url='' WHERE creator_id=?"
+        ).bind(user_id).run();
+        await env.DB.prepare(
+          "DELETE FROM notifications WHERE user_id=?"
+        ).bind(user_id).run();
+        return json({ ok: true, message: "Account deleted. Financial records retained for legal compliance." });
+      }
       return err("Not found", 404);
     } catch (e) {
       console.error(e);
@@ -1630,70 +1685,3 @@ async function processMonthlyPayouts(env) {
 }
 
 export { worker_default as default };
-// ════════════════════════════════════════════════════════════
-// PASTE THIS BLOCK INTO worker.js
-// Location: immediately BEFORE this line:
-//   return err("Not found", 404);
-// (found near the bottom of the fetch() handler)
-// ════════════════════════════════════════════════════════════
-
-
-      // ── GDPR: Export user data ────────────────────────────────────────────
-      if (path === "/api/gdpr/export" && method === "GET") {
-        const userId = url.searchParams.get("user_id");
-        if (!userId) return err("Missing user_id");
-        const user = await env.DB.prepare(
-          "SELECT id,email,name,bio,avatar,cover,category,price,role,created_at FROM users WHERE id=?"
-        ).bind(userId).first();
-        const { results: gPosts } = await env.DB.prepare(
-          "SELECT id,title,content,tier,created_at FROM posts WHERE creator_id=?"
-        ).bind(userId).all();
-        const { results: gPurchases } = await env.DB.prepare(
-          "SELECT id,product_id,price,created_at FROM purchases WHERE user_id=?"
-        ).bind(userId).all();
-        const { results: gMessages } = await env.DB.prepare(
-          "SELECT id,from_id,to_id,text,created_at FROM messages WHERE from_id=? OR to_id=?"
-        ).bind(userId, userId).all();
-        return new Response(JSON.stringify({
-          profile: user,
-          posts: gPosts || [],
-          purchases: gPurchases || [],
-          messages: gMessages || [],
-          exported_at: new Date().toISOString()
-        }, null, 2), {
-          headers: {
-            ...CORS,
-            "Content-Type": "application/json",
-            "Content-Disposition": `attachment; filename="galaxy-data-export.json"`
-          }
-        });
-      }
-
-      // ── GDPR: Delete account ──────────────────────────────────────────────
-      if (path === "/api/gdpr/delete" && method === "POST") {
-        const { user_id, email } = body;
-        if (!user_id) return err("Missing user_id");
-        const gUser = await env.DB.prepare(
-          "SELECT id FROM users WHERE id=? AND email=?"
-        ).bind(user_id, email || '').first();
-        if (!gUser) return err("User not found or email mismatch", 404);
-        const anon = "deleted_" + Date.now();
-        await env.DB.prepare(
-          "UPDATE users SET email=?, name='Deleted User', bio='', avatar='', password_hash='', role='deleted' WHERE id=?"
-        ).bind(anon + "@deleted.galaxy", user_id).run();
-        await env.DB.prepare(
-          "DELETE FROM messages WHERE from_id=? OR to_id=?"
-        ).bind(user_id, user_id).run();
-        await env.DB.prepare(
-          "UPDATE posts SET content='[deleted]', title='[deleted]', media_url='' WHERE creator_id=?"
-        ).bind(user_id).run();
-        await env.DB.prepare(
-          "DELETE FROM notifications WHERE user_id=?"
-        ).bind(user_id).run();
-        return json({ ok: true, message: "Account deleted. Financial records retained for legal compliance." });
-      }
-
-
-// ════════════════════════════════════════════════════════════
-// END OF PASTE
-// ════════════════════════════════════════════════════════════
