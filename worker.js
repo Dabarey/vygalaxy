@@ -1544,6 +1544,28 @@ var worker_default = {
         return json({ id, success: true });
       }
 
+      // ── KYC doc viewer — admin only, proxies private R2 file ─────────────
+      if (path === "/api/kyc/doc" && method === "GET") {
+        const requestorId = url.searchParams.get("uid");
+        const key = url.searchParams.get("key"); // e.g. kyc/filename.jpg
+        if (!requestorId || !key) return err("Missing params");
+        // Verify requestor is admin
+        const requestor = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(requestorId).first();
+        if (!requestor || requestor.role !== 'admin') return err("Forbidden", 403);
+        // Sanitise key — must start with kyc/ and have no traversal
+        if (!key.startsWith('kyc/') || key.includes('..')) return err("Invalid key", 400);
+        const obj = await env.MEDIA.get(key);
+        if (!obj) return err("Not found", 404);
+        const headers = {
+          ...CORS,
+          "Content-Type": obj.httpMetadata?.contentType || "image/jpeg",
+          "Cache-Control": "private, max-age=300",
+          "Content-Disposition": "inline"
+        };
+        return new Response(obj.body, { headers });
+      }
+
+
       // ── GDPR: Export user data ────────────────────────────────────────────
       if (path === "/api/gdpr/export" && method === "GET") {
         const userId = url.searchParams.get("user_id");
@@ -1702,3 +1724,8 @@ async function processMonthlyPayouts(env) {
 }
 
 export { worker_default as default };
+// ════════════════════════════════════════════════════════════
+// PASTE THIS BLOCK INTO worker.js
+// Location: immediately BEFORE this line:
+//   return err("Not found", 404);
+// (found near the bottom of the fetch() handler)
