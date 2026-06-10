@@ -5764,16 +5764,6 @@ setTimeout(function(){
 
 
 
-// Footer links on landing page
-(function(){
-  var s=document.createElement('style');
-  s.textContent='.priv-links{text-align:center;padding:14px 16px 32px;font-size:.74rem;color:var(--muted2);border-top:1px solid var(--border);margin-top:40px}.priv-links a{color:var(--muted);cursor:pointer;margin:0 8px;text-decoration:underline}.priv-links a:hover{color:var(--accent)}';
-  document.head.appendChild(s);
-  var lp=document.getElementById('page-landing');
-  if(lp){var f=document.createElement('div');f.className='priv-links';
-    f.innerHTML='<a onclick="showPage(\'privacy\',null)">Privacy Policy</a> · <a onclick="showPage(\'terms\',null)">Terms of Service</a> · <a href="mailto:vino@galaxyvy.com">vino@galaxyvy.com</a>';
-    lp.appendChild(f);}
-})();
 
 // ══ GDPR Data export ══════════════════════════════════════════════
 async function gdprExportData(){
