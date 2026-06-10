@@ -1110,12 +1110,10 @@ var worker_default = {
         const { from_id, to_id, text, from_name, media_url, media_type, price } = body;
         if (!from_id || !to_id) return err("Missing fields");
         if (!text && !media_url) return err("Missing text or media");
-        // Subscription gate — either direction
         const subCheck = await env.DB.prepare(
           "SELECT 1 FROM subscriptions WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?)) AND status='active' LIMIT 1"
         ).bind(from_id, to_id, to_id, from_id).first();
-        if (!subCheck) return err("Subscription required to message", 403);
-        // Ensure PPV columns exist
+        if (!subCheck) return err("Subscription required", 403);
         for(const col of ["media_url TEXT DEFAULT ''","media_type TEXT DEFAULT ''","price REAL DEFAULT 0"]){
           await env.DB.prepare("ALTER TABLE messages ADD COLUMN "+col).run().catch(()=>{});
         }
@@ -1125,10 +1123,8 @@ var worker_default = {
           `INSERT INTO messages (id, from_id, to_id, from_name, text, media_url, media_type, price, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
         ).bind(id, from_id, to_id, sender?.name||from_name||'', text||'', media_url||'', media_type||'', Number(price)||0).run();
-        // Notify recipient
         await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
-          .bind('notif_msg_'+Date.now(), to_id, '💬',
-            (sender?.name||from_name||'Someone')+': '+(text||'📎 Media').slice(0,60), 'just now').run().catch(()=>{});
+          .bind('notif_msg_'+Date.now(), to_id, '💬', (sender?.name||from_name||'Someone')+': '+(text||'📎 Media').slice(0,60), 'just now').run().catch(()=>{});
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
@@ -1635,7 +1631,6 @@ var worker_default = {
         return json({ ok: true, message: "Account deleted. Financial records retained for legal compliance." });
       }
 
-      // ── PPV unlock ───────────────────────────────────────────────────────
       if (path === "/api/messages/unlock" && method === "POST") {
         const { message_id, user_id } = body;
         if (!message_id || !user_id) return err("Missing fields");
@@ -1647,32 +1642,24 @@ var worker_default = {
         if (already) return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type, already:true });
         await creditBalance(env, msg.from_id, Number(msg.price));
         await env.DB.prepare("INSERT INTO msg_unlocks (message_id,user_id,unlocked_at) VALUES (?,?,datetime('now'))").bind(message_id, user_id).run();
-        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
-          .bind('notif_ppv_'+Date.now(), msg.from_id, '💰', 'Someone unlocked your pay-to-view for $'+Number(msg.price).toFixed(2), 'just now').run().catch(()=>{});
+        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)").bind('notif_ppv_'+Date.now(), msg.from_id, '💰', 'Someone unlocked your pay-to-view for $'+Number(msg.price).toFixed(2), 'just now').run().catch(()=>{});
         return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type });
       }
-
-      // ── PPV media proxy ─────────────────────────────────────────────────
       if (path === "/api/ppv/media" && method === "GET") {
-        const msgId = url.searchParams.get("msg_id");
-        const userId = url.searchParams.get("uid");
-        const key = url.searchParams.get("key");
-        if (!msgId || !userId || !key) return err("Missing params");
-        if (key.includes('..') || !key.startsWith('ppv/')) return err("Invalid key", 400);
-        const msg = await env.DB.prepare("SELECT from_id, price FROM messages WHERE id=?").bind(msgId).first();
-        if (!msg) return err("Not found", 404);
-        const isSender = msg.from_id === userId;
-        const isFree = !msg.price || Number(msg.price) <= 0;
-        if (!isSender && !isFree) {
+        const msgId=url.searchParams.get("msg_id"),userId=url.searchParams.get("uid"),key=url.searchParams.get("key");
+        if (!msgId||!userId||!key) return err("Missing params");
+        if (key.includes('..')||!key.startsWith('ppv/')) return err("Invalid key",400);
+        const msg=await env.DB.prepare("SELECT from_id,price FROM messages WHERE id=?").bind(msgId).first();
+        if (!msg) return err("Not found",404);
+        if (msg.from_id!==userId&&Number(msg.price)>0) {
           await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
-          const unlocked = await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(msgId, userId).first();
-          if (!unlocked) return err("Payment required", 402);
+          const ok=await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(msgId,userId).first();
+          if (!ok) return err("Payment required",402);
         }
-        const obj = await env.MEDIA.get(key);
-        if (!obj) return err("Media not found", 404);
-        return new Response(obj.body, { headers: { ...CORS, "Content-Type": obj.httpMetadata?.contentType||"application/octet-stream", "Cache-Control":"private,max-age=3600" }});
+        const obj=await env.MEDIA.get(key);
+        if (!obj) return err("Media not found",404);
+        return new Response(obj.body,{headers:{...CORS,"Content-Type":obj.httpMetadata?.contentType||"application/octet-stream","Cache-Control":"private,max-age=3600"}});
       }
-
       return err("Not found", 404);
     } catch (e) {
       console.error(e);
