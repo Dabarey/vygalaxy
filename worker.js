@@ -1557,6 +1557,50 @@ var worker_default = {
         return json({ id, success: true });
       }
 
+      // ── Delete chat ───────────────────────────────────────────────────────
+      if (path === "/api/messages/delete" && method === "POST") {
+        const { user_id, other_id } = body;
+        if (!user_id || !other_id) return err("Missing fields");
+        await env.DB.prepare(
+          "DELETE FROM messages WHERE (from_id=? AND to_id=?) OR (from_id=? AND to_id=?)"
+        ).bind(user_id, other_id, other_id, user_id).run();
+        return json({ ok: true });
+      }
+
+      // ── PPV unlock ────────────────────────────────────────────────────────
+      if (path === "/api/messages/unlock" && method === "POST") {
+        const { message_id, user_id } = body;
+        if (!message_id || !user_id) return err("Missing fields");
+        const msg = await env.DB.prepare("SELECT * FROM messages WHERE id=?").bind(message_id).first();
+        if (!msg) return err("Not found", 404);
+        if (!msg.price || Number(msg.price) <= 0) return err("Free message");
+        await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
+        const already = await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(message_id, user_id).first();
+        if (already) return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type, already:true });
+        await creditBalance(env, msg.from_id, Number(msg.price));
+        await env.DB.prepare("INSERT INTO msg_unlocks (message_id,user_id,unlocked_at) VALUES (?,?,datetime('now'))").bind(message_id, user_id).run();
+        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)").bind('notif_ppv_'+Date.now(), msg.from_id, '💰', 'Someone unlocked your pay-to-view for $'+Number(msg.price).toFixed(2), 'just now').run().catch(()=>{});
+        return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type });
+      }
+
+      // ── PPV media proxy ───────────────────────────────────────────────────
+      if (path === "/api/ppv/media" && method === "GET") {
+        const msgId=url.searchParams.get("msg_id"),userId=url.searchParams.get("uid"),key=url.searchParams.get("key");
+        if (!msgId||!userId||!key) return err("Missing params");
+        if (key.includes('..')||!key.startsWith('ppv/')) return err("Invalid key",400);
+        const msg2=await env.DB.prepare("SELECT from_id,price FROM messages WHERE id=?").bind(msgId).first();
+        if (!msg2) return err("Not found",404);
+        if (msg2.from_id!==userId&&Number(msg2.price)>0){
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
+          const unlocked=await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(msgId,userId).first();
+          if (!unlocked) return err("Payment required",402);
+        }
+        const obj=await env.MEDIA.get(key);
+        if (!obj) return err("Media not found",404);
+        return new Response(obj.body,{headers:{...CORS,"Content-Type":obj.httpMetadata?.contentType||"application/octet-stream","Cache-Control":"private,max-age=3600"}});
+      }
+
+
       // ── KYC doc viewer — admin only, proxies private R2 file ─────────────
       if (path === "/api/kyc/doc" && method === "GET") {
         const requestorId = url.searchParams.get("uid");

@@ -2929,7 +2929,111 @@ function getThreads(){
   });
   return Object.values(seen).sort((a,b)=>new Date(b.at)-new Date(a.at));
 }
+
+function _blockReportUser(userId,userName){
+  if(!currentUser)return;
+  var blocked=JSON.parse(localStorage.getItem('galaxy_blocked')||'[]');
+  var isBlocked=blocked.includes(userId);
+
+  // Remove any existing sheet
+  var existing=document.getElementById('msgActionSheet');
+  if(existing)existing.remove();
+
+  // Build sheet using DOM (no innerHTML string escaping issues)
+  var sheet=document.createElement('div');
+  sheet.id='msgActionSheet';
+  sheet.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;justify-content:flex-end';
+
+  var overlay=document.createElement('div');
+  overlay.style.cssText='flex:1;background:rgba(0,0,0,.5)';
+  overlay.onclick=function(){sheet.remove();};
+
+  var panel=document.createElement('div');
+  panel.style.cssText='background:var(--bg2);border-radius:16px 16px 0 0;padding:16px;display:flex;flex-direction:column;gap:8px;padding-bottom:calc(16px + env(safe-area-inset-bottom))';
+
+  var title=document.createElement('div');
+  title.style.cssText='font-size:.8rem;color:var(--muted);text-align:center;padding:4px 0 8px;font-weight:600';
+  title.textContent=userName;
+
+  var blockBtn=document.createElement('button');
+  blockBtn.style.cssText='background:var(--card);border:none;border-radius:12px;padding:14px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;color:'+(isBlocked?'var(--green)':'var(--rose)');
+  blockBtn.textContent=isBlocked?'✅ Unblock '+userName:'🔴 Block & Report';
+  blockBtn.onclick=function(){
+    sheet.remove();
+    if(isBlocked){
+      blocked=blocked.filter(function(x){return x!==userId;});
+      localStorage.setItem('galaxy_blocked',JSON.stringify(blocked));
+      toast(userName+' unblocked','✅');
+      _drawThread(userId,userName);
+    } else {
+      if(!confirm('Block and report '+userName+'?'))return;
+      blocked.push(userId);
+      localStorage.setItem('galaxy_blocked',JSON.stringify(blocked));
+      fetch(WORKER_URL+'/api/report',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({reporter_id:currentUser.id,reporter_name:currentUser.name,
+          reported_id:userId,reported_name:userName,reason:'Blocked from messages',context:'messages'})
+      }).catch(function(){});
+      toast(userName+' blocked','🔴');
+      _activeMsgThread=null;showPage('messages',null);
+    }
+  };
+
+  var delBtn=document.createElement('button');
+  delBtn.style.cssText='background:var(--card);border:none;border-radius:12px;padding:14px;color:var(--text);font-size:.9rem;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif';
+  delBtn.textContent='🗑️ Delete Chat';
+  delBtn.onclick=function(){
+    sheet.remove();
+    if(!confirm('Delete this chat? Cannot be undone.'))return;
+    var msgs=DB.get('messages')||[];
+    DB.set('messages',msgs.filter(function(m){
+      return !((m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id));
+    }));
+    fetch(WORKER_URL+'/api/messages/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:currentUser.id,other_id:userId})
+    }).catch(function(){});
+    toast('Chat deleted','🗑️');
+    _activeMsgThread=null;showPage('messages',null);
+  };
+
+  var cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='background:none;border:none;border-radius:12px;padding:14px;color:var(--muted);font-size:.9rem;cursor:pointer;font-family:"DM Sans",sans-serif';
+  cancelBtn.textContent='Cancel';
+  cancelBtn.onclick=function(){sheet.remove();};
+
+  panel.appendChild(title);
+  panel.appendChild(blockBtn);
+  panel.appendChild(delBtn);
+  panel.appendChild(cancelBtn);
+  sheet.appendChild(overlay);
+  sheet.appendChild(panel);
+  document.body.appendChild(sheet);
+}
+
 function renderMessages(){
+  if(!currentUser)return;
+  // Fetch latest messages from D1 then re-render threads
+  fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
+    .then(function(r){return r.json();})
+    .then(function(sv){
+      if(!Array.isArray(sv))return;
+      var local=DB.get('messages')||[];
+      var ids=new Set(local.map(function(x){return x.id;}));
+      var hasNew=false;
+      sv.forEach(function(m){
+        if(!ids.has(m.id)){
+          local.push({id:m.id,from:m.from_id,to:m.to_id,
+            fromName:m.from_name||'',toName:m.to_name||'',
+            text:m.text||'',media_url:m.media_url||'',
+            media_type:m.media_type||'',price:Number(m.price||0),
+            at:m.created_at||'',read:m.to_id!==currentUser.id});
+          hasNew=true;
+        }
+      });
+      if(hasNew){DB.set('messages',local);_refreshBadges();_renderThreadList();}
+    }).catch(function(){});
+  _renderThreadList();
+}
+function _renderThreadList(){
   if(!currentUser)return;
   const threads=getThreads();
   document.getElementById('msgThreads').innerHTML=threads.length?threads.map(t=>`
@@ -3000,7 +3104,7 @@ function _drawThread(userId,name){
     +'<button id="msgBackBtn" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0">←</button>'
     +'<div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">'+(otherName[0]||'?')+'</div>'
     +'<div class="msg-main-name">'+otherName+'</div></div>'
-    +'<button id="msgBlockBtn" style="background:none;border:1px solid rgba(232,108,108,.3);color:var(--rose);border-radius:100px;padding:5px 11px;font-size:.72rem;cursor:pointer">🔴 Block</button>'
+    +'<button id="msgBlockBtn" style="background:none;border:1px solid var(--border2);color:var(--muted);border-radius:100px;padding:5px 11px;font-size:.72rem;cursor:pointer">⋯ More</button>'
     +'</div>'
     +'<div class="msg-messages" id="msgBubbles">'+thread.map(mkBubble).join('')
     +(!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':'')
@@ -3026,10 +3130,11 @@ function _drawThread(userId,name){
   thread.forEach(function(m){
     if(m.media_url&&Number(m.price)>0&&!ppvU.includes(m.id)){
       var btn=document.getElementById('ppv_unlock_'+m.id);
-      if(btn)btn.onclick=function(){_unlockPpv(m.id,m.from,m.price);};
+      if(btn)(function(mm){btn.onclick=function(){_unlockPpv(mm.id,mm.from,mm.price);};})(m);
     }
   });
-  renderMessages();
+  // Update thread list badge without re-rendering the whole messages area
+  _refreshBadges();
 }
 function sendMsg(toId,toName){
   var inp=document.getElementById('msgInputBox');
@@ -3080,6 +3185,49 @@ function renderNotifs(){
 }
 
 // DASHBOARD
+// ── My Subscriptions ─────────────────────────────────────────────────
+async function renderMySubscriptions(){
+  var el=document.getElementById('mySubscriptionsList');
+  if(!el||!currentUser)return;
+  try{
+    var res=await fetch(WORKER_URL+'/api/subscriptions?user_id='+currentUser.id);
+    var subs=await res.json();
+    if(!Array.isArray(subs)||!subs.length){
+      el.innerHTML='<div style="color:var(--muted);font-size:.82rem">No active subscriptions. <a onclick="showPage(\'explore\',null)" style="color:var(--gold);cursor:pointer">Browse creators</a></div>';
+      return;
+    }
+    el.innerHTML='';
+    for(var i=0;i<subs.length;i++){
+      var sub=subs[i];
+      var creator={};
+      try{var r=await fetch(WORKER_URL+'/api/users?id='+sub.creator_id);creator=await r.json();}catch(e){}
+      var name=creator.name||sub.creator_name||'Creator';
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)';
+      var img=document.createElement('img');
+      img.src=creator.avatar||'';
+      img.style.cssText='width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0';
+      img.onerror=function(){this.style.background='var(--card2)';this.src='';};
+      var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+      var nm=document.createElement('div');nm.style.cssText='font-weight:600;font-size:.88rem;cursor:pointer;color:var(--accent)';
+      nm.textContent=name;
+      (function(id){nm.onclick=function(){showProfile(id);};})(sub.creator_id);
+      var meta=document.createElement('div');meta.style.cssText='font-size:.74rem;color:var(--muted)';
+      meta.textContent='$'+Number(sub.price||0).toFixed(2)+'/mo';
+      info.appendChild(nm);info.appendChild(meta);
+      var actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px;align-items:center;flex-shrink:0';
+      var badge=document.createElement('span');badge.className=sub.status==='active'?'badge-green':'badge-rose';
+      badge.textContent=sub.status==='active'?'Active':'Inactive';
+      var msgBtn=document.createElement('button');
+      msgBtn.style.cssText='background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:"DM Sans",sans-serif';
+      msgBtn.textContent='💬';
+      (function(sid,sname){msgBtn.onclick=function(){openMsgWith({id:sid,name:sname});};})(sub.creator_id,name);
+      actions.appendChild(badge);actions.appendChild(msgBtn);
+      row.appendChild(img);row.appendChild(info);row.appendChild(actions);
+      el.appendChild(row);
+    }
+  }catch(e){el.innerHTML='<div style="color:var(--muted);font-size:.82rem">Could not load.</div>';}
+}
 function renderDashboard(){
   if(!currentUser)return;
   const u=DB.get('user')||currentUser;
@@ -3151,7 +3299,7 @@ async function stripePayoutNow(){
   }
 }
 
-  renderMySubscriptions();
+  if(typeof renderMySubscriptions==="function")renderMySubscriptions();
 function renderPayoutZone(u){
   const zone=document.getElementById('payoutZone');if(!zone)return;
   zone.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading payout info…</div>`;
@@ -5691,7 +5839,7 @@ document.addEventListener('keydown',function(e){
 <script>
 // ── Auto-poll for new messages every 5s ──────────────────────────────
 setInterval(function(){
-  if(currentPage!=='messages'||!currentUser||!_activeMsgThread)return;
+  if(typeof currentPage==='undefined'||currentPage!=='messages'||!currentUser||!_activeMsgThread)return;
   fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
     .then(function(r){return r.json();})
     .then(function(sv){
@@ -5813,49 +5961,6 @@ function _onScreenshotDetected(){
   }).catch(function(){});
 }
 
-// ── My Subscriptions ─────────────────────────────────────────────────
-async function renderMySubscriptions(){
-  var el=document.getElementById('mySubscriptionsList');
-  if(!el||!currentUser)return;
-  try{
-    var res=await fetch(WORKER_URL+'/api/subscriptions?user_id='+currentUser.id);
-    var subs=await res.json();
-    if(!Array.isArray(subs)||!subs.length){
-      el.innerHTML='<div style="color:var(--muted);font-size:.82rem">No active subscriptions. <a onclick="showPage(\'explore\',null)" style="color:var(--gold);cursor:pointer">Browse creators</a></div>';
-      return;
-    }
-    el.innerHTML='';
-    for(var i=0;i<subs.length;i++){
-      var sub=subs[i];
-      var creator={};
-      try{var r=await fetch(WORKER_URL+'/api/users?id='+sub.creator_id);creator=await r.json();}catch(e){}
-      var name=creator.name||sub.creator_name||'Creator';
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)';
-      var img=document.createElement('img');
-      img.src=creator.avatar||'';
-      img.style.cssText='width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0';
-      img.onerror=function(){this.style.background='var(--card2)';this.src='';};
-      var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
-      var nm=document.createElement('div');nm.style.cssText='font-weight:600;font-size:.88rem;cursor:pointer;color:var(--accent)';
-      nm.textContent=name;
-      (function(id){nm.onclick=function(){showProfile(id);};})(sub.creator_id);
-      var meta=document.createElement('div');meta.style.cssText='font-size:.74rem;color:var(--muted)';
-      meta.textContent='$'+Number(sub.price||0).toFixed(2)+'/mo';
-      info.appendChild(nm);info.appendChild(meta);
-      var actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px;align-items:center;flex-shrink:0';
-      var badge=document.createElement('span');badge.className=sub.status==='active'?'badge-green':'badge-rose';
-      badge.textContent=sub.status==='active'?'Active':'Inactive';
-      var msgBtn=document.createElement('button');
-      msgBtn.style.cssText='background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:"DM Sans",sans-serif';
-      msgBtn.textContent='💬';
-      (function(sid,sname){msgBtn.onclick=function(){openMsgWith({id:sid,name:sname});};})(sub.creator_id,name);
-      actions.appendChild(badge);actions.appendChild(msgBtn);
-      row.appendChild(img);row.appendChild(info);row.appendChild(actions);
-      el.appendChild(row);
-    }
-  }catch(e){el.innerHTML='<div style="color:var(--muted);font-size:.82rem">Could not load.</div>';}
-}
 </script>
 </body>
 </html>
