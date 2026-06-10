@@ -1114,7 +1114,11 @@ var worker_default = {
         await env.DB.prepare(
           `INSERT INTO messages (id, from_id, to_id, from_name, text, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
         ).bind(id, from_id, to_id, sender?.name||from_name||'', text).run();
-        // Messages go to Messages tab only — not notifications
+        // Notify recipient
+        await env.DB.prepare(`INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`)
+          .bind('notif_msg_'+Date.now(), to_id, '💬',
+            (sender?.name||from_name||'Someone')+': '+( text||'').slice(0,60),
+            'just now').run().catch(()=>{});
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
@@ -1620,23 +1624,6 @@ var worker_default = {
         ).bind(user_id).run();
         return json({ ok: true, message: "Account deleted. Financial records retained for legal compliance." });
       }
-
-      // ── Subscription check — allow messaging if either user subs the other ─
-      if (path === "/api/subscriptions/check" && method === "GET") {
-        const userA = url.searchParams.get("user_a");
-        const userB = url.searchParams.get("user_b");
-        if (!userA || !userB) return err("Missing params");
-        // Check if A is subbed to B
-        const aToB = await env.DB.prepare(
-          "SELECT 1 FROM subscriptions WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1"
-        ).bind(userA, userB).first();
-        // Check if B is subbed to A
-        const bToA = await env.DB.prepare(
-          "SELECT 1 FROM subscriptions WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1"
-        ).bind(userB, userA).first();
-        return json({ allowed: !!(aToB || bToA) });
-      }
-
       return err("Not found", 404);
     } catch (e) {
       console.error(e);

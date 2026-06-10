@@ -366,14 +366,13 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
   .feed-wrap{padding:14px}
   .post-card{border-radius:10px}
 
-  /* Messages — mobile */
-  #page-messages{max-width:100%;padding-top:58px;padding-bottom:62px}
-  .msg-layout{flex-direction:column;height:auto}
-  .msg-sidebar{width:100%;max-height:260px;border-right:none;border-bottom:1px solid var(--border);overflow-y:auto}
-  .msg-main{min-height:60vh;display:flex;flex-direction:column}
-  .msg-messages{flex:1;padding:10px 12px;min-height:40vh;max-height:50vh;overflow-y:auto}
+  /* Messages — stack sidebar above chat */
+  #page-messages{max-width:100%}
+  .msg-layout{flex-direction:column;height:auto;min-height:calc(100vh - 128px)}
+  .msg-sidebar{width:100%;height:auto;max-height:220px;border-right:none;border-bottom:1px solid var(--border)}
+  .msg-main{height:calc(100vh - 360px);min-height:300px}
+  .msg-messages{padding:10px 12px}
   .msg-bubble{max-width:85%}
-  .msg-layout.thread-open .msg-sidebar{display:none}
 
   /* Notifications */
   #page-notifs{padding:16px}
@@ -2936,6 +2935,35 @@ function renderMessages(){
 }
 function openThread(userId,name){
   _activeMsgThread=userId;
+  // Fetch from D1 first, then render
+  fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
+    .then(function(r){return r.json();})
+    .then(function(serverMsgs){
+      if(Array.isArray(serverMsgs)&&serverMsgs.length){
+        // Merge server messages into local cache
+        var local=DB.get('messages')||[];
+        var ids=new Set(local.map(function(m){return m.id;}));
+        serverMsgs.forEach(function(m){
+          if(!ids.has(m.id)){
+            local.push({
+              id:m.id,
+              from:m.from_id,to:m.to_id,
+              fromName:m.from_name||'',toName:m.to_name||'',
+              text:m.text||'',
+              media_url:m.media_url||'',media_type:m.media_type||'',
+              price:Number(m.price||0),
+              at:m.created_at||new Date().toISOString(),
+              read:m.to_id!==currentUser.id
+            });
+          }
+        });
+        DB.set('messages',local);
+      }
+    }).catch(function(){}).finally(function(){
+      _renderOpenThread(userId,name);
+    });
+}
+function _renderOpenThread(userId,name){
   const msgs=DB.get('messages')||[];
   msgs.forEach(m=>{if(m.to===currentUser.id&&m.from===userId)m.read=true;});
   DB.set('messages',msgs);_refreshBadges();
@@ -2953,12 +2981,7 @@ function openThread(userId,name){
       <input class="msg-input" id="msgInputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg('${userId}','${otherName}')">
       <button class="msg-send-btn" onclick="sendMsg('${userId}','${otherName}')">Send</button>
     </div>`;
-  var b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
-  // Mobile: hide sidebar, show chat
-  if(window.innerWidth<=700){
-    var layout=document.querySelector('.msg-layout');
-    if(layout)layout.classList.add('thread-open');
-  }
+  const b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
   renderMessages();
 }
 function sendMsg(toId,toName){
@@ -2967,33 +2990,26 @@ function sendMsg(toId,toName){
   msgs.push({id:'m'+Date.now(),from:currentUser.id,to:toId,fromName:currentUser.name,toName,text,at:new Date().toISOString(),read:false});
   // Save message to D1
   fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({from_id:currentUser.id,to_id:toId,text})
+    body:JSON.stringify({from_id:currentUser.id,to_id:toId,text,from_name:currentUser.name})
   }).catch(()=>{});
   DB.set('messages',msgs);
-  openThread(toId,toName);
+  _renderOpenThread(toId,toName);
 }
 function openMsgWith(c){
-  if(!c)return;
-  if(!currentUser){openModal('login');return;}
-  if(currentUser.id===c.id){toast("Can't message yourself",'ℹ️');return;}
-  // Check subscription in D1 (either direction)
-  fetch(WORKER_URL+'/api/subscriptions/check?user_a='+currentUser.id+'&user_b='+c.id)
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(data.allowed){
-        _activeMsgThread=c.id;
-        showPage('messages',null);
-        setTimeout(function(){openThread(c.id,c.name);},100);
-      } else {
-        toast('Subscribe to '+c.name+' to message them','🔒');
-        showProfile(c.id);
-      }
-    }).catch(function(){
-      // On error, allow (don't block)
-      _activeMsgThread=c.id;
-      showPage('messages',null);
-      setTimeout(function(){openThread(c.id,c.name);},100);
-    });
+  if(!c)return;if(!currentUser){openModal('login');return;}
+  if(currentUser.id===c.id){toast("Can\'t message yourself",'ℹ️');return;}
+  // Only subscribers can message creators (either direction)
+  const mySubscriptions=DB.get('user')?.subscriptions||[];
+  const isSubbedToThem=mySubscriptions.includes(c.id);
+  // Check if they are subscribed to me (creator messaging subscriber)
+  const allUsers=DB.get('users')||{};
+  const themUser=Object.values(allUsers).find(u=>u.id===c.id);
+  const theySubToMe=themUser?(themUser.subscriptions||[]).includes(currentUser.id):false;
+  if(!isSubbedToThem&&!theySubToMe){
+    toast('Subscribe to '+c.name+' to send them a message','🔒');
+    showProfile(c.id);return;
+  }
+  _activeMsgThread=c.id;showPage('messages',null);setTimeout(()=>openThread(c.id,c.name),80);
 }
 
 // NOTIFICATIONS
@@ -5625,6 +5641,47 @@ function _kycLightbox(url,label){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){var lb=document.getElementById('kycLightbox');if(lb)lb.style.display='none';}
 });
+</script>
+
+<script>
+// Auto-poll for new messages every 5 seconds when on messages page
+setInterval(function(){
+  if(currentPage==='messages'&&currentUser&&_activeMsgThread){
+    fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
+      .then(function(r){return r.json();})
+      .then(function(serverMsgs){
+        if(!Array.isArray(serverMsgs))return;
+        var local=DB.get('messages')||[];
+        var ids=new Set(local.map(function(m){return m.id;}));
+        var hasNew=false;
+        serverMsgs.forEach(function(m){
+          if(!ids.has(m.id)){
+            local.push({
+              id:m.id,from:m.from_id,to:m.to_id,
+              fromName:m.from_name||'',toName:m.to_name||'',
+              text:m.text||'',
+              media_url:m.media_url||'',media_type:m.media_type||'',
+              price:Number(m.price||0),
+              at:m.created_at||new Date().toISOString(),
+              read:m.to_id!==currentUser.id
+            });
+            hasNew=true;
+          }
+        });
+        if(hasNew){
+          DB.set('messages',local);
+          _refreshBadges();
+          // Re-render current thread if new messages for it
+          var newForThread=serverMsgs.some(function(m){
+            return m.from_id===_activeMsgThread&&m.to_id===currentUser.id;
+          });
+          if(newForThread&&_activeMsgThread){
+            _renderOpenThread(_activeMsgThread,'');
+          }
+        }
+      }).catch(function(){});
+  }
+},5000);
 </script>
 </body>
 </html>
