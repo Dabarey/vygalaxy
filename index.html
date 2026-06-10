@@ -366,13 +366,15 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
   .feed-wrap{padding:14px}
   .post-card{border-radius:10px}
 
-  /* Messages — stack sidebar above chat */
-  #page-messages{max-width:100%}
-  .msg-layout{flex-direction:column;height:auto;min-height:calc(100vh - 128px)}
-  .msg-sidebar{width:100%;height:auto;max-height:220px;border-right:none;border-bottom:1px solid var(--border)}
-  .msg-main{height:calc(100vh - 360px);min-height:300px}
-  .msg-messages{padding:10px 12px}
+  /* Messages — mobile */
+  #page-messages{max-width:100%;padding-top:58px;padding-bottom:62px}
+  .msg-layout{flex-direction:column;height:auto}
+  .msg-sidebar{width:100%;max-height:260px;border-right:none;border-bottom:1px solid var(--border);overflow-y:auto}
+  .msg-main{display:flex;flex-direction:column;min-height:55vh}
+  .msg-messages{flex:1;overflow-y:auto;padding:10px 12px;max-height:45vh}
   .msg-bubble{max-width:85%}
+  .msg-layout.thread-open .msg-sidebar{display:none}
+  .msg-layout.thread-open .msg-main{min-height:calc(100vh - 130px)}
 
   /* Notifications */
   #page-notifs{padding:16px}
@@ -2922,6 +2924,12 @@ function getThreads(){
   });
   return Object.values(seen).sort((a,b)=>new Date(b.at)-new Date(a.at));
 }
+function _msgBack(){
+  var lay=document.querySelector('.msg-layout');
+  if(lay)lay.classList.remove('thread-open');
+  _activeMsgThread=null;
+  renderMessages();
+}
 function renderMessages(){
   if(!currentUser)return;
   const threads=getThreads();
@@ -2935,65 +2943,94 @@ function renderMessages(){
 }
 function openThread(userId,name){
   _activeMsgThread=userId;
-  // Fetch from D1 first, then render
+  if(window.innerWidth<=700){
+    var lay=document.querySelector('.msg-layout');
+    if(lay)lay.classList.add('thread-open');
+  }
   fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
     .then(function(r){return r.json();})
-    .then(function(serverMsgs){
-      if(Array.isArray(serverMsgs)&&serverMsgs.length){
-        // Merge server messages into local cache
+    .then(function(sv){
+      if(Array.isArray(sv)){
         var local=DB.get('messages')||[];
-        var ids=new Set(local.map(function(m){return m.id;}));
-        serverMsgs.forEach(function(m){
-          if(!ids.has(m.id)){
-            local.push({
-              id:m.id,
-              from:m.from_id,to:m.to_id,
-              fromName:m.from_name||'',toName:m.to_name||'',
-              text:m.text||'',
-              media_url:m.media_url||'',media_type:m.media_type||'',
-              price:Number(m.price||0),
-              at:m.created_at||new Date().toISOString(),
-              read:m.to_id!==currentUser.id
-            });
-          }
+        var ids=new Set(local.map(function(x){return x.id;}));
+        sv.forEach(function(m){
+          if(!ids.has(m.id))local.push({
+            id:m.id,from:m.from_id,to:m.to_id,
+            fromName:m.from_name||'',toName:m.to_name||'',
+            text:m.text||'',media_url:m.media_url||'',
+            media_type:m.media_type||'',price:Number(m.price||0),
+            at:m.created_at||new Date().toISOString(),read:m.to_id!==currentUser.id
+          });
         });
         DB.set('messages',local);
       }
-    }).catch(function(){}).finally(function(){
-      _renderOpenThread(userId,name);
-    });
+    }).catch(function(){}).finally(function(){_renderThread(userId,name);});
 }
-function _renderOpenThread(userId,name){
-  const msgs=DB.get('messages')||[];
-  msgs.forEach(m=>{if(m.to===currentUser.id&&m.from===userId)m.read=true;});
+function _renderThread(userId,name){
+  var msgs=DB.get('messages')||[];
+  msgs.forEach(function(m){if(m.to===currentUser.id&&m.from===userId)m.read=true;});
   DB.set('messages',msgs);_refreshBadges();
-  const users=DB.get('users')||{},creators=DB.get('creators')||[];
-  const other=Object.values(users).find(u=>u.id===userId)||creators.find(c=>c.id===userId);
-  const otherName=other?other.name:name||'User';
-  const thread=msgs.filter(m=>(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id)).sort((a,b)=>new Date(a.at)-new Date(b.at));
+  var creators=DB.get('creators')||[];
+  var other=creators.find(function(c){return c.id===userId;});
+  var otherName=other?other.name:name||'User';
+  var thread=msgs.filter(function(m){
+    return(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id);
+  }).sort(function(a,b){return new Date(a.at)-new Date(b.at);});
   document.getElementById('msgMain').innerHTML=`
-    <div class="msg-main-head"><button onclick="document.querySelector('.msg-sidebar').style.display='';document.getElementById('msgMain').style.flex='';" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0;display:none" class="msg-back-btn" id="msgBackBtn">←</button><div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">${otherName[0]||'?'}</div><div class="msg-main-name">${otherName}</div></div>
+    <div class="msg-main-head"><button onclick="_msgBack()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0;display:none" class="msg-back-btn" id="msgBackBtn">←</button><div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">${otherName[0]||'?'}</div><div class="msg-main-name">${otherName}</div></div>
     <div class="msg-messages" id="msgBubbles">
-      ${thread.map(m=>`<div class="msg-bubble ${m.from===currentUser.id?'mine':'theirs'}">${m.text}</div>`).join('')}
+      ${thread.map(function(m){
+        var isMine=m.from===currentUser.id;
+        var cls='msg-bubble '+(isMine?'mine':'theirs');
+        if(m.media_url&&Number(m.price)>0){
+          var unlocked=(_ppvUnlocked||[]).includes(m.id);
+          if(unlocked){
+            var pUrl=WORKER_URL+'/api/ppv/media?msg_id='+encodeURIComponent(m.id)+'&uid='+(currentUser.id||'')+'&key='+encodeURIComponent(m.media_url.replace(/^https?:\/\/[^/]+\//,''));
+            return '<div class="'+cls+'">'+(m.media_type==='video'?'<video src="'+pUrl+'" controls playsinline style="max-width:200px;border-radius:8px;display:block"></video>':'<img src="'+pUrl+'" style="max-width:200px;border-radius:8px;display:block">')+(m.text?'<div style="margin-top:4px">'+m.text+'</div>':'')+'</div>';
+          }
+          return '<div class="'+cls+'" style="padding:0;overflow:hidden;min-width:150px">'
+            +'<div style="position:relative">'
+            +'<div style="width:200px;height:130px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;filter:blur(6px)">'+(m.media_type==='video'?'🎬':'📸')+'</div>'
+            +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.5)">'
+            +'<div style="color:#fff;font-size:.78rem;font-weight:700">'+(m.media_type==='video'?'🎬 Video':'📸 Photo')+'</div>'
+            +(isMine?'<div style="color:rgba(255,255,255,.6);font-size:.7rem">$'+Number(m.price).toFixed(2)+' · pay-to-view</div>':'<button onclick="_unlockPpv(''+m.id+'',''+m.from+'','+m.price+')" style="background:var(--gold);border:none;border-radius:100px;padding:7px 16px;color:#0a0a0b;font-weight:700;font-size:.78rem;cursor:pointer;font-family:\'DM Sans\',sans-serif">🔓 Unlock $'+Number(m.price).toFixed(2)+'</button>')
+            +'</div></div>'
+            +(m.text?'<div style="padding:8px 12px;font-size:.84rem">'+m.text+'</div>':'')
+            +'</div>';
+        }
+        return '<div class="'+cls+'">'+(m.text||'')+'</div>';
+      }).join('')}
       ${!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':''}
     </div>
-    <div class="msg-input-row">
+    <div class="msg-input-row" style="gap:6px">
+      <button onclick="_msgAttach('${userId}','${otherName}')" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;flex-shrink:0">💰 PPV</button>
       <input class="msg-input" id="msgInputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg('${userId}','${otherName}')">
       <button class="msg-send-btn" onclick="sendMsg('${userId}','${otherName}')">Send</button>
     </div>`;
   const b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
   renderMessages();
+
 }
 function sendMsg(toId,toName){
-  const inp=document.getElementById('msgInputBox');if(!inp||!inp.value.trim())return;
-  const text=inp.value.trim(),msgs=DB.get('messages')||[];
-  msgs.push({id:'m'+Date.now(),from:currentUser.id,to:toId,fromName:currentUser.name,toName,text,at:new Date().toISOString(),read:false});
-  // Save message to D1
-  fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({from_id:currentUser.id,to_id:toId,text,from_name:currentUser.name})
-  }).catch(()=>{});
+  var inp=document.getElementById('msgInputBox');
+  if(!inp||!inp.value.trim())return;
+  var text=inp.value.trim();
+  var msgId='m'+Date.now();
+  inp.value='';
+  var msgs=DB.get('messages')||[];
+  msgs.push({id:msgId,from:currentUser.id,to:toId,fromName:currentUser.name,toName:toName,text:text,at:new Date().toISOString(),read:false});
   DB.set('messages',msgs);
-  _renderOpenThread(toId,toName);
+  _renderThread(toId,toName);
+  fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:text,from_name:currentUser.name})
+  }).then(function(r){
+    if(r.status===403){
+      var m2=DB.get('messages')||[];
+      DB.set('messages',m2.filter(function(x){return x.id!==msgId;}));
+      toast('Subscribe to message this creator','🔒');
+      _renderThread(toId,toName);
+    }
+  }).catch(function(){});
 }
 function openMsgWith(c){
   if(!c)return;if(!currentUser){openModal('login');return;}
@@ -5384,7 +5421,7 @@ async function stripeDoCharge(){
       const posts=DB.get('posts')||[];
       const p=posts.find(x=>x.id===m.post_id);
       if(p){p.tips=(p.tips||0)+1;DB.set('posts',posts);}
-      toast('Tip sent! 💰','✅');
+      if(m&&m._ppv_msg_id&&window._ppvPendingUnlock){_finishPpvUnlock(m._ppv_msg_id);window._ppvPendingUnlock=null;}else{toast('Tip sent! 💰','✅');}
       // Update tip count in-place
       const tc=document.getElementById('tcount-'+m.post_id);
       if(tc) tc.textContent=Number(tc.textContent||0)+1;
@@ -5642,46 +5679,112 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){var lb=document.getElementById('kycLightbox');if(lb)lb.style.display='none';}
 });
 </script>
-
 <script>
-// Auto-poll for new messages every 5 seconds when on messages page
+// Auto-poll for new messages every 5s
 setInterval(function(){
-  if(currentPage==='messages'&&currentUser&&_activeMsgThread){
-    fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
-      .then(function(r){return r.json();})
-      .then(function(serverMsgs){
-        if(!Array.isArray(serverMsgs))return;
-        var local=DB.get('messages')||[];
-        var ids=new Set(local.map(function(m){return m.id;}));
-        var hasNew=false;
-        serverMsgs.forEach(function(m){
-          if(!ids.has(m.id)){
-            local.push({
-              id:m.id,from:m.from_id,to:m.to_id,
-              fromName:m.from_name||'',toName:m.to_name||'',
-              text:m.text||'',
-              media_url:m.media_url||'',media_type:m.media_type||'',
-              price:Number(m.price||0),
-              at:m.created_at||new Date().toISOString(),
-              read:m.to_id!==currentUser.id
-            });
-            hasNew=true;
-          }
-        });
-        if(hasNew){
-          DB.set('messages',local);
-          _refreshBadges();
-          // Re-render current thread if new messages for it
-          var newForThread=serverMsgs.some(function(m){
-            return m.from_id===_activeMsgThread&&m.to_id===currentUser.id;
-          });
-          if(newForThread&&_activeMsgThread){
-            _renderOpenThread(_activeMsgThread,'');
-          }
+  if(currentPage!=='messages'||!currentUser||!_activeMsgThread)return;
+  fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
+    .then(function(r){return r.json();})
+    .then(function(sv){
+      if(!Array.isArray(sv))return;
+      var local=DB.get('messages')||[];
+      var ids=new Set(local.map(function(x){return x.id;}));
+      var hasNew=false;
+      sv.forEach(function(m){
+        if(!ids.has(m.id)){
+          local.push({id:m.id,from:m.from_id,to:m.to_id,
+            fromName:m.from_name||'',toName:m.to_name||'',
+            text:m.text||'',media_url:m.media_url||'',
+            media_type:m.media_type||'',price:Number(m.price||0),
+            at:m.created_at||new Date().toISOString(),read:m.to_id!==currentUser.id});
+          if(m.from_id===_activeMsgThread)hasNew=true;
         }
-      }).catch(function(){});
-  }
+      });
+      if(hasNew){DB.set('messages',local);_refreshBadges();_renderThread(_activeMsgThread,'');}
+    }).catch(function(){});
 },5000);
+// Auto-poll for new messages every 5s
+</script>
+<script>
+var _ppvPending=null;
+var _ppvUnlocked=JSON.parse(localStorage.getItem('galaxy_ppv_unlocked')||'[]');
+
+function _msgAttach(toId,toName){
+  if(!currentUser){openModal('login');return;}
+  openModal('ppv','<h2 style="font-family:\'Fraunces\',serif;font-weight:300;font-size:1.3rem;margin:0 0 14px">Send pay-to-view</h2>'
+    +'<div class="fg"><label>Price (USD)</label><input id="ppvPrice" type="number" min="1" max="500" value="5" inputmode="decimal" style="width:100%"></div>'
+    +'<div class="fg"><label>Caption (optional)</label><input id="ppvCaption" placeholder="Add a caption..." style="width:100%"></div>'
+    +'<div class="fg"><label>Photo or Video</label>'
+    +'<input type="file" id="ppvFile" accept="image/*,video/*" style="display:none" onchange="_ppvSel(this)">'
+    +'<div id="ppvZone" class="upload-zone" onclick="document.getElementById(\'ppvFile\').click()" style="min-height:80px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">'
+    +'<div style="font-size:1.4rem">📎</div><div style="font-size:.8rem;color:var(--muted)">Tap to pick photo or video</div>'
+    +'</div></div>'
+    +'<div class="err-msg" id="ppv-err"></div>'
+    +'<button class="modal-btn" onclick="_ppvSend(\''+toId+'\',\''+toName+'\')">Send PPV →</button>');
+  _ppvPending=null;
+  window._ppvTo={id:toId,name:toName};
+}
+function _ppvSel(input){
+  var file=input.files&&input.files[0];if(!file)return;
+  _ppvPending={file:file,mediaType:file.type.startsWith('video/')?'video':'image'};
+  var z=document.getElementById('ppvZone');
+  if(z)z.innerHTML='<div style="font-size:1.4rem">'+(file.type.startsWith('video/')?'🎬':'📸')+'</div>'
+    +'<div style="font-size:.8rem;color:var(--gold);font-weight:600">'+file.name+'</div>'
+    +'<div style="font-size:.7rem;color:var(--muted)">'+Math.round(file.size/1024)+'KB</div>';
+}
+async function _ppvSend(toId,toName){
+  var price=parseFloat((document.getElementById('ppvPrice')||{}).value||'0');
+  var caption=((document.getElementById('ppvCaption')||{}).value||'').trim();
+  var err=document.getElementById('ppv-err');
+  if(!price||price<1){if(err)err.textContent='Minimum $1';return;}
+  if(!_ppvPending){if(err)err.textContent='Pick a photo or video first';return;}
+  var btn=document.querySelector('#modalContent .modal-btn');
+  if(btn){btn.disabled=true;btn.textContent='Uploading...';}
+  try{
+    var mediaUrl=await _uploadToR2(_ppvPending.file,'ppv',_ppvPending.file.type);
+    var res=await fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:caption,
+        from_name:currentUser.name,media_url:mediaUrl,media_type:_ppvPending.mediaType,price:price})});
+    var data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Failed');
+    var msgs=DB.get('messages')||[];
+    msgs.push({id:data.id||('m'+Date.now()),from:currentUser.id,to:toId,
+      fromName:currentUser.name,toName:toName,text:caption,
+      media_url:mediaUrl,media_type:_ppvPending.mediaType,price:price,
+      at:new Date().toISOString(),read:false});
+    DB.set('messages',msgs);
+    _ppvPending=null;
+    closeModal();
+    toast('PPV sent! ($'+price.toFixed(2)+')','💰');
+    _renderThread(toId,toName);
+  }catch(e){
+    if(err)err.textContent=e.message||'Upload failed';
+    if(btn){btn.disabled=false;btn.textContent='Send PPV →';}
+  }
+}
+function _unlockPpv(msgId,creatorId,price){
+  if(!currentUser){openModal('login');return;}
+  window._ppvPendingUnlock={msgId:msgId,creatorId:creatorId,price:price};
+  openStripeModal('Unlock content','Pay once · instant access',Number(price),
+    {plan:'tip',creator_id:creatorId,post_id:msgId,price_usd:Number(price),_ppv_msg_id:msgId});
+}
+async function _finishPpvUnlock(msgId){
+  try{
+    var res=await fetch(WORKER_URL+'/api/messages/unlock',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message_id:msgId,user_id:currentUser.id})});
+    var data=await res.json();
+    if(data.ok){
+      if(!_ppvUnlocked.includes(msgId))_ppvUnlocked.push(msgId);
+      localStorage.setItem('galaxy_ppv_unlocked',JSON.stringify(_ppvUnlocked));
+      var msgs=DB.get('messages')||[];
+      var m=msgs.find(function(x){return x.id===msgId;});
+      if(m&&data.media_url){m.media_url=data.media_url;m.media_type=data.media_type;DB.set('messages',msgs);}
+      toast('Unlocked!','🔓');
+      if(_activeMsgThread)_renderThread(_activeMsgThread,'');
+    }
+  }catch(e){console.warn('ppv unlock error',e);}
+}
 </script>
 </body>
 </html>
