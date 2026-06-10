@@ -505,6 +505,7 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
     <button class="nav-btn primary" onclick="openModal('signup')">Start creating</button>
   </div>
   <div class="nav-right" id="navUser" style="display:none">
+    <button class="nav-btn" onclick="requireAuth('referrals',null)" style="color:var(--gold);border-color:rgba(212,168,67,.4)">🔗 Refer & Earn</button>
     <div class="nav-av" id="navAvatar" onclick="currentUser?openOwnProfile(null):openModal('login')" style="cursor:pointer">👤</div>
     <button class="nav-btn" onclick="logout()">Sign out</button>
   </div>
@@ -881,6 +882,10 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
 
     <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
       <div id="creatorProductsWrap"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+      <div class="ds-title">My Subscriptions</div>
+      <div id="mySubscriptionsList"><div style="color:var(--muted);font-size:.82rem">Loading...</div></div>
     </div>
     <div id="payoutZone" style="text-align:right;margin-top:6px"></div>
   </div>
@@ -2924,20 +2929,6 @@ function getThreads(){
   });
   return Object.values(seen).sort((a,b)=>new Date(b.at)-new Date(a.at));
 }
-function _msgBack(){
-  var lay=document.querySelector('.msg-layout');if(lay)lay.classList.remove('thread-open');
-  _activeMsgThread=null;renderMessages();
-}
-function _blockReportUser(userId,userName){
-  if(!currentUser)return;
-  if(!confirm('Block and report '+userName+'?'))return;
-  var blocked=JSON.parse(localStorage.getItem('galaxy_blocked')||'[]');
-  if(!blocked.includes(userId)){blocked.push(userId);localStorage.setItem('galaxy_blocked',JSON.stringify(blocked));}
-  fetch(WORKER_URL+'/api/report',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({reporter_id:currentUser.id,reporter_name:currentUser.name,reported_id:userId,reported_name:userName,reason:'Blocked from messages',context:'messages'})
-  }).catch(function(){});
-  toast(userName+' blocked','🔴');_activeMsgThread=null;showPage('messages',null);
-}
 function renderMessages(){
   if(!currentUser)return;
   const threads=getThreads();
@@ -2958,7 +2949,12 @@ function openThread(userId,name){
       if(Array.isArray(sv)){
         var local=DB.get('messages')||[];
         var ids=new Set(local.map(function(x){return x.id;}));
-        sv.forEach(function(m){if(!ids.has(m.id))local.push({id:m.id,from:m.from_id,to:m.to_id,fromName:m.from_name||'',toName:m.to_name||'',text:m.text||'',media_url:m.media_url||'',media_type:m.media_type||'',price:Number(m.price||0),at:m.created_at||new Date().toISOString(),read:m.to_id!==currentUser.id});});
+        sv.forEach(function(m){
+          if(!ids.has(m.id))local.push({id:m.id,from:m.from_id,to:m.to_id,
+            fromName:m.from_name||'',toName:m.to_name||'',text:m.text||'',
+            media_url:m.media_url||'',media_type:m.media_type||'',price:Number(m.price||0),
+            at:m.created_at||new Date().toISOString(),read:m.to_id!==currentUser.id});
+        });
         DB.set('messages',local);
       }
     }).catch(function(){}).finally(function(){_drawThread(userId,name);});
@@ -2969,43 +2965,75 @@ function _drawThread(userId,name){
   DB.set('messages',msgs);_refreshBadges();
   var creators=DB.get('creators')||[];
   var other=creators.find(function(c){return c.id===userId;});
-  var otherName=other?other.name:name||'User';
-  var thread=msgs.filter(function(m){return(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id);}).sort(function(a,b){return new Date(a.at)-new Date(b.at);});
+  var otherName=other?other.name:(name||'User');
+  var thread=msgs.filter(function(m){
+    return(m.from===currentUser.id&&m.to===userId)||(m.from===userId&&m.to===currentUser.id);
+  }).sort(function(a,b){return new Date(a.at)-new Date(b.at);});
   var ppvU=JSON.parse(localStorage.getItem('galaxy_ppv_unlocked')||'[]');
   function mkBubble(m){
     var mine=m.from===currentUser.id;
     var cls='msg-bubble '+(mine?'mine':'theirs');
     if(m.media_url&&Number(m.price)>0){
       if(ppvU.includes(m.id)){
-        var pUrl=WORKER_URL+'/api/ppv/media?msg_id='+encodeURIComponent(m.id)+'&uid='+currentUser.id+'&key='+encodeURIComponent(m.media_url.replace(/^https?:\/\/[^/]+\//,''));
-        return '<div class="'+cls+'">'+(m.media_type==='video'?'<video src="'+pUrl+'" controls playsinline style="max-width:200px;border-radius:8px;display:block"></video>':'<img src="'+pUrl+'" style="max-width:200px;border-radius:8px;display:block">')+(m.text?'<div style="margin-top:4px">'+m.text+'</div>':'')+'</div>';
+        var pKey=m.media_url.replace(/^https?:\/\/[^/]+\//,'');
+        var pUrl=WORKER_URL+'/api/ppv/media?msg_id='+encodeURIComponent(m.id)+'&uid='+encodeURIComponent(currentUser.id)+'&key='+encodeURIComponent(pKey);
+        return '<div class="'+cls+'">'+(m.media_type==='video'
+          ?'<video src="'+pUrl+'" controls playsinline style="max-width:200px;border-radius:8px;display:block"></video>'
+          :'<img src="'+pUrl+'" style="max-width:200px;border-radius:8px;display:block">')
+          +(m.text?'<div style="margin-top:4px">'+m.text+'</div>':'')+'</div>';
       }
-      return '<div class="'+cls+'" style="padding:0;overflow:hidden;min-width:150px"><div style="position:relative"><div style="width:200px;height:130px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;filter:blur(6px)">'+(m.media_type==='video'?'🎬':'📸')+'</div><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.5)"><div style="color:#fff;font-size:.78rem;font-weight:700">'+(m.media_type==='video'?'🎬 Video':'📸 Photo')+'</div>'+(mine?'<div style="color:rgba(255,255,255,.6);font-size:.7rem">$'+Number(m.price).toFixed(2)+' pay-to-view</div>':'<button onclick="_unlockPpv(''+m.id+'',''+m.from+'','+m.price+')" style="background:var(--gold);border:none;border-radius:100px;padding:7px 14px;color:#0a0a0b;font-weight:700;font-size:.78rem;cursor:pointer">🔓 Unlock $'+Number(m.price).toFixed(2)+'</button>')+'</div></div>'+(m.text?'<div style="padding:8px 12px;font-size:.84rem">'+m.text+'</div>':'')+'</div>';
+      return '<div class="'+cls+'" style="padding:0;overflow:hidden;min-width:150px">'
+        +'<div style="position:relative">'
+        +'<div style="width:200px;height:130px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;filter:blur(6px)">'+(m.media_type==='video'?'🎬':'📸')+'</div>'
+        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.5)">'
+        +'<div style="color:#fff;font-size:.78rem;font-weight:700">'+(m.media_type==='video'?'🎬 Video':'📸 Photo')+'</div>'
+        +(mine
+          ?'<div style="color:rgba(255,255,255,.6);font-size:.7rem">$'+Number(m.price).toFixed(2)+' pay-to-view</div>'
+          :'<button id="ppv_unlock_'+m.id+'" style="background:var(--gold);border:none;border-radius:100px;padding:7px 14px;color:#0a0a0b;font-weight:700;font-size:.78rem;cursor:pointer">🔓 Unlock $'+Number(m.price).toFixed(2)+'</button>')
+        +'</div></div>'+(m.text?'<div style="padding:8px 12px;font-size:.84rem">'+m.text+'</div>':'')+'</div>';
     }
     return '<div class="'+cls+'">'+(m.text||'')+'</div>';
   }
   document.getElementById('msgMain').innerHTML=
-    '<div class="msg-main-head" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><button onclick="_msgBack()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0">←</button><div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">'+(otherName[0]||'?')+'</div><div class="msg-main-name">'+otherName+'</div></div>'
-    +'<button id="msgBlockBtn" style="background:none;border:1px solid rgba(232,108,108,.3);color:var(--rose);border-radius:100px;padding:5px 11px;font-size:.72rem;cursor:pointer">🔴 Block</button></div>'
-    +'<div class="msg-messages" id="msgBubbles">'
-    +thread.map(mkBubble).join('')
+    '<div class="msg-main-head" style="justify-content:space-between">'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +'<button id="msgBackBtn" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px 8px 4px 0">←</button>'
+    +'<div style="width:32px;height:32px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center">'+(otherName[0]||'?')+'</div>'
+    +'<div class="msg-main-name">'+otherName+'</div></div>'
+    +'<button id="msgBlockBtn" style="background:none;border:1px solid rgba(232,108,108,.3);color:var(--rose);border-radius:100px;padding:5px 11px;font-size:.72rem;cursor:pointer">🔴 Block</button>'
+    +'</div>'
+    +'<div class="msg-messages" id="msgBubbles">'+thread.map(mkBubble).join('')
     +(!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':'')
     +'</div>'
-    +'<div class="msg-input-row" style="gap:6px"><button onclick="_msgAttach(''+userId+'',''+otherName+'')" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button><input class="msg-input" id="msgInputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg(''+userId+'',''+otherName+'')"><button class="msg-send-btn" onclick="sendMsg(''+userId+'',''+otherName+'')">Send</button></div>';
+    +'<div class="msg-input-row" style="gap:6px">'
+    +'<button id="msgPpvBtn" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button>'
+    +'<input class="msg-input" id="msgInputBox" placeholder="Type a message...">'
+    +'<button class="msg-send-btn" id="msgSendBtn">Send</button>'
+    +'</div>';
+  // Wire up buttons
   var b=document.getElementById('msgBubbles');if(b)b.scrollTop=b.scrollHeight;
-  // Wire up buttons after innerHTML set
+  var inp=document.getElementById('msgInputBox');
   var sendBtn=document.getElementById('msgSendBtn');
   var ppvBtn=document.getElementById('msgPpvBtn');
+  var backBtn=document.getElementById('msgBackBtn');
   var blockBtn=document.getElementById('msgBlockBtn');
-  var inp=document.getElementById('msgInputBox');
+  if(inp)inp.onkeydown=function(e){if(e.key==='Enter')sendMsg(userId,otherName);};
   if(sendBtn)sendBtn.onclick=function(){sendMsg(userId,otherName);};
   if(ppvBtn)ppvBtn.onclick=function(){_msgAttach(userId,otherName);};
+  if(backBtn)backBtn.onclick=function(){_msgBack();};
   if(blockBtn)blockBtn.onclick=function(){_blockReportUser(userId,otherName);};
-  if(inp)inp.onkeydown=function(e){if(e.key==='Enter')sendMsg(userId,otherName);};
+  // Wire PPV unlock buttons
+  thread.forEach(function(m){
+    if(m.media_url&&Number(m.price)>0&&!ppvU.includes(m.id)){
+      var btn=document.getElementById('ppv_unlock_'+m.id);
+      if(btn)btn.onclick=function(){_unlockPpv(m.id,m.from,m.price);};
+    }
+  });
   renderMessages();
 }
 function sendMsg(toId,toName){
-  var inp=document.getElementById('msgInputBox');if(!inp||!inp.value.trim())return;
+  var inp=document.getElementById('msgInputBox');
+  if(!inp||!inp.value.trim())return;
   var text=inp.value.trim();var msgId='m'+Date.now();inp.value='';
   var msgs=DB.get('messages')||[];
   msgs.push({id:msgId,from:currentUser.id,to:toId,fromName:currentUser.name,toName:toName,text:text,at:new Date().toISOString(),read:false});
@@ -3014,15 +3042,18 @@ function sendMsg(toId,toName){
     body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:text,from_name:currentUser.name})
   }).then(function(r){
     if(r.status===403){
-      var m2=DB.get('messages')||[];DB.set('messages',m2.filter(function(x){return x.id!==msgId;}));
-      toast('Subscribe to message this creator','🔒');_drawThread(toId,toName);
+      var m2=DB.get('messages')||[];
+      DB.set('messages',m2.filter(function(x){return x.id!==msgId;}));
+      toast('Subscribe to message this creator','🔒');
+      _drawThread(toId,toName);
     }
   }).catch(function(){});
 }
 function openMsgWith(c){
   if(!c)return;if(!currentUser){openModal('login');return;}
   if(currentUser.id===c.id){toast("Can't message yourself",'ℹ️');return;}
-  _activeMsgThread=c.id;showPage('messages',null);setTimeout(function(){openThread(c.id,c.name);},100);
+  _activeMsgThread=c.id;showPage('messages',null);
+  setTimeout(function(){openThread(c.id,c.name);},100);
 }
 
 // NOTIFICATIONS
@@ -3120,6 +3151,7 @@ async function stripePayoutNow(){
   }
 }
 
+  renderMySubscriptions();
 function renderPayoutZone(u){
   const zone=document.getElementById('payoutZone');if(!zone)return;
   zone.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Loading payout info…</div>`;
@@ -5655,7 +5687,9 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){var lb=document.getElementById('kycLightbox');if(lb)lb.style.display='none';}
 });
 </script>
+
 <script>
+// ── Auto-poll for new messages every 5s ──────────────────────────────
 setInterval(function(){
   if(currentPage!=='messages'||!currentUser||!_activeMsgThread)return;
   fetch(WORKER_URL+'/api/messages?user_id='+currentUser.id)
@@ -5665,12 +5699,20 @@ setInterval(function(){
       var local=DB.get('messages')||[];
       var ids=new Set(local.map(function(x){return x.id;}));
       var hasNew=false;
-      sv.forEach(function(m){if(!ids.has(m.id)){local.push({id:m.id,from:m.from_id,to:m.to_id,fromName:m.from_name||'',toName:m.to_name||'',text:m.text||'',media_url:m.media_url||'',media_type:m.media_type||'',price:Number(m.price||0),at:m.created_at||'',read:m.to_id!==currentUser.id});if(m.from_id===_activeMsgThread)hasNew=true;}});
+      sv.forEach(function(m){
+        if(!ids.has(m.id)){
+          local.push({id:m.id,from:m.from_id,to:m.to_id,fromName:m.from_name||'',
+            toName:m.to_name||'',text:m.text||'',media_url:m.media_url||'',
+            media_type:m.media_type||'',price:Number(m.price||0),
+            at:m.created_at||'',read:m.to_id!==currentUser.id});
+          if(m.from_id===_activeMsgThread)hasNew=true;
+        }
+      });
       if(hasNew){DB.set('messages',local);_refreshBadges();_drawThread(_activeMsgThread,'');}
     }).catch(function(){});
-},5000); // galaxy_ppv_poll
-</script>
-<script>
+},5000);
+
+// ── PPV messages ──────────────────────────────────────────────────────
 function _msgAttach(toId,toName){
   if(!currentUser){openModal('login');return;}
   openModal('ppv','<h2 style="font-family:\'Fraunces\',serif;font-weight:300;font-size:1.3rem;margin:0 0 14px">Send pay-to-view</h2>'
@@ -5681,8 +5723,12 @@ function _msgAttach(toId,toName){
     +'<div id="ppvZone" class="upload-zone" onclick="document.getElementById(\'ppvFile\').click()" style="min-height:80px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">'
     +'<div style="font-size:1.4rem">📎</div><div style="font-size:.8rem;color:var(--muted)">Tap to pick photo or video</div></div></div>'
     +'<div class="err-msg" id="ppv-err"></div>'
-    +'<button class="modal-btn" onclick="_ppvSend(\''+toId+'\',\''+toName+'\')">Send PPV →</button>');
-  window._ppvPending=null;
+    +'<button class="modal-btn" id="ppvSendBtn">Send PPV</button>');
+  window._ppvPending=null;window._ppvTo={id:toId,name:toName};
+  setTimeout(function(){
+    var btn=document.getElementById('ppvSendBtn');
+    if(btn)btn.onclick=function(){_ppvSend(toId,toName);};
+  },50);
 }
 function _ppvSel(input){
   var file=input.files&&input.files[0];if(!file)return;
@@ -5698,42 +5744,117 @@ async function _ppvSend(toId,toName){
   var errEl=document.getElementById('ppv-err');
   if(!price||price<1){if(errEl)errEl.textContent='Minimum $1';return;}
   if(!window._ppvPending){if(errEl)errEl.textContent='Pick a photo or video first';return;}
-  var btn=document.querySelector('#modalContent .modal-btn');
+  var btn=document.getElementById('ppvSendBtn');
   if(btn){btn.disabled=true;btn.textContent='Uploading...';}
   try{
     var mediaUrl=await _uploadToR2(window._ppvPending.file,'ppv',window._ppvPending.file.type);
-    var res=await fetch(WORKER_URL+'/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:caption,from_name:currentUser.name,media_url:mediaUrl,media_type:window._ppvPending.mediaType,price:price})});
+    var res=await fetch(WORKER_URL+'/api/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:caption,
+        from_name:currentUser.name,media_url:mediaUrl,
+        media_type:window._ppvPending.mediaType,price:price})});
     var data=await res.json();
     if(!res.ok)throw new Error(data.error||'Failed');
     var msgs=DB.get('messages')||[];
-    msgs.push({id:data.id||('m'+Date.now()),from:currentUser.id,to:toId,fromName:currentUser.name,toName:toName,text:caption,media_url:mediaUrl,media_type:window._ppvPending.mediaType,price:price,at:new Date().toISOString(),read:false});
-    DB.set('messages',msgs);window._ppvPending=null;closeModal();
-    toast('PPV sent ($'+price.toFixed(2)+')','💰');_drawThread(toId,toName);
+    msgs.push({id:data.id||('m'+Date.now()),from:currentUser.id,to:toId,
+      fromName:currentUser.name,toName:toName,text:caption,
+      media_url:mediaUrl,media_type:window._ppvPending.mediaType,
+      price:price,at:new Date().toISOString(),read:false});
+    DB.set('messages',msgs);window._ppvPending=null;
+    closeModal();toast('PPV sent ($'+price.toFixed(2)+')','💰');
+    _drawThread(toId,toName);
   }catch(e){
     if(errEl)errEl.textContent=e.message||'Upload failed';
-    if(btn){btn.disabled=false;btn.textContent='Send PPV →';}
+    if(btn){btn.disabled=false;btn.textContent='Send PPV';}
   }
 }
 function _unlockPpv(msgId,creatorId,price){
   if(!currentUser){openModal('login');return;}
   window._ppvPendingUnlock={msgId:msgId};
-  openStripeModal('Unlock content','Pay once · instant access',Number(price),
+  openStripeModal('Unlock content','Pay once, instant access',Number(price),
     {plan:'tip',creator_id:creatorId,post_id:msgId,price_usd:Number(price),_ppv_msg_id:msgId});
 }
 async function _finishPpvUnlock(msgId){
   try{
-    var res=await fetch(WORKER_URL+'/api/messages/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message_id:msgId,user_id:currentUser.id})});
+    var res=await fetch(WORKER_URL+'/api/messages/unlock',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message_id:msgId,user_id:currentUser.id})});
     var data=await res.json();
     if(data.ok){
       var arr=JSON.parse(localStorage.getItem('galaxy_ppv_unlocked')||'[]');
       if(!arr.includes(msgId))arr.push(msgId);
       localStorage.setItem('galaxy_ppv_unlocked',JSON.stringify(arr));
-      var msgs=DB.get('messages')||[];var m=msgs.find(function(x){return x.id===msgId;});
+      var msgs=DB.get('messages')||[];
+      var m=msgs.find(function(x){return x.id===msgId;});
       if(m&&data.media_url){m.media_url=data.media_url;m.media_type=data.media_type;DB.set('messages',msgs);}
-      toast('Unlocked!','🔓');if(_activeMsgThread)_drawThread(_activeMsgThread,'');
+      toast('Unlocked!','🔓');
+      if(_activeMsgThread)_drawThread(_activeMsgThread,'');
     }
   }catch(e){console.warn('ppv unlock',e);}
+}
+
+// ── Screenshot alerts ─────────────────────────────────────────────────
+(function(){
+  var _lastHidden=0;
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){_lastHidden=Date.now();}
+    else{var d=Date.now()-_lastHidden;if(d>50&&d<1500&&currentPage==='messages'&&_activeMsgThread)_onScreenshotDetected();}
+  });
+  document.addEventListener('keyup',function(e){
+    if(e.key==='PrintScreen'&&currentPage==='messages'&&_activeMsgThread)_onScreenshotDetected();
+  });
+})();
+function _onScreenshotDetected(){
+  if(!currentUser||!_activeMsgThread)return;
+  toast('Screenshot detected — other person notified','🌸');
+  fetch(WORKER_URL+'/api/notifications',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user_id:_activeMsgThread,icon:'🌸',
+      text:(currentUser.name||'Someone')+' took a screenshot of your conversation.',time:'just now'})
+  }).catch(function(){});
+}
+
+// ── My Subscriptions ─────────────────────────────────────────────────
+async function renderMySubscriptions(){
+  var el=document.getElementById('mySubscriptionsList');
+  if(!el||!currentUser)return;
+  try{
+    var res=await fetch(WORKER_URL+'/api/subscriptions?user_id='+currentUser.id);
+    var subs=await res.json();
+    if(!Array.isArray(subs)||!subs.length){
+      el.innerHTML='<div style="color:var(--muted);font-size:.82rem">No active subscriptions. <a onclick="showPage(\'explore\',null)" style="color:var(--gold);cursor:pointer">Browse creators</a></div>';
+      return;
+    }
+    el.innerHTML='';
+    for(var i=0;i<subs.length;i++){
+      var sub=subs[i];
+      var creator={};
+      try{var r=await fetch(WORKER_URL+'/api/users?id='+sub.creator_id);creator=await r.json();}catch(e){}
+      var name=creator.name||sub.creator_name||'Creator';
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)';
+      var img=document.createElement('img');
+      img.src=creator.avatar||'';
+      img.style.cssText='width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0';
+      img.onerror=function(){this.style.background='var(--card2)';this.src='';};
+      var info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+      var nm=document.createElement('div');nm.style.cssText='font-weight:600;font-size:.88rem;cursor:pointer;color:var(--accent)';
+      nm.textContent=name;
+      (function(id){nm.onclick=function(){showProfile(id);};})(sub.creator_id);
+      var meta=document.createElement('div');meta.style.cssText='font-size:.74rem;color:var(--muted)';
+      meta.textContent='$'+Number(sub.price||0).toFixed(2)+'/mo';
+      info.appendChild(nm);info.appendChild(meta);
+      var actions=document.createElement('div');actions.style.cssText='display:flex;gap:6px;align-items:center;flex-shrink:0';
+      var badge=document.createElement('span');badge.className=sub.status==='active'?'badge-green':'badge-rose';
+      badge.textContent=sub.status==='active'?'Active':'Inactive';
+      var msgBtn=document.createElement('button');
+      msgBtn.style.cssText='background:none;border:1px solid var(--border2);border-radius:100px;padding:4px 10px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:"DM Sans",sans-serif';
+      msgBtn.textContent='💬';
+      (function(sid,sname){msgBtn.onclick=function(){openMsgWith({id:sid,name:sname});};})(sub.creator_id,name);
+      actions.appendChild(badge);actions.appendChild(msgBtn);
+      row.appendChild(img);row.appendChild(info);row.appendChild(actions);
+      el.appendChild(row);
+    }
+  }catch(e){el.innerHTML='<div style="color:var(--muted);font-size:.82rem">Could not load.</div>';}
 }
 </script>
 </body>

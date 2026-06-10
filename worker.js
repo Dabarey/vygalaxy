@@ -1110,11 +1110,13 @@ var worker_default = {
         const { from_id, to_id, text, from_name, media_url, media_type, price } = body;
         if (!from_id || !to_id) return err("Missing fields");
         if (!text && !media_url) return err("Missing text or media");
+        // Subscription gate
         const subCheck = await env.DB.prepare(
           "SELECT 1 FROM subscriptions WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?)) AND status='active' LIMIT 1"
         ).bind(from_id, to_id, to_id, from_id).first();
         if (!subCheck) return err("Subscription required", 403);
-        for(const col of ["media_url TEXT DEFAULT ''","media_type TEXT DEFAULT ''","price REAL DEFAULT 0"]){
+        // Ensure PPV columns exist
+        for (const col of ["media_url TEXT DEFAULT ''","media_type TEXT DEFAULT ''","price REAL DEFAULT 0"]) {
           await env.DB.prepare("ALTER TABLE messages ADD COLUMN "+col).run().catch(()=>{});
         }
         const id = "msg_" + Date.now();
@@ -1124,7 +1126,8 @@ var worker_default = {
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
         ).bind(id, from_id, to_id, sender?.name||from_name||'', text||'', media_url||'', media_type||'', Number(price)||0).run();
         await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
-          .bind('notif_msg_'+Date.now(), to_id, '💬', (sender?.name||from_name||'Someone')+': '+(text||'📎 Media').slice(0,60), 'just now').run().catch(()=>{});
+          .bind('notif_msg_'+Date.now(), to_id, '💬',
+            (sender?.name||from_name||'Someone')+': '+(text||'📎 Media').slice(0,60), 'just now').run().catch(()=>{});
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
@@ -1575,197 +1578,3 @@ var worker_default = {
         return new Response(obj.body, { headers });
       }
 
-
-      // ── GDPR: Export user data ────────────────────────────────────────────
-      if (path === "/api/gdpr/export" && method === "GET") {
-        const userId = url.searchParams.get("user_id");
-        if (!userId) return err("Missing user_id");
-        const user = await env.DB.prepare(
-          "SELECT id,email,name,bio,avatar,cover,category,price,role,created_at FROM users WHERE id=?"
-        ).bind(userId).first();
-        const { results: gPosts } = await env.DB.prepare(
-          "SELECT id,title,content,tier,created_at FROM posts WHERE creator_id=?"
-        ).bind(userId).all();
-        const { results: gPurchases } = await env.DB.prepare(
-          "SELECT id,product_id,price,created_at FROM purchases WHERE user_id=?"
-        ).bind(userId).all();
-        const { results: gMessages } = await env.DB.prepare(
-          "SELECT id,from_id,to_id,text,created_at FROM messages WHERE from_id=? OR to_id=?"
-        ).bind(userId, userId).all();
-        return new Response(JSON.stringify({
-          profile: user,
-          posts: gPosts || [],
-          purchases: gPurchases || [],
-          messages: gMessages || [],
-          exported_at: new Date().toISOString()
-        }, null, 2), {
-          headers: {
-            ...CORS,
-            "Content-Type": "application/json",
-            "Content-Disposition": `attachment; filename="galaxy-data-export.json"`
-          }
-        });
-      }
-
-      // ── GDPR: Delete account ──────────────────────────────────────────────
-      if (path === "/api/gdpr/delete" && method === "POST") {
-        const { user_id, email } = body;
-        if (!user_id) return err("Missing user_id");
-        const gUser = await env.DB.prepare(
-          "SELECT id FROM users WHERE id=? AND email=?"
-        ).bind(user_id, email || '').first();
-        if (!gUser) return err("User not found or email mismatch", 404);
-        const anon = "deleted_" + Date.now();
-        await env.DB.prepare(
-          "UPDATE users SET email=?, name='Deleted User', bio='', avatar='', password_hash='', role='deleted' WHERE id=?"
-        ).bind(anon + "@deleted.galaxy", user_id).run();
-        await env.DB.prepare(
-          "DELETE FROM messages WHERE from_id=? OR to_id=?"
-        ).bind(user_id, user_id).run();
-        await env.DB.prepare(
-          "UPDATE posts SET content='[deleted]', title='[deleted]', media_url='' WHERE creator_id=?"
-        ).bind(user_id).run();
-        await env.DB.prepare(
-          "DELETE FROM notifications WHERE user_id=?"
-        ).bind(user_id).run();
-        return json({ ok: true, message: "Account deleted. Financial records retained for legal compliance." });
-      }
-
-      if (path === "/api/messages/unlock" && method === "POST") {
-        const { message_id, user_id } = body;
-        if (!message_id || !user_id) return err("Missing fields");
-        const msg = await env.DB.prepare("SELECT * FROM messages WHERE id=?").bind(message_id).first();
-        if (!msg) return err("Not found", 404);
-        if (!msg.price || Number(msg.price) <= 0) return err("Free message");
-        await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
-        const already = await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(message_id, user_id).first();
-        if (already) return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type, already:true });
-        await creditBalance(env, msg.from_id, Number(msg.price));
-        await env.DB.prepare("INSERT INTO msg_unlocks (message_id,user_id,unlocked_at) VALUES (?,?,datetime('now'))").bind(message_id, user_id).run();
-        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)").bind('notif_ppv_'+Date.now(), msg.from_id, '💰', 'Someone unlocked your pay-to-view for $'+Number(msg.price).toFixed(2), 'just now').run().catch(()=>{});
-        return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type });
-      }
-      if (path === "/api/ppv/media" && method === "GET") {
-        const msgId=url.searchParams.get("msg_id"),userId=url.searchParams.get("uid"),key=url.searchParams.get("key");
-        if (!msgId||!userId||!key) return err("Missing params");
-        if (key.includes('..')||!key.startsWith('ppv/')) return err("Invalid key",400);
-        const msg=await env.DB.prepare("SELECT from_id,price FROM messages WHERE id=?").bind(msgId).first();
-        if (!msg) return err("Not found",404);
-        if (msg.from_id!==userId&&Number(msg.price)>0) {
-          await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
-          const ok=await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(msgId,userId).first();
-          if (!ok) return err("Payment required",402);
-        }
-        const obj=await env.MEDIA.get(key);
-        if (!obj) return err("Media not found",404);
-        return new Response(obj.body,{headers:{...CORS,"Content-Type":obj.httpMetadata?.contentType||"application/octet-stream","Cache-Control":"private,max-age=3600"}});
-      }
-      return err("Not found", 404);
-    } catch (e) {
-      console.error(e);
-      return err(e.message || "Server error", 500);
-    }
-  }
-};
-// ── AUTO PAYOUT CRON ────────────────────────────────────────────────────
-// Runs on the 1st of every month at 6am UTC
-// Add to wrangler.toml:
-//   [triggers]
-//   crons = ["0 6 1 * *"]
-
-async function processMonthlyPayouts(env) {
-  const now = new Date().toISOString();
-  // Get all pending payout requests
-  const { results: pending } = await env.DB.prepare(
-    `SELECT p.*,
-      ps.paypal_email, ps.stripe_account_id, ps.bank_name, ps.bank_iban, ps.bank_swift,
-      ps.bank_account, ps.bank_routing, ps.bank_sortcode, ps.bank_bankname, ps.bank_country
-     FROM payouts p
-     LEFT JOIN payout_settings ps ON p.creator_id = ps.creator_id
-     WHERE p.status = 'pending'`
-  ).all();
-
-  for (const payout of pending) {
-    try {
-      if (payout.method === 'paypal' && payout.paypal_email) {
-        // ── PayPal Payout (automatic) ─────────────────────────────────
-        const token = await getPayPalToken(env);
-        const batchId = 'GALAXY_' + payout.id;
-        const res = await fetch('https://api-m.paypal.com/v1/payments/payouts', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            sender_batch_header: {
-              sender_batch_id: batchId,
-              email_subject: 'Your GALAXY payout is here!',
-              email_message: `You've received a payout of $${payout.amount.toFixed(2)} from GALAXY.`
-            },
-            items: [{
-              recipient_type: 'EMAIL',
-              amount: { value: payout.amount.toFixed(2), currency: 'USD' },
-              receiver: payout.paypal_email,
-              note: 'GALAXY creator payout',
-              sender_item_id: payout.id
-            }]
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || JSON.stringify(data));
-        const batchStatus = data.batch_header?.payout_batch_id || batchId;
-
-        await env.DB.prepare(
-          `UPDATE payouts SET status='paid', reference=?, paid_at=? WHERE id=?`
-        ).bind(batchStatus, now, payout.id).run();
-
-        // Zero out balance
-        await env.DB.prepare(
-          `UPDATE balances SET balance=0, updated_at=? WHERE creator_id=?`
-        ).bind(now, payout.creator_id).run();
-
-        // Notify creator
-        await env.DB.prepare(
-          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
-        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '💸',
-          `Your payout of $${payout.amount.toFixed(2)} has been sent to your PayPal!`, 'just now').run();
-
-      } else if (payout.method === 'stripe' && payout.bank_iban) {
-        // ── Bank transfer — mark as processing, admin sends manually ──
-        // (Auto bank transfer requires Stripe Connect onboarding)
-        await env.DB.prepare(
-          `UPDATE payouts SET status='processing', note=?, paid_at=? WHERE id=?`
-        ).bind(
-          `Bank: ${payout.bank_name} | IBAN: ${payout.bank_iban} | Bank: ${payout.bank_bankname} | Country: ${payout.bank_country}`,
-          now, payout.id
-        ).run();
-
-        // Notify creator
-        await env.DB.prepare(
-          `INSERT INTO notifications (id, user_id, icon, text, time) VALUES (?,?,?,?,?)`
-        ).bind('notif_'+Date.now()+'_'+payout.creator_id, payout.creator_id, '🏦',
-          `Your bank transfer of $${payout.amount.toFixed(2)} is being processed. Allow 3–5 business days.`, 'just now').run();
-
-      } else {
-        await env.DB.prepare(
-          `UPDATE payouts SET status='failed', note='Missing payout destination' WHERE id=?`
-        ).bind(payout.id).run();
-      }
-    } catch (e) {
-      console.error('Payout failed for', payout.id, e.message);
-      await env.DB.prepare(
-        `UPDATE payouts SET status='failed', note=? WHERE id=?`
-      ).bind(e.message || 'Unknown error', payout.id).run();
-    }
-  }
-
-  console.log(`Processed ${pending.length} payouts`);
-}
-
-export { worker_default as default };
-// ════════════════════════════════════════════════════════════
-// PASTE THIS BLOCK INTO worker.js
-// Location: immediately BEFORE this line:
-//   return err("Not found", 404);
-// (found near the bottom of the fetch() handler)
