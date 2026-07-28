@@ -5054,22 +5054,14 @@ function openAddProductModal(){
     <div style="background:#0d0000;margin:-16px -16px 0;padding:0 16px 16px">
     <div style="padding-top:16px">
       <div style="margin-bottom:12px"><label style="${lbl}">Title</label><input id="prodTitle" placeholder="e.g. Lightroom Preset Pack" maxlength="60" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="margin-bottom:12px">
-        <label style="${lbl}">What are you selling?</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button type="button" id="prodKindDigitalBtn" onclick="_setProdKind('digital')" style="padding:10px;border-radius:10px;border:1.5px solid var(--gold);background:rgba(212,168,67,.12);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">📥 Digital<div style="font-weight:400;font-size:.68rem;opacity:.75;margin-top:2px">Instant download</div></button>
-          <button type="button" id="prodKindPhysicalBtn" onclick="_setProdKind('physical')" style="padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">📦 Physical<div style="font-weight:400;font-size:.68rem;opacity:.75;margin-top:2px">Ships to buyer</div></button>
-        </div>
-        <input type="hidden" id="prodKind" value="digital">
-      </div>
       <div id="prodTypeRow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <div><label style="${lbl}">Type</label><select id="prodType" onchange="_renderDeliverables()" style="${inp};cursor:pointer">
           <option value="course">🎓 Course</option><option value="ebook">📖 E-book</option>
           <option value="preset">Presets</option><option value="template">📄 Template</option><option value="audio">Audio</option>
+          <option value="physical">📦 Physical (ships to buyer)</option>
         </select></div>
         <div><label style="${lbl}">Price (USD)</label><input id="prodPrice" type="number" min="2" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
       </div>
-      <div id="prodPhysicalPriceRow" style="display:none;margin-bottom:12px"><label style="${lbl}">Price (USD)</label><input id="prodPricePhysical" type="number" min="2" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
       <div id="prodPhysicalFields" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
           <div><label style="${lbl}">Shipping fee (USD)</label><input id="prodShippingFee" type="number" min="0" step="0.01" placeholder="4.99 (0 = free shipping)" style="${inp}"></div>
@@ -5125,25 +5117,7 @@ function openAddProductModal(){
     </div>`;
   openModal('addProduct', html);
   document.getElementById('modalContent').style.background='#0d0000';
-  setTimeout(()=>{_setProdKind('digital');_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
-}
-
-function _setProdKind(kind){
-  const kindInput=document.getElementById('prodKind');if(!kindInput)return;
-  kindInput.value=kind;
-  const digitalBtn=document.getElementById('prodKindDigitalBtn'),physicalBtn=document.getElementById('prodKindPhysicalBtn');
-  const activeStyle='border:1.5px solid var(--gold);background:rgba(212,168,67,.12);color:var(--gold)';
-  const inactiveStyle='border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7)';
-  if(digitalBtn)digitalBtn.style.cssText='padding:10px;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;'+(kind==='digital'?activeStyle:inactiveStyle);
-  if(physicalBtn)physicalBtn.style.cssText='padding:10px;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;'+(kind==='physical'?activeStyle:inactiveStyle);
-  const show=(id,on)=>{const el=document.getElementById(id);if(el)el.style.display=on?'':'none';};
-  const isPhysical=kind==='physical';
-  show('prodTypeRow',!isPhysical);
-  show('prodPhysicalPriceRow',isPhysical);
-  show('prodPhysicalFields',isPhysical);
-  show('prodDeliverables',!isPhysical);
-  show('prodSampleBlock',!isPhysical);
-  if(isPhysical)_renderDeliverables();
+  setTimeout(()=>{_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
 }
 
 // Style for consistent inputs across .fg (textarea was inconsistent before)
@@ -5164,6 +5138,12 @@ function _charCount(srcId,tgtId,max){
 function _renderDeliverables(){
   const wrap=document.getElementById('prodDeliverables');if(!wrap)return;
   const type=(document.getElementById('prodType')||{}).value||'course';
+  const show=(id,on)=>{const el=document.getElementById(id);if(el)el.style.display=on?'':'none';};
+  const isPhysical=type==='physical';
+  show('prodPhysicalFields',isPhysical);
+  show('prodDeliverables',!isPhysical);
+  show('prodSampleBlock',!isPhysical);
+  if(isPhysical) return;
   const lbl=`<div style="font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:10px">📦 What buyers receive</div>`;
   if(type==='course'){
     wrap.innerHTML=lbl+
@@ -5280,13 +5260,13 @@ function _isUrl(s){
 
 async function addProduct(){
   if(!currentUser) return;
-  const kind=(document.getElementById('prodKind')||{}).value||'digital';
+  const type=(document.getElementById('prodType')||{}).value||'ebook';
   const title=_val('prodTitle');
   const desc=_val('prodDesc');
+  const price=parseFloat((document.getElementById('prodPrice')||{}).value||'0');
+  if(!title||!desc||!price||price<2){toast('Fill in title, description and price (min $2)','⚠️');return;}
 
-  if(kind==='physical'){
-    const price=parseFloat((document.getElementById('prodPricePhysical')||{}).value||'0');
-    if(!title||!desc||!price||price<2){toast('Fill in title, description and price (min $2)','⚠️');return;}
+  if(type==='physical'){
     const shippingFee=parseFloat((document.getElementById('prodShippingFee')||{}).value||'0')||0;
     const stockRaw=(document.getElementById('prodStock')||{}).value;
     const stock=stockRaw===''||stockRaw==null?null:Math.max(0,parseInt(stockRaw,10)||0);
@@ -5328,10 +5308,6 @@ async function addProduct(){
     toast('Product added to shop! 🛒','');renderCreatorProducts();renderShop();
     return;
   }
-
-  const type=(document.getElementById('prodType')||{}).value||'ebook';
-  const price=parseFloat((document.getElementById('prodPrice')||{}).value||'0');
-  if(!title||!desc||!price||price<2){toast('Fill in title, description and price (min $2)','⚠️');return;}
 
   // Gather what buyers actually receive based on type
   const deliverables={};
@@ -5491,7 +5467,7 @@ function openCreateSheet(){
           <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#c8a93a);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">📦</div>
           <div>
             <div style="font-weight:700;font-size:.95rem;color:var(--text)">Add Product</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Sell a course, e-book, preset or template</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Digital download or a physical item that ships</div>
           </div>
         </button>
       </div>
