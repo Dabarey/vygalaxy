@@ -1156,7 +1156,19 @@ var worker_default = {
 
       if (path === "/api/subscriptions/confirm" && method === "POST") {
         const { user_id, user_name, creator_id } = body;
-        if (!creator_id) return err("Missing creator_id");
+        if (!creator_id || !user_id) return err("Missing fields");
+        // Force the most recent subscription row active — don't rely solely on the
+        // Stripe webhook (invoice.payment_succeeded), which may be unregistered,
+        // misconfigured, or delayed, leaving the row stuck as 'incomplete' even
+        // though the card payment already succeeded on the client.
+        await env.DB.prepare(`
+          UPDATE subscriptions SET status='active'
+          WHERE id = (
+            SELECT id FROM subscriptions
+            WHERE user_id=? AND creator_id=?
+            ORDER BY created_at DESC LIMIT 1
+          )
+        `).bind(user_id, creator_id).run().catch(()=>{});
         // Increment subs_count
         await env.DB.prepare("UPDATE users SET subs_count=COALESCE(subs_count,0)+1 WHERE id=?")
           .bind(creator_id).run().catch(()=>{});
