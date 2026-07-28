@@ -122,6 +122,64 @@ async function creditBalance(env, creatorId, amountUsd) {
 }
 __name(creditBalance, "creditBalance");
 
+// ── Physical product / shipping helpers ─────────────────────────────────
+async function checkProductStock(env, productId, qty) {
+  const prod = await env.DB.prepare("SELECT product_kind, stock FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+  if (!prod) return { error: "Product not found" };
+  if (prod.product_kind === "physical" && prod.stock !== null && prod.stock !== undefined) {
+    if (Number(prod.stock) < qty) return { error: "Sorry, that item is out of stock." };
+  }
+  return { ok: true };
+}
+__name(checkProductStock, "checkProductStock");
+
+async function recordProductPurchase(env, { productId, userId, creatorAmount, payRef, body }) {
+  const prod = await env.DB.prepare("SELECT creator_id, product_kind, shipping_fee, stock FROM products WHERE id=?").bind(productId).first().catch(()=>null);
+  if (!prod) return { error: "Product not found", status: 404 };
+  const qty = Math.max(1, parseInt(body.qty || 1, 10) || 1);
+  const isPhysical = prod.product_kind === "physical";
+  if (isPhysical && prod.stock !== null && prod.stock !== undefined) {
+    if (Number(prod.stock) < qty) return { error: "Sorry, that item just sold out.", status: 400 };
+  }
+  // Add columns if missing
+  for (const col of [
+    "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_address TEXT",
+    "shipping_city TEXT","shipping_state TEXT","shipping_zip TEXT","shipping_country TEXT",
+    "shipping_status TEXT","tracking_number TEXT","shipping_fee REAL DEFAULT 0"
+  ]) {
+    await env.DB.prepare(`ALTER TABLE purchases ADD COLUMN ${col}`).run().catch(()=>{});
+  }
+  const shipping = body.shipping || {};
+  const shippingFee = Number(prod.shipping_fee || 0);
+  // Pass the flat shipping fee through to the creator in full (no platform cut on shipping)
+  let finalCreatorAmount = Number(creatorAmount);
+  if (isPhysical && shippingFee > 0) {
+    finalCreatorAmount = Math.round((finalCreatorAmount + shippingFee * 0.29) * 100) / 100;
+  }
+  const id = "pur_" + Date.now();
+  await env.DB.prepare(
+    `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, qty, variant, shipping_name, shipping_address, shipping_city, shipping_state, shipping_zip, shipping_country, shipping_status, tracking_number, shipping_fee, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+  ).bind(
+    id, userId, productId, finalCreatorAmount, payRef, qty,
+    typeof body.variant === "string" ? body.variant : JSON.stringify(body.variant || {}),
+    shipping.name || "", shipping.address || "", shipping.city || "", shipping.state || "",
+    shipping.zip || "", shipping.country || "",
+    isPhysical ? "pending" : null, "",
+    isPhysical ? shippingFee : 0
+  ).run();
+  await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(productId).run();
+  if (isPhysical && prod.stock !== null && prod.stock !== undefined) {
+    await env.DB.prepare(`UPDATE products SET stock = stock - ? WHERE id = ?`).bind(qty, productId).run();
+  }
+  if (isPhysical) {
+    await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+      .bind("notif_order_"+Date.now(), prod.creator_id, "📦", "New order placed! Ship it from your Orders tab.", "just now").run().catch(()=>{});
+  }
+  return { ok: true, id };
+}
+__name(recordProductPurchase, "recordProductPurchase");
+
 var worker_default = {
   async scheduled(event, env, ctx) {
     if (event.cron === '0 6 1 * *') {
@@ -380,6 +438,10 @@ var worker_default = {
         const amountNum = Number(amount||0);
         if (amountNum < 1) return err("Minimum payment is $1.");
         if (plan === "purchase" && amountNum < 5) return err("Minimum product price is $5.");
+        if (plan === "purchase" && product_id) {
+          const stockCheck = await checkProductStock(env, product_id, Number(body.qty || 1));
+          if (stockCheck.error) return err(stockCheck.error, 400);
+        }
         const capture = await paypalReq(env, "/v2/checkout/orders/" + order_id + "/capture", "POST", {});
         if (capture.status !== "COMPLETED") return err("Payment not completed: " + capture.status);
         const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
@@ -390,10 +452,11 @@ var worker_default = {
           await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
         }
         if (plan === "purchase" && product_id) {
-          await env.DB.prepare(
-            `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
-          ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, "paypal_" + order_id).run();
-          await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+          const purResult = await recordProductPurchase(env, {
+            productId: product_id, userId: user_id, creatorAmount,
+            payRef: "paypal_" + order_id, body
+          });
+          if (purResult.error) return err(purResult.error, purResult.status || 400);
         }
         // Credit creator balance for PayPal payments
         if (creator_id) await creditBalance(env, creator_id, Number(amount));
@@ -662,6 +725,10 @@ var worker_default = {
           desc:         p.desc || p.description || '',
           sales:        p.sales || p.sales_count || 0,
           includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
+          product_kind: p.product_kind || 'digital',
+          shipping_fee: Number(p.shipping_fee || 0),
+          stock:        (p.stock === null || p.stock === undefined) ? null : Number(p.stock),
+          variants:     (() => { try { return JSON.parse(p.variants || '[]'); } catch(e){ return []; } })(),
         }));
         if (creatorId) {
           const { results } = await env.DB.prepare(
@@ -679,19 +746,23 @@ var worker_default = {
         return json(normalize(results));
       }
       if (path === "/api/products" && method === "POST") {
-        const { id: clientId, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview } = body;
+        const { id: clientId, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category } = body;
+        const product_kind = body.product_kind === "physical" ? "physical" : "digital";
+        const shipping_fee = product_kind === "physical" ? (Math.round(Number(body.shipping_fee || 0) * 100) / 100) : 0;
+        const stock = (product_kind === "physical" && body.stock !== "" && body.stock != null) ? parseInt(body.stock, 10) : null;
+        const variants = product_kind === "physical" ? (typeof body.variants === "string" ? body.variants : JSON.stringify(body.variants || [])) : "[]";
         if (!creator_id || !title || !price) return err("Missing fields");
         if (Number(price) < 5) return err("Minimum product price is $5.");
         const id = clientId || ("prod_" + Date.now());
         const finalDesc = description || desc || "";
         // Add columns if missing
-        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT"]) {
+        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT","product_kind TEXT DEFAULT 'digital'","shipping_fee REAL DEFAULT 0","stock INTEGER","variants TEXT"]) {
           await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
         }
         await env.DB.prepare(
-          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category, sales, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
-        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'').run();
+          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category, product_kind, shipping_fee, stock, variants, sales, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
+        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'', product_kind, shipping_fee, stock, variants).run();
         return json({ id, success: true });
       }
       if (path.match(/^\/api\/products\/[^\/]+\/analytics$/) && method === "GET") {
@@ -717,6 +788,25 @@ var worker_default = {
         // Get total sales from product record
         const prod = await env.DB.prepare("SELECT sales, price FROM products WHERE id=?").bind(productId).first().catch(()=>null);
         return json({ recent: recent||[], sales: prod?.sales||0, price: prod?.price||0 });
+      }
+
+      if (path.match(/^\/api\/products\/[^/]+$/) && method === "GET") {
+        const productId = path.split("/")[3];
+        const prod = await env.DB.prepare(
+          `SELECT p.*, u.name as creator_name, u.avatar as creator_avatar
+           FROM products p LEFT JOIN users u ON p.creator_id = u.id WHERE p.id=?`
+        ).bind(productId).first();
+        if (!prod) return err("Not found", 404);
+        let variants = [];
+        try { variants = JSON.parse(prod.variants || "[]"); } catch(e) {}
+        return json({
+          ...prod,
+          creatorId: prod.creator_id, creatorName: prod.creator_name||'', creatorAvatar: prod.creator_avatar||'',
+          product_kind: prod.product_kind || 'digital',
+          shipping_fee: Number(prod.shipping_fee || 0),
+          stock: (prod.stock === null || prod.stock === undefined) ? null : Number(prod.stock),
+          variants
+        });
       }
 
       if (path.startsWith("/api/products/") && method === "DELETE") {
@@ -752,6 +842,47 @@ var worker_default = {
         ).bind(userId).all();
         return json(results || []);
       }
+      // ── Physical product orders (seller view) ─────────────────────────────
+      if (path === "/api/orders" && method === "GET") {
+        const creatorId = url.searchParams.get("creator_id");
+        if (!creatorId) return err("Missing creator_id");
+        const { results } = await env.DB.prepare(
+          `SELECT pu.*, p.title as product_title, p.emoji, p.creator_id
+           FROM purchases pu JOIN products p ON pu.product_id = p.id
+           LEFT JOIN users u ON pu.user_id = u.id
+           WHERE p.creator_id = ? AND p.product_kind='physical'
+           ORDER BY pu.created_at DESC`
+        ).bind(creatorId).all().catch(()=>({results:[]}));
+        // attach buyer name separately (avoid ambiguous column collisions)
+        const withBuyer = [];
+        for (const o of (results||[])) {
+          const buyer = await env.DB.prepare("SELECT name FROM users WHERE id=?").bind(o.user_id).first().catch(()=>null);
+          withBuyer.push({ ...o, buyer_name: buyer?.name || "" });
+        }
+        return json(withBuyer);
+      }
+
+      if (path.match(/^\/api\/purchases\/[^/]+\/shipping$/) && method === "POST") {
+        const purchaseId = path.split("/")[3];
+        const { seller_id, status, tracking_number } = body;
+        if (!seller_id || !status) return err("Missing fields");
+        const pur = await env.DB.prepare(
+          `SELECT pu.user_id, p.creator_id, p.title FROM purchases pu JOIN products p ON pu.product_id=p.id WHERE pu.id=?`
+        ).bind(purchaseId).first();
+        if (!pur) return err("Order not found", 404);
+        if (pur.creator_id !== seller_id) return err("Forbidden", 403);
+        if (!["pending","shipped","delivered"].includes(status)) return err("Invalid status");
+        await env.DB.prepare("UPDATE purchases SET shipping_status=?, tracking_number=? WHERE id=?")
+          .bind(status, tracking_number || "", purchaseId).run();
+        const icon = status === "shipped" ? "🚚" : status === "delivered" ? "📬" : "📦";
+        const text = status === "shipped"
+          ? `Your order "${pur.title}" has shipped!${tracking_number ? " Tracking: " + tracking_number : ""}`
+          : status === "delivered" ? `Your order "${pur.title}" was marked delivered.` : `Your order "${pur.title}" is being prepared.`;
+        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
+          .bind("notif_ship_"+Date.now(), pur.user_id, icon, text, "just now").run().catch(()=>{});
+        return json({ success: true });
+      }
+
       if (path === "/api/pay" && method === "POST") {
         const {
           payment_method_id, user_id, user_email, user_name, plan, price_usd,
@@ -781,6 +912,10 @@ var worker_default = {
         }
         await stripeReq(env, `/payment_methods/${payment_method_id}/attach`, "POST", { customer: customerId });
         await stripeReq(env, `/customers/${customerId}`, "POST", { "invoice_settings[default_payment_method]": payment_method_id });
+        if (plan === "purchase" && product_id) {
+          const stockCheck = await checkProductStock(env, product_id, Number(body.qty || 1));
+          if (stockCheck.error) return err(stockCheck.error, 400);
+        }
         if (plan === "tip" || plan === "purchase") {
           const pi = await stripeReq(env, "/payment_intents", "POST", {
             amount: String(amountCents),
@@ -804,10 +939,11 @@ var worker_default = {
             await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
           }
           if (plan === "purchase" && product_id) {
-            await env.DB.prepare(
-              `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
-            ).bind("pur_" + Date.now(), user_id, product_id, creatorAmount, pi.id).run();
-            await env.DB.prepare(`UPDATE products SET sales = sales + 1 WHERE id = ?`).bind(product_id).run();
+            const purResult = await recordProductPurchase(env, {
+              productId: product_id, userId: user_id, creatorAmount,
+              payRef: pi.id, body
+            });
+            if (purResult.error) return err(purResult.error, purResult.status || 400);
           }
           // Credit creator balance
           if (creator_id) await creditBalance(env, creator_id, originalPrice);
@@ -1622,3 +1758,10 @@ var worker_default = {
         return new Response(obj.body, { headers });
       }
 
+      return err("Not found", 404);
+    } catch (e) {
+      return err(e.message || "Server error", 500);
+    }
+  }
+};
+export default worker_default;

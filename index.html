@@ -908,6 +908,7 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
       <div class="cat" onclick="filterShop('preset',this)">Presets</div>
       <div class="cat" onclick="filterShop('template',this)">Templates</div>
       <div class="cat" onclick="filterShop('audio',this)">Audio</div>
+      <div class="cat" onclick="filterShop('physical',this)">📦 Physical</div>
     </div>
     <div class="shop-sort">
       <span class="shop-sort-label">Sort by</span>
@@ -1034,20 +1035,23 @@ const GOOGLE_CLIENT_ID="402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googl
     sessionStorage.removeItem('pp_order_id');
     history.replaceState({},'',window.location.pathname);
     fetch(WORKER_URL+'/api/paypal/capture',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({order_id:orderId,user_id:p.userId,creator_id:p.creatorId,post_id:p.postId,product_id:p.productId,plan:p.type,amount:p.amt||p.price,user_name:p.userName})
+      body:JSON.stringify({order_id:orderId,user_id:p.userId,creator_id:p.creatorId,post_id:p.postId,product_id:p.productId,plan:p.type,amount:p.amt||p.price,user_name:p.userName,qty:p.qty||1,variant:p.variant||{},shipping:p.shipping||null})
     }).then(r=>r.json()).then(res=>{
       if(res.success){
         if(p.type==='tip'){toast('Tipped $'+Number(p.amt).toFixed(2)+' via PayPal!','💰');}
         if(p.type==='purchase'){
           const prods=DB.get('products')||[];
           const prod=prods.find(x=>x.id===p.productId);
+          const isPhysical=prod&&(prod.product_kind==='physical'||prod.type==='physical');
           const purs=DB.get('purchases')||[];
-          purs.push({id:'pur_'+Date.now(),productId:p.productId,userId:p.userId,productTitle:p.productTitle,price:p.price,boughtAt:new Date().toISOString()});
+          purs.push({id:'pur_'+Date.now(),productId:p.productId,userId:p.userId,productTitle:p.productTitle,price:p.price,boughtAt:new Date().toISOString(),qty:p.qty||1,variant:p.variant||{},shipping:p.shipping||null,shipping_status:isPhysical?'pending':null});
           DB.set('purchases',purs);
           if(prod){prod.sales=(prod.sales||0)+1;DB.set('products',prods);}
-          toast('Purchase complete!','✅');
-          setTimeout(()=>showPage('shop'),500);
+          toast(isPhysical?'Order placed! You\'ll get shipping updates in your Library.':'Purchase complete!','✅');
+          setTimeout(()=>showPage(isPhysical?'library':'shop'),500);
         }
+      } else if(res.error){
+        toast(res.error,'⚠️');
       }
     }).catch(()=>{});
   }
@@ -1228,7 +1232,7 @@ const modalTemplates={
 function openModal(type,html){
   const mc=document.getElementById('modalContent');
   mc.innerHTML=html||modalTemplates[type]||modalTemplates.signup;
-  mc.classList.toggle('wide', type==='addProduct'||type==='purchase'||type==='tip'||type==='payout');
+  mc.classList.toggle('wide', type==='addProduct'||type==='purchase'||type==='tip'||type==='payout'||type==='shipping'||type==='orders');
   mc.classList.toggle('auth-modal', type==='login'||type==='signup');
   document.getElementById('authOverlay').classList.add('open');document.body.style.overflow='hidden';
   mc.scrollTop=0;
@@ -4409,8 +4413,11 @@ function starsHtml(r){
 }
 
 function shopCard(p){
-  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)'}[p.type]||'rgba(122,122,140,.9)';
-  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type;
+  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)',physical:'rgba(139,92,246,.9)'}[p.type]||'rgba(122,122,140,.9)';
+  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio',physical:'Physical'}[p.type]||p.type;
+  const isPhysical=p.product_kind==='physical'||p.type==='physical';
+  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
+  const soldOut=isPhysical&&stockNum!==null&&stockNum<=0;
   const bought=(DB.get('purchases')||[]).some(b=>b.productId===p.id&&b.userId===currentUser?.id);
   const isOwn=currentUser&&(currentUser.id===(p.creatorId||p.creator_id||p.creator)||currentUser.role==='admin');
   const reviews=DB.get('reviews_'+p.id)||[];
@@ -4424,7 +4431,7 @@ function shopCard(p){
       <span class="shop-type-badge" style="background:${typeColor};color:#0a0a0b">${typeLabel}</span>
       ${p.trending?`<span class="shop-momentum">🔥 Trending</span>`:''}
       ${p.bestseller&&!p.trending?`<span class="shop-momentum" style="background:rgba(212,168,67,.9);color:#0a0a0b">⭐ Bestseller</span>`:''}
-      <span class="shop-instant">📥 Instant download</span>
+      <span class="shop-instant">${isPhysical?(soldOut?'🚫 Sold out':(stockNum!==null?'🚚 Ships · '+stockNum+' left':'🚚 Ships to you')):'📥 Instant download'}</span>
     </div>
     <div class="shop-card-body">
       <div class="shop-card-title" onclick="openProductPage('${p.id}')" style="cursor:pointer">${p.title}</div>
@@ -4452,13 +4459,19 @@ function shopCard(p){
         <didisplay:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${isOwn
             ?`<button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.4);background:rgba(212,168,67,.1);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openBoostModal('product','${p.id}','${(p.title||"").replace(/'/g,"")}')">⚡ Boost</button>
+             ${isPhysical?`<button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#a78bfa;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openProductOrders('${p.id}')">📦 Orders</button>`:''}
              <button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openProductAnalytics('${p.id}')">📊 Analytics</button>
              <button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="deleteProduct('${p.id}',this)">🗑 Delete</button>`
-            :bought
+            :bought&&!isPhysical
               ?`<span style="font-size:.76rem;color:var(--green);font-weight:700">✓ Purchased</span>
                  <button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">View</button>
                  <button class="shop-preview-btn" onclick="leaveReview('${p.id}','${p.title.replace(/'/g,'')}')">Leave review</button>`
-              :`<button class="shop-buy-btn" onclick="buyProduct('${p.id}')">Buy now</button>
+              :bought&&isPhysical
+              ?`<span style="font-size:.76rem;color:var(--green);font-weight:700">✓ Ordered</span>
+                 <button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">Order status</button>`
+              :soldOut
+              ?`<button class="shop-buy-btn" disabled style="opacity:.5;cursor:not-allowed">Sold out</button>`
+              :`<button class="shop-buy-btn" onclick="buyProduct('${p.id}')">${isPhysical?'Buy · ships':'Buy now'}</button>
                  <button class="shop-preview-btn" onclick="showReviews('${p.id}','${p.title.replace(/'/g,'')}')">Reviews (${reviewCount})</button>`}
           ${!isOwn?`<button class="shop-preview-btn" style="margin-top:2px;color:var(--muted)" onclick="shareProduct('${p.id}','${(p.title||'').replace(/'/g,"\'")}','${(p.creatorName||'').replace(/'/g,"\'")}')">↗ Share</button>`:''}
         </div>
@@ -4476,8 +4489,11 @@ function openProductPage(id){
   const isOwn=currentUser&&(currentUser.id===(p.creatorId||p.creator_id||p.creator)||currentUser.role==='admin');
   const reviews=DB.get('reviews_'+id)||[];
   const avgRating=reviews.length?(reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1):(p.rating||0);
-  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)'}[p.type]||'rgba(122,122,140,.9)';
-  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio'}[p.type]||p.type||'Product';
+  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)',physical:'rgba(139,92,246,.9)'}[p.type]||'rgba(122,122,140,.9)';
+  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio',physical:'Physical'}[p.type]||p.type||'Product';
+  const isPhysical=p.product_kind==='physical'||p.type==='physical';
+  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
+  const soldOut=isPhysical&&stockNum!==null&&stockNum<=0;
 
   const html=`
     <div style="margin:-20px -20px 0;position:relative">
@@ -4500,14 +4516,16 @@ function openProductPage(id){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
           <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${p.price}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold</div>
+          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold${isPhysical&&p.shipping_fee?' · +$'+Number(p.shipping_fee).toFixed(2)+' shipping':''}${isPhysical&&stockNum!==null?' · '+(soldOut?'sold out':stockNum+' left'):''}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${isOwn
             ?`<button style="font-size:.78rem;padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="closeModal();deleteProduct('${p.id}',this)">🗑 Delete</button>`
             :bought
-              ?`<button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">View purchase</button>`
-              :`<button class="shop-buy-btn" onclick="closeModal();buyProduct('${p.id}')">Buy now →</button>`}
+              ?`<button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">${isPhysical?'Order status':'View purchase'}</button>`
+              :soldOut
+                ?`<button class="shop-buy-btn" disabled style="opacity:.5;cursor:not-allowed">Sold out</button>`
+                :`<button class="shop-buy-btn" onclick="closeModal();buyProduct('${p.id}')">${isPhysical?'Buy · ships':'Buy now'} →</button>`}
           ${p.sample_url&&!bought?`<button onclick="openSample('${p.id}','${(p.title||'').replace(/'/g,'')}','${p.sample_url}')" style="font-size:.76rem;padding:6px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.3);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">👁 Free preview</button>`:''}
         </div>
       </div>
@@ -4714,8 +4732,23 @@ function viewPurchase(id){
   // Include seeded + user-created products
   let p=products.find(x=>x.id===id);
   if(!p){toast('Product not found','⚠️');return;}
-  const owned=(DB.get('purchases')||[]).some(b=>b.productId===id&&b.userId===currentUser.id);
-  if(!owned){toast('Purchase this product first','🔒');return;}
+  const purchases=DB.get('purchases')||[];
+  const myPur=purchases.find(b=>(b.productId===id||b.product_id===id)&&(b.userId===currentUser.id||b.user_id===currentUser.id));
+  if(!myPur){toast('Purchase this product first','🔒');return;}
+  const isPhysical=p.product_kind==='physical'||p.type==='physical';
+  if(isPhysical){
+    _openOrderStatusModal(p,myPur);
+    // Refresh from server in the background to pick up shipping updates
+    if(myPur.id) apiFetch('/api/purchases?user_id='+encodeURIComponent(currentUser.id)).then(rows=>{
+      const fresh=(rows||[]).find(r=>(r.id===myPur.id)||(r.product_id===id));
+      if(fresh){
+        Object.assign(myPur,{shipping_status:fresh.shipping_status,tracking_number:fresh.tracking_number});
+        DB.set('purchases',purchases);
+        if(document.getElementById('modalContent')) _openOrderStatusModal(p,myPur);
+      }
+    }).catch(()=>{});
+    return;
+  }
   const d=p.deliverables||{};
   let body='';
   if(p.type==='course'){
@@ -4745,19 +4778,115 @@ function viewPurchase(id){
 }
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
+// ── Physical order status (buyer view) ──────────────────────────────
+function _openOrderStatusModal(p,pur){
+  const status=pur.shipping_status||'pending';
+  const steps=[{k:'pending',l:'Order placed',i:'📦'},{k:'shipped',l:'Shipped',i:'🚚'},{k:'delivered',l:'Delivered',i:'📬'}];
+  const idx=Math.max(0,steps.findIndex(s=>s.k===status));
+  const shipping=pur.shipping||{};
+  const variant=pur.variant&&Object.keys(pur.variant).length?Object.entries(pur.variant).map(([k,v])=>`${_esc(k)}: ${_esc(v)}`).join(' · '):'';
+  const html=`
+    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.4rem;margin:0 0 4px;display:flex;align-items:center;gap:8px"><span>${p.emoji||'📦'}</span>${_esc(p.title)}</h2>
+    <div style="color:var(--muted);font-size:.82rem;margin-bottom:4px">by ${_esc(p.creatorName||'')}${pur.qty>1?' · qty '+pur.qty:''}</div>
+    ${variant?`<div style="color:var(--muted);font-size:.78rem;margin-bottom:14px">${variant}</div>`:'<div style="margin-bottom:14px"></div>'}
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+      ${steps.map((s,i)=>`<div style="flex:1;text-align:center;position:relative">
+        <div style="width:34px;height:34px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:${i<=idx?'var(--gold)':'var(--bg3)'};color:${i<=idx?'#0a0a0b':'var(--muted)'}">${s.i}</div>
+        <div style="font-size:.7rem;color:${i<=idx?'var(--text)':'var(--muted)'};font-weight:${i<=idx?'700':'400'}">${s.l}</div>
+      </div>`).join('')}
+    </div>
+    ${pur.tracking_number?`<div style="background:var(--bg2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:.82rem"><strong style="color:var(--text)">Tracking number:</strong> <span style="color:var(--gold)">${_esc(pur.tracking_number)}</span></div>`:''}
+    <div style="background:var(--bg2);border-radius:10px;padding:12px;font-size:.8rem;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--text);display:block;margin-bottom:4px">Shipping to</strong>
+      ${_esc(shipping.name||'')}<br>${_esc(shipping.address||'')}<br>${_esc(shipping.city||'')}${shipping.state?', '+_esc(shipping.state):''} ${_esc(shipping.zip||'')}<br>${_esc(shipping.country||'')}
+    </div>
+    <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:14px">Questions about your order? Message the seller directly.</div>`;
+  openModal('purchase', html);
+}
+
+// ── Physical order management (seller view) ─────────────────────────
+function openProductOrders(productId){
+  if(!currentUser)return;
+  openModal('orders','<div style="text-align:center;color:var(--muted);padding:30px 0">Loading orders…</div>');
+  apiFetch('/api/orders?creator_id='+encodeURIComponent(currentUser.id)).then(all=>{
+    const orders=(all||[]).filter(o=>o.product_id===productId);
+    const html=`
+      <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.3rem;margin:0 0 14px">📦 Orders</h2>
+      ${orders.length?orders.map(o=>_orderRow(o)).join(''):'<div class="empty" style="padding:30px 0">No orders yet for this product.</div>'}`;
+    openModal('orders', html);
+  }).catch(()=>{openModal('orders','<div class="empty">Could not load orders.</div>');});
+}
+function _orderRow(o){
+  const status=o.shipping_status||'pending';
+  const statusColor={pending:'var(--muted)',shipped:'#60a5fa',delivered:'var(--green)'}[status]||'var(--muted)';
+  let variant={};try{variant=typeof o.variant==='string'?JSON.parse(o.variant):(o.variant||{});}catch(e){}
+  const variantStr=Object.entries(variant||{}).map(([k,v])=>`${_esc(k)}: ${_esc(v)}`).join(' · ');
+  return `<div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+      <div>
+        <div style="font-weight:700;font-size:.88rem">${_esc(o.buyer_name||'Buyer')}${o.qty>1?' · qty '+o.qty:''}</div>
+        ${variantStr?`<div style="font-size:.74rem;color:var(--muted)">${variantStr}</div>`:''}
+      </div>
+      <span style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(255,255,255,.06);color:${statusColor};text-transform:uppercase;letter-spacing:.04em">${_esc(status)}</span>
+    </div>
+    <div style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px">
+      ${_esc(o.shipping_name||'')}, ${_esc(o.shipping_address||'')}, ${_esc(o.shipping_city||'')}${o.shipping_state?', '+_esc(o.shipping_state):''} ${_esc(o.shipping_zip||'')}, ${_esc(o.shipping_country||'')}
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <input id="track_${o.id}" placeholder="Tracking number (optional)" value="${_esc(o.tracking_number||'')}" style="flex:1;min-width:140px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:.78rem;font-family:'DM Sans',sans-serif">
+      <button style="font-size:.72rem;padding:6px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="_updateOrderStatus('${o.id}','shipped')">Mark shipped</button>
+      <button style="font-size:.72rem;padding:6px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="_updateOrderStatus('${o.id}','delivered')">Mark delivered</button>
+    </div>
+  </div>`;
+}
+async function _updateOrderStatus(purchaseId,status){
+  const trackInput=document.getElementById('track_'+purchaseId);
+  const tracking_number=trackInput?trackInput.value.trim():'';
+  try{
+    await apiFetch('/api/purchases/'+encodeURIComponent(purchaseId)+'/shipping','POST',{seller_id:currentUser.id,status,tracking_number});
+    toast('Order marked as '+status,'📦');
+    closeModal();
+  }catch(e){toast('Could not update order','⚠️');}
+}
+
 function renderLibrary(){
   const wrap=document.getElementById('libraryList');if(!wrap)return;
   if(!currentUser){wrap.innerHTML='<div class="empty">Sign in to view your library.</div>';return;}
+  // Pull fresh purchase + shipping status from the server, then render
+  apiFetch('/api/purchases?user_id='+encodeURIComponent(currentUser.id)).then(rows=>{
+    if(rows&&rows.length){
+      const local=DB.get('purchases')||[];
+      const fresh=rows.map(r=>({
+        id:r.id,productId:r.product_id,userId:r.user_id,productTitle:r.product_title,
+        price:r.price,boughtAt:r.created_at,qty:r.qty||1,
+        variant:(()=>{try{return typeof r.variant==='string'?JSON.parse(r.variant):(r.variant||{});}catch(e){return {};}})(),
+        shipping:{name:r.shipping_name,address:r.shipping_address,city:r.shipping_city,state:r.shipping_state,zip:r.shipping_zip,country:r.shipping_country},
+        shipping_status:r.shipping_status,tracking_number:r.tracking_number
+      }));
+      const freshIds=new Set(fresh.map(f=>f.id));
+      const others=local.filter(l=>l.userId!==currentUser.id||!freshIds.has(l.id));
+      DB.set('purchases',[...others,...fresh]);
+    }
+    _renderLibraryLocal();
+  }).catch(()=>_renderLibraryLocal());
+}
+function _renderLibraryLocal(){
+  const wrap=document.getElementById('libraryList');if(!wrap)return;
   const purchases=DB.get('purchases')||[];
   const mine=purchases.filter(b=>b.userId===currentUser.id).reverse();
-  if(!mine.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">📚</div>No purchases yet. Browse the <a onclick="showPage(\'shop\',null)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Shop</a> to find courses, e-books, presets and more.</div>';return;}
+  if(!mine.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">📚</div>No purchases yet. Browse the <a onclick="showPage(\'shop\',null)" style="color:var(--gold);cursor:pointer;text-decoration:underline">Shop</a> to find courses, e-books, presets, physical goods and more.</div>';return;}
   const products=DB.get('products')||[];
   wrap.innerHTML=mine.map(pur=>{
     const p=products.find(x=>x.id===pur.productId);
     if(!p) return `<div class="lib-card"><h3>${_esc(pur.productTitle||'Product')}</h3><div class="lib-meta">No longer available · paid $${pur.price}</div></div>`;
+    const isPhysical=p.product_kind==='physical'||p.type==='physical';
     const d=p.deliverables||{};
     let summary='';
-    if(p.type==='course') summary=(d.lessons||[]).length+' lessons';
+    if(isPhysical){
+      const statusLabel={pending:'Order placed',shipped:'Shipped',delivered:'Delivered'}[pur.shipping_status||'pending']||'Order placed';
+      summary=`<span style="color:var(--gold);font-weight:600">${statusLabel}</span>`;
+    }
+    else if(p.type==='course') summary=(d.lessons||[]).length+' lessons';
     else if(d.fileUrl) summary=[d.pages&&d.pages+' pages',d.count&&d.count+' items',d.format].filter(Boolean).join(' · ')||'Download ready';
     else summary='Delivery details available';
     const date=new Date(pur.boughtAt).toLocaleDateString();
@@ -4767,7 +4896,7 @@ function renderLibrary(){
         <div style="flex:1;min-width:0">
           <h3 style="overflow:hidden;text-overflow:ellipsis">${_esc(p.title)}</h3>
           <div class="lib-meta">${_esc(p.creatorName||'')} · ${summary} · bought ${date}</div>
-          <button class="btn btn-gold btn-sm" onclick="viewPurchase('${p.id}')">Open →</button>
+          <button class="btn btn-gold btn-sm" onclick="viewPurchase('${p.id}')">${isPhysical?'Track order →':'Open →'}</button>
         </div>
       </div>
     </div>`;
@@ -4925,12 +5054,39 @@ function openAddProductModal(){
     <div style="background:#0d0000;margin:-16px -16px 0;padding:0 16px 16px">
     <div style="padding-top:16px">
       <div style="margin-bottom:12px"><label style="${lbl}">Title</label><input id="prodTitle" placeholder="e.g. Lightroom Preset Pack" maxlength="60" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="margin-bottom:12px">
+        <label style="${lbl}">What are you selling?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button type="button" id="prodKindDigitalBtn" onclick="_setProdKind('digital')" style="padding:10px;border-radius:10px;border:1.5px solid var(--gold);background:rgba(212,168,67,.12);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">📥 Digital<div style="font-weight:400;font-size:.68rem;opacity:.75;margin-top:2px">Instant download</div></button>
+          <button type="button" id="prodKindPhysicalBtn" onclick="_setProdKind('physical')" style="padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer">📦 Physical<div style="font-weight:400;font-size:.68rem;opacity:.75;margin-top:2px">Ships to buyer</div></button>
+        </div>
+        <input type="hidden" id="prodKind" value="digital">
+      </div>
+      <div id="prodTypeRow" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
         <div><label style="${lbl}">Type</label><select id="prodType" onchange="_renderDeliverables()" style="${inp};cursor:pointer">
           <option value="course">🎓 Course</option><option value="ebook">📖 E-book</option>
           <option value="preset">Presets</option><option value="template">📄 Template</option><option value="audio">Audio</option>
         </select></div>
         <div><label style="${lbl}">Price (USD)</label><input id="prodPrice" type="number" min="2" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
+      </div>
+      <div id="prodPhysicalPriceRow" style="display:none;margin-bottom:12px"><label style="${lbl}">Price (USD)</label><input id="prodPricePhysical" type="number" min="2" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
+      <div id="prodPhysicalFields" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div><label style="${lbl}">Shipping fee (USD)</label><input id="prodShippingFee" type="number" min="0" step="0.01" placeholder="4.99 (0 = free shipping)" style="${inp}"></div>
+          <div><label style="${lbl}">Stock qty <span style="font-weight:400;color:#9ca3af;text-transform:none">— blank = unlimited</span></label><input id="prodStock" type="number" min="0" step="1" placeholder="e.g. 25" style="${inp}"></div>
+        </div>
+        <div style="margin-bottom:12px;padding:12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);border-radius:12px">
+          <div style="font-size:.72rem;color:rgba(212,168,67,.8);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">🎛 Variants — optional</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <input id="prodVar1Name" placeholder="e.g. Size" style="${inp}">
+            <input id="prodVar1Opts" placeholder="Options: S, M, L, XL" style="${inp}">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input id="prodVar2Name" placeholder="e.g. Color" style="${inp}">
+            <input id="prodVar2Opts" placeholder="Options: Black, White" style="${inp}">
+          </div>
+        </div>
+        <div style="margin-bottom:12px"><label style="${lbl}">What's included <span style="font-weight:400;color:#9ca3af;text-transform:none">— shown to buyers</span></label><textarea id="prodPhysicalIncludes" maxlength="300" placeholder="e.g. 1x hoodie, printed box, thank-you card" style="${inp};resize:vertical;min-height:56px"></textarea></div>
       </div>
       <div style="margin-bottom:12px"><label style="${lbl}">Category tag</label>
         <select id="prodCategory" style="${inp};cursor:pointer">
@@ -4950,7 +5106,7 @@ function openAddProductModal(){
         </div>
       </div>
       <div id="prodDeliverables" style="margin-bottom:14px;padding:14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);border-radius:12px"><div style="font-size:.72rem;color:rgba(212,168,67,.8);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px">📦 What buyers receive</div><div style="color:rgba(255,255,255,.35);font-size:.8rem">Loading…</div></div>
-      <div style="margin-bottom:14px">
+      <div id="prodSampleBlock" style="margin-bottom:14px">
         <label style="${lbl}">Free sample <span style="font-weight:400;color:#9ca3af;text-transform:none">— optional, shown to non-buyers</span></label>
         <input id="prodSampleFile" type="file" accept="image/*,video/*,.pdf" style="display:none" onchange="_handleSampleUpload(event)">
         <div id="prodSamplePreview" onclick="document.getElementById('prodSampleFile').click()" style="width:100%;min-height:80px;border:2px dashed rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(212,168,67,.8)'" onmouseout="this.style.borderColor='rgba(255,255,255,.18)'">
@@ -4961,7 +5117,7 @@ function openAddProductModal(){
           </div>
         </div>
       </div>
-      <div style="margin-bottom:14px">
+      <div id="prodPreviewBlock" style="margin-bottom:14px">
         <label style="${lbl}">Preview text <span style="font-weight:400;color:#9ca3af;text-transform:none">— teaser quote shown on card</span></label>
         <input id="prodPreview" maxlength="100" placeholder="e.g. The first chapter is free..." style="${inp};border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff">
       </div>
@@ -4969,7 +5125,25 @@ function openAddProductModal(){
     </div>`;
   openModal('addProduct', html);
   document.getElementById('modalContent').style.background='#0d0000';
-  setTimeout(()=>{_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
+  setTimeout(()=>{_setProdKind('digital');_renderDeliverables();const t=document.getElementById('prodTitle');if(t)t.focus();},60);
+}
+
+function _setProdKind(kind){
+  const kindInput=document.getElementById('prodKind');if(!kindInput)return;
+  kindInput.value=kind;
+  const digitalBtn=document.getElementById('prodKindDigitalBtn'),physicalBtn=document.getElementById('prodKindPhysicalBtn');
+  const activeStyle='border:1.5px solid var(--gold);background:rgba(212,168,67,.12);color:var(--gold)';
+  const inactiveStyle='border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:rgba(255,255,255,.7)';
+  if(digitalBtn)digitalBtn.style.cssText='padding:10px;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;'+(kind==='digital'?activeStyle:inactiveStyle);
+  if(physicalBtn)physicalBtn.style.cssText='padding:10px;border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;'+(kind==='physical'?activeStyle:inactiveStyle);
+  const show=(id,on)=>{const el=document.getElementById(id);if(el)el.style.display=on?'':'none';};
+  const isPhysical=kind==='physical';
+  show('prodTypeRow',!isPhysical);
+  show('prodPhysicalPriceRow',isPhysical);
+  show('prodPhysicalFields',isPhysical);
+  show('prodDeliverables',!isPhysical);
+  show('prodSampleBlock',!isPhysical);
+  if(isPhysical)_renderDeliverables();
 }
 
 // Style for consistent inputs across .fg (textarea was inconsistent before)
@@ -5106,9 +5280,56 @@ function _isUrl(s){
 
 async function addProduct(){
   if(!currentUser) return;
+  const kind=(document.getElementById('prodKind')||{}).value||'digital';
   const title=_val('prodTitle');
-  const type=(document.getElementById('prodType')||{}).value||'ebook';
   const desc=_val('prodDesc');
+
+  if(kind==='physical'){
+    const price=parseFloat((document.getElementById('prodPricePhysical')||{}).value||'0');
+    if(!title||!desc||!price||price<2){toast('Fill in title, description and price (min $2)','⚠️');return;}
+    const shippingFee=parseFloat((document.getElementById('prodShippingFee')||{}).value||'0')||0;
+    const stockRaw=(document.getElementById('prodStock')||{}).value;
+    const stock=stockRaw===''||stockRaw==null?null:Math.max(0,parseInt(stockRaw,10)||0);
+    const variants=[];
+    const v1n=_val('prodVar1Name'),v1o=_val('prodVar1Opts');
+    const v2n=_val('prodVar2Name'),v2o=_val('prodVar2Opts');
+    if(v1n&&v1o) variants.push({name:v1n,options:v1o.split(',').map(s=>s.trim()).filter(Boolean)});
+    if(v2n&&v2o) variants.push({name:v2n,options:v2o.split(',').map(s=>s.trim()).filter(Boolean)});
+    const includesText=_val('prodPhysicalIncludes');
+    const includes=includesText?includesText.split('\n').map(s=>s.trim()).filter(Boolean):[];
+    const cover=_pendingCoverPublicUrl||_pendingCover||currentUser.cover||'';
+    const previewText=(document.getElementById('prodPreview')||{}).value?.trim()||'';
+    const productId='pr'+Date.now();
+    const newProd={
+      id:productId,creatorId:currentUser.id,creator_id:currentUser.id,
+      creatorName:currentUser.name,creator_name:currentUser.name,
+      creatorAvatar:currentUser.avatar||'',creator_avatar:currentUser.avatar||'',
+      title,type:'physical',desc,description:desc,price,cover,sales:0,emoji:'📦',
+      deliverables:{},includes,preview:previewText,
+      category:(document.getElementById('prodCategory')||{}).value||'',
+      verified:currentUser.verified||false,creatorSubs:currentUser.subs_count||0,
+      product_kind:'physical',shipping_fee:shippingFee,stock,variants
+    };
+    try{
+      const saved=await apiFetch('/api/products','POST',{
+        id:productId,creator_id:currentUser.id,creator_name:currentUser.name,
+        creator_avatar:currentUser.avatar||'',title,type:'physical',description:desc,price,
+        cover_url:cover,emoji:'📦',deliverables:JSON.stringify({includes}),
+        preview:previewText,category:(document.getElementById('prodCategory')||{}).value||'',
+        product_kind:'physical',shipping_fee:shippingFee,stock,variants
+      });
+      if(saved?.id) newProd.id=saved.id;
+    }catch(e){console.warn('product save to D1 failed:',e);}
+    const products=DB.get('products')||[];
+    products.unshift(newProd);
+    DB.set('products',products);
+    _pendingCover='';_pendingCoverFile=null;_pendingCoverPublicUrl='';
+    closeModal();
+    toast('Product added to shop! 🛒','');renderCreatorProducts();renderShop();
+    return;
+  }
+
+  const type=(document.getElementById('prodType')||{}).value||'ebook';
   const price=parseFloat((document.getElementById('prodPrice')||{}).value||'0');
   if(!title||!desc||!price||price<2){toast('Fill in title, description and price (min $2)','⚠️');return;}
 
@@ -5582,15 +5803,22 @@ async function stripeDoCharge(){
       const tc=document.getElementById('tcount-'+m.post_id);
       if(tc) tc.textContent=Number(tc.textContent||0)+1;
     } else if(m.plan==='purchase'){
-      const purchases=DB.get('purchases')||[];
-      purchases.push({id:'pur_'+Date.now(),productId:m.product_id,userId:currentUser.id,productTitle:m.product_title,price:amt,boughtAt:new Date().toISOString()});
-      DB.set('purchases',purchases);
       const products=DB.get('products')||[];
       const prod=products.find(x=>x.id===m.product_id);
+      const isPhysical=prod&&(prod.product_kind==='physical'||prod.type==='physical');
+      const purchases=DB.get('purchases')||[];
+      purchases.push({id:'pur_'+Date.now(),productId:m.product_id,userId:currentUser.id,productTitle:m.product_title,price:amt,boughtAt:new Date().toISOString(),qty:m.qty||1,variant:m.variant||{},shipping:m.shipping||null,shipping_status:isPhysical?'pending':null});
+      DB.set('purchases',purchases);
       if(prod){prod.sales=(prod.sales||0)+1;DB.set('products',products);}
-      toast('Purchase complete!','✅');
-      renderShop();
-      setTimeout(()=>viewPurchase(m.product_id),400);
+      if(isPhysical){
+        toast('Order placed! You\'ll get shipping updates in your Library.','✅');
+        renderShop();
+        setTimeout(()=>showPage('library',null),400);
+      } else {
+        toast('Purchase complete!','✅');
+        renderShop();
+        setTimeout(()=>viewPurchase(m.product_id),400);
+      }
     } else {
       // Update user.subscriptions string array (for isSubscribed check)
       const userSubs=currentUser.subscriptions||[];
@@ -5658,30 +5886,95 @@ function buyProduct(id){
   if(!p){toast('Product not found','⚠️');return;}
   const purchases=DB.get('purchases')||[];
   if(purchases.some(b=>(b.productId===id||b.product_id===id)&&(b.userId===currentUser.id||b.user_id===currentUser.id))){viewPurchase(id);return;}
-  // Show payment method choice
-  const html=`<div style="text-align:center;margin-bottom:16px"><div style="font-size:1.5rem">${p.emoji||'📦'}</div><div style="font-weight:700;margin:6px 0">${p.title}</div><div style="color:var(--gold);font-weight:700;font-size:1.1rem">$${Number(p.price).toFixed(2)}</div></div>
+  const isPhysical=p.product_kind==='physical'||p.type==='physical';
+  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
+  if(isPhysical&&stockNum!==null&&stockNum<=0){toast('Sorry, this item is sold out','⚠️');return;}
+  if(isPhysical){openShippingModal(p);return;}
+  _openPayChoice(p,{qty:1,variant:{},shipping:null,shippingFee:0});
+}
+
+// Collect shipping address + variant + quantity for physical products, then continue to payment
+function openShippingModal(p){
+  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
+  const maxQty=stockNum!==null?Math.max(1,stockNum):99;
+  const variants=p.variants||[];
+  const variantHtml=variants.map((v,i)=>`
+    <div class="fg"><label>${_esc(v.name)}</label>
+      <select id="shipVar${i}" data-vname="${_esc(v.name)}">
+        ${(v.options||[]).map(o=>`<option value="${_esc(o)}">${_esc(o)}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  const html=`
+    <h2 style="font-family:'Fraunces',serif;font-weight:300;font-size:1.3rem;margin:0 0 4px">🚚 Shipping details</h2>
+    <div style="color:var(--muted);font-size:.82rem;margin-bottom:16px">${_esc(p.title)}</div>
+    ${variantHtml}
+    <div class="add-prod-grid">
+      <div class="fg"><label>Quantity</label><input id="shipQty" type="number" min="1" max="${maxQty}" value="1"></div>
+      <div class="fg"><label>Full name</label><input id="shipName" placeholder="Jane Doe" value="${_esc(currentUser.name||'')}"></div>
+    </div>
+    <div class="fg"><label>Street address</label><input id="shipAddress" placeholder="123 Main St, Apt 4"></div>
+    <div class="add-prod-grid">
+      <div class="fg"><label>City</label><input id="shipCity" placeholder="City"></div>
+      <div class="fg"><label>State / Province</label><input id="shipState" placeholder="State"></div>
+    </div>
+    <div class="add-prod-grid">
+      <div class="fg"><label>ZIP / Postal code</label><input id="shipZip" placeholder="ZIP"></div>
+      <div class="fg"><label>Country</label><input id="shipCountry" placeholder="Country"></div>
+    </div>
+    <div id="shipErr" style="color:var(--rose);font-size:.8rem;margin-bottom:8px"></div>
+    <button class="modal-btn" onclick="_confirmShipping('${p.id}')">Continue to payment →</button>`;
+  openModal('shipping', html);
+}
+function _confirmShipping(productId){
+  const products=DB.get('products')||[],p=products.find(x=>x.id===productId);
+  if(!p)return;
+  const err=document.getElementById('shipErr');
+  const name=_val('shipName'),address=_val('shipAddress'),city=_val('shipCity'),state=_val('shipState'),zip=_val('shipZip'),country=_val('shipCountry');
+  if(!name||!address||!city||!zip||!country){if(err)err.textContent='Please fill in all required shipping fields.';return;}
+  const qty=Math.max(1,parseInt(_val('shipQty'))||1);
+  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
+  if(stockNum!==null&&qty>stockNum){if(err)err.textContent='Only '+stockNum+' left in stock.';return;}
+  const variant={};
+  (p.variants||[]).forEach((v,i)=>{const el=document.getElementById('shipVar'+i);if(el)variant[v.name]=el.value;});
+  closeModal();
+  _openPayChoice(p,{qty,variant,shipping:{name,address,city,state,zip,country},shippingFee:Number(p.shipping_fee||0)});
+}
+
+function _openPayChoice(p,order){
+  const id=p.id;
+  const total=(parseFloat(p.price)||0)*order.qty+(order.shippingFee||0);
+  const isPhysical=!!order.shipping;
+  const meta={
+    plan:'purchase',creator_id:p.creatorId||p.creator_id||p.creator||'',creator_name:p.creatorName||p.creator_name||'',
+    product_id:id,product_title:p.title,price_usd:total,
+    qty:order.qty,variant:order.variant||{},shipping:order.shipping||null
+  };
+  const orderSummary=isPhysical?`<div style="font-size:.76rem;color:var(--muted);margin-top:4px">${order.qty>1?order.qty+' × ':''}$${Number(p.price).toFixed(2)}${order.shippingFee?' + $'+order.shippingFee.toFixed(2)+' shipping':''}</div>`:'';
+  const html=`<div style="text-align:center;margin-bottom:16px"><div style="font-size:1.5rem">${p.emoji||'📦'}</div><div style="font-weight:700;margin:6px 0">${p.title}</div><div style="color:var(--gold);font-weight:700;font-size:1.1rem">$${total.toFixed(2)}</div>${orderSummary}</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <button type="button" onclick="closeModal();openStripeModal('Buy · ${p.title}','${p.desc||''}',${parseFloat(p.price)||0},{plan:'purchase',creator_id:'${p.creatorId||p.creator_id||p.creator||''}',creator_name:'${p.creatorName||p.creator_name||''}',product_id:'${id}',product_title:'${p.title}',price_usd:${parseFloat(p.price)||0}})"
+    <button type="button" onclick='closeModal();openStripeModal("Buy · ${(p.title||'').replace(/"/g,'')}","${(p.desc||'').replace(/"/g,'')}",${total},${JSON.stringify(meta)})'
       style="padding:16px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
       <span style="font-size:1.5rem">💳</span>Card
     </button>
-    <button type="button" onclick="closeModal();_paypalBuy('${id}',${parseFloat(p.price)||0},'${p.title}',currentUser)"
+    <button type="button" onclick='closeModal();_paypalBuy("${id}",${total},"${(p.title||'').replace(/"/g,'')}",currentUser,${JSON.stringify(order)})'
       style="padding:16px;background:#0070ba;color:#fff;border:none;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
       <span style="font-size:1.5rem">🅿️</span>PayPal
     </button>
   </div>`;
   openModal('pay', html);
 }
-function _paypalBuy(id, price, title, user){
+
+function _paypalBuy(id, price, title, user, order){
+  order=order||{qty:1,variant:{},shipping:null};
   toast('Opening PayPal...','🅿️');
-  sessionStorage.setItem('pp_pending',JSON.stringify({type:'purchase',productId:id,productTitle:title,price,userId:user.id,userName:user.name}));
+  sessionStorage.setItem('pp_pending',JSON.stringify({type:'purchase',productId:id,productTitle:title,price,userId:user.id,userName:user.name,qty:order.qty,variant:order.variant,shipping:order.shipping}));
   fetch(WORKER_URL+'/api/paypal/order',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({amount:price,description:title,user_id:user.id,product_id:id,plan:'purchase',user_name:user.name})
-  }).then(r=>r.json()).then(order=>{
-    console.log('PayPal order response:',JSON.stringify(order));
-    if(!order.id){toast('PayPal error: '+(order.error||'no order id'),'⚠️');return;}
-    sessionStorage.setItem('pp_order_id',order.id);
-    window.location.href='https://www.paypal.com/checkoutnow?token='+order.id+'&useraction=commit';
+  }).then(r=>r.json()).then(order2=>{
+    console.log('PayPal order response:',JSON.stringify(order2));
+    if(!order2.id){toast('PayPal error: '+(order2.error||'no order id'),'⚠️');return;}
+    sessionStorage.setItem('pp_order_id',order2.id);
+    window.location.href='https://www.paypal.com/checkoutnow?token='+order2.id+'&useraction=commit';
   }).catch(e=>{console.error('PayPal fetch error:',e);toast('PayPal error, try again','⚠️');});
 }
 
