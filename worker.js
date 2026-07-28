@@ -846,6 +846,16 @@ var worker_default = {
       if (path === "/api/orders" && method === "GET") {
         const creatorId = url.searchParams.get("creator_id");
         if (!creatorId) return err("Missing creator_id");
+        for (const col of ["product_kind TEXT DEFAULT 'digital'","shipping_fee REAL DEFAULT 0","stock INTEGER","variants TEXT"]) {
+          await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
+        }
+        for (const col of [
+          "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_address TEXT",
+          "shipping_city TEXT","shipping_state TEXT","shipping_zip TEXT","shipping_country TEXT",
+          "shipping_status TEXT","tracking_number TEXT","shipping_fee REAL DEFAULT 0"
+        ]) {
+          await env.DB.prepare(`ALTER TABLE purchases ADD COLUMN ${col}`).run().catch(()=>{});
+        }
         const { results } = await env.DB.prepare(
           `SELECT pu.*, p.title as product_title, p.emoji, p.creator_id
            FROM purchases pu JOIN products p ON pu.product_id = p.id
@@ -866,6 +876,9 @@ var worker_default = {
         const purchaseId = path.split("/")[3];
         const { seller_id, status, tracking_number } = body;
         if (!seller_id || !status) return err("Missing fields");
+        for (const col of ["shipping_status TEXT","tracking_number TEXT"]) {
+          await env.DB.prepare(`ALTER TABLE purchases ADD COLUMN ${col}`).run().catch(()=>{});
+        }
         const pur = await env.DB.prepare(
           `SELECT pu.user_id, p.creator_id, p.title FROM purchases pu JOIN products p ON pu.product_id=p.id WHERE pu.id=?`
         ).bind(purchaseId).first();
