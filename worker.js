@@ -143,7 +143,7 @@ async function recordProductPurchase(env, { productId, userId, creatorAmount, pa
   }
   // Add columns if missing
   for (const col of [
-    "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_address TEXT",
+    "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_phone TEXT","shipping_address TEXT",
     "shipping_city TEXT","shipping_state TEXT","shipping_zip TEXT","shipping_country TEXT",
     "shipping_status TEXT","tracking_number TEXT","shipping_fee REAL DEFAULT 0"
   ]) {
@@ -158,12 +158,12 @@ async function recordProductPurchase(env, { productId, userId, creatorAmount, pa
   }
   const id = "pur_" + Date.now();
   await env.DB.prepare(
-    `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, qty, variant, shipping_name, shipping_address, shipping_city, shipping_state, shipping_zip, shipping_country, shipping_status, tracking_number, shipping_fee, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+    `INSERT INTO purchases (id, user_id, product_id, price, stripe_pi_id, qty, variant, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_state, shipping_zip, shipping_country, shipping_status, tracking_number, shipping_fee, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
   ).bind(
     id, userId, productId, finalCreatorAmount, payRef, qty,
     typeof body.variant === "string" ? body.variant : JSON.stringify(body.variant || {}),
-    shipping.name || "", shipping.address || "", shipping.city || "", shipping.state || "",
+    shipping.name || "", shipping.phone || "", shipping.address || "", shipping.city || "", shipping.state || "",
     shipping.zip || "", shipping.country || "",
     isPhysical ? "pending" : null, "",
     isPhysical ? shippingFee : 0
@@ -724,6 +724,7 @@ var worker_default = {
           creatorAvatar:p.creator_avatar || '',
           desc:         p.desc || p.description || '',
           sales:        p.sales || p.sales_count || 0,
+          cover:        p.cover_url || p.cover || '',
           includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
           product_kind: p.product_kind || 'digital',
           shipping_fee: Number(p.shipping_fee || 0),
@@ -754,6 +755,13 @@ var worker_default = {
         if (!creator_id || !title || !price) return err("Missing fields");
         if (Number(price) < 5) return err("Minimum product price is $5.");
         const id = clientId || ("prod_" + Date.now());
+        // Enforce max 5 products per creator — only counts against the limit
+        // when this is a genuinely new product (not an edit/replace of an existing one)
+        const existing = clientId ? await env.DB.prepare("SELECT id FROM products WHERE id=?").bind(clientId).first().catch(()=>null) : null;
+        if (!existing) {
+          const countRow = await env.DB.prepare("SELECT COUNT(*) as c FROM products WHERE creator_id=?").bind(creator_id).first().catch(()=>({c:0}));
+          if ((countRow?.c || 0) >= 5) return err("You can list a maximum of 5 products. Delete one to add another.", 400);
+        }
         const finalDesc = description || desc || "";
         // Add columns if missing
         for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT","product_kind TEXT DEFAULT 'digital'","shipping_fee REAL DEFAULT 0","stock INTEGER","variants TEXT"]) {
@@ -802,6 +810,7 @@ var worker_default = {
         return json({
           ...prod,
           creatorId: prod.creator_id, creatorName: prod.creator_name||'', creatorAvatar: prod.creator_avatar||'',
+          cover: prod.cover_url || prod.cover || '',
           product_kind: prod.product_kind || 'digital',
           shipping_fee: Number(prod.shipping_fee || 0),
           stock: (prod.stock === null || prod.stock === undefined) ? null : Number(prod.stock),
@@ -850,7 +859,7 @@ var worker_default = {
           await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
         }
         for (const col of [
-          "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_address TEXT",
+          "qty INTEGER DEFAULT 1","variant TEXT","shipping_name TEXT","shipping_phone TEXT","shipping_address TEXT",
           "shipping_city TEXT","shipping_state TEXT","shipping_zip TEXT","shipping_country TEXT",
           "shipping_status TEXT","tracking_number TEXT","shipping_fee REAL DEFAULT 0"
         ]) {

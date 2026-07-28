@@ -4643,6 +4643,8 @@ async function deleteProduct(id, btn){
     DB.set('products',prods.filter(p=>p.id!==id));
     toast('Product deleted','🗑️');
     renderShop();
+    if(typeof renderCreatorProducts==='function')renderCreatorProducts();
+    if(typeof _renderProfileProducts==='function')_renderProfileProducts();
   }catch(e){toast('Could not delete: '+e.message,'⚠️');if(btn){btn.disabled=false;btn.textContent='Delete';}}
 }
 
@@ -4681,6 +4683,7 @@ function renderShopGrid(){
           creatorName:  p.creatorName  ?? p.creator_name ?? '',
           creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
           desc:         p.desc         ?? p.description ?? '',
+          cover:        p.cover        ?? p.cover_url ?? '',
           includes:     p.includes     ?? (p.deliverables ? JSON.parse(typeof p.deliverables==='string'?p.deliverables:'{}').lessons?.map(l=>l.title)||[] : []),
           sales:        p.sales        ?? p.sales_count ?? 0,
         }));
@@ -4798,7 +4801,7 @@ function _openOrderStatusModal(p,pur){
     ${pur.tracking_number?`<div style="background:var(--bg2);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:.82rem"><strong style="color:var(--text)">Tracking number:</strong> <span style="color:var(--gold)">${_esc(pur.tracking_number)}</span></div>`:''}
     <div style="background:var(--bg2);border-radius:10px;padding:12px;font-size:.8rem;color:var(--muted);line-height:1.6">
       <strong style="color:var(--text);display:block;margin-bottom:4px">Shipping to</strong>
-      ${_esc(shipping.name||'')}<br>${_esc(shipping.address||'')}<br>${_esc(shipping.city||'')}${shipping.state?', '+_esc(shipping.state):''} ${_esc(shipping.zip||'')}<br>${_esc(shipping.country||'')}
+      ${_esc(shipping.name||'')}<br>${shipping.phone?_esc(shipping.phone)+'<br>':''}${_esc(shipping.address||'')}<br>${_esc(shipping.city||'')}${shipping.state?', '+_esc(shipping.state):''} ${_esc(shipping.zip||'')}<br>${_esc(shipping.country||'')}
     </div>
     <div style="font-size:.7rem;color:var(--muted2);text-align:center;margin-top:14px">Questions about your order? Message the seller directly.</div>`;
   openModal('purchase', html);
@@ -4830,7 +4833,8 @@ function _orderRow(o){
       <span style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:100px;background:rgba(255,255,255,.06);color:${statusColor};text-transform:uppercase;letter-spacing:.04em">${_esc(status)}</span>
     </div>
     <div style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px">
-      ${_esc(o.shipping_name||'')}, ${_esc(o.shipping_address||'')}, ${_esc(o.shipping_city||'')}${o.shipping_state?', '+_esc(o.shipping_state):''} ${_esc(o.shipping_zip||'')}, ${_esc(o.shipping_country||'')}
+      ${_esc(o.shipping_name||'')}${o.shipping_phone?` · <a href="tel:${_esc(o.shipping_phone)}" style="color:var(--gold);text-decoration:none">${_esc(o.shipping_phone)}</a>`:''}<br>
+      ${_esc(o.shipping_address||'')}, ${_esc(o.shipping_city||'')}${o.shipping_state?', '+_esc(o.shipping_state):''} ${_esc(o.shipping_zip||'')}, ${_esc(o.shipping_country||'')}
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <input id="track_${o.id}" placeholder="Tracking number (optional)" value="${_esc(o.tracking_number||'')}" style="flex:1;min-width:140px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:.78rem;font-family:'DM Sans',sans-serif">
@@ -4860,7 +4864,7 @@ function renderLibrary(){
         id:r.id,productId:r.product_id,userId:r.user_id,productTitle:r.product_title,
         price:r.price,boughtAt:r.created_at,qty:r.qty||1,
         variant:(()=>{try{return typeof r.variant==='string'?JSON.parse(r.variant):(r.variant||{});}catch(e){return {};}})(),
-        shipping:{name:r.shipping_name,address:r.shipping_address,city:r.shipping_city,state:r.shipping_state,zip:r.shipping_zip,country:r.shipping_country},
+        shipping:{name:r.shipping_name,phone:r.shipping_phone,address:r.shipping_address,city:r.shipping_city,state:r.shipping_state,zip:r.shipping_zip,country:r.shipping_country},
         shipping_status:r.shipping_status,tracking_number:r.tracking_number
       }));
       const freshIds=new Set(fresh.map(f=>f.id));
@@ -5038,6 +5042,8 @@ function renderCreatorProducts(){
 // Add Product form lives in a modal opened by the + Upload bottom-nav button
 function openAddProductModal(){
   if(!currentUser){openModal('login');return;}
+  const myProductCount=(DB.get('products')||[]).filter(p=>(p.creatorId||p.creator_id)===currentUser.id).length;
+  if(myProductCount>=5){toast('You can list a maximum of 5 products. Delete one to add another.','⚠️');return;}
   const inp="width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 13px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;box-sizing:border-box;transition:border-color .2s";
   const lbl="display:block;font-size:.72rem;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em";
   const html=`
@@ -5082,7 +5088,7 @@ function openAddProductModal(){
       </div>
       <div style="margin-bottom:12px"><label style="${lbl}">Category tag</label>
         <select id="prodCategory" style="${inp};cursor:pointer">
-  <option value="">— Select category —</option><option>Photography & Film</option><option>Visual Art & Design</option><option>Music & Audio</option><option>Writing & Blogging</option><option>Fashion & Style</option><option>Interior Design</option><option>Fitness & Training</option><option>Yoga & Meditation</option><option>Nutrition & Diet</option><option>Mental Health</option><option>Business & Entrepreneurship</option><option>Finance & Investing</option><option>Law & Legal</option><option>Real Estate</option><option>Marketing & Sales</option><option>Technology & Coding</option><option>Travel & Adventure</option><option>Cooking & Food</option><option>Parenting</option><option>Relationships</option><option>Spirituality</option><option>Beauty & Skincare</option><option>Language Learning</option><option>Science & Math</option><option>History & Culture</option><option>Online Courses</option><option>Comedy</option><option>Gaming</option><option>Podcasting</option><option>Sports & Athletics</option><option>Doctor</option><option>Personal Trainer</option><option>Therapist</option><option>Financial Advisor</option><option>Other</option>
+  <option value="">— Select category —</option><option>Photography & Film</option><option>Visual Art & Design</option><option>Music & Audio</option><option>Writing & Blogging</option><option>Fashion & Style</option><option>Interior Design</option><option>Fitness & Training</option><option>Yoga & Meditation</option><option>Nutrition & Diet</option><option>Mental Health</option><option>Business & Entrepreneurship</option><option>Finance & Investing</option><option>Law & Legal</option><option>Real Estate</option><option>Marketing & Sales</option><option>Technology & Coding</option><option>Travel & Adventure</option><option>Cooking & Food</option><option>Parenting</option><option>Relationships</option><option>Spirituality</option><option>Beauty & Skincare</option><option>Language Learning</option><option>Science & Math</option><option>History & Culture</option><option>Online Courses</option><option>Comedy</option><option>Gaming</option><option>Podcasting</option><option>Sports & Athletics</option><option>Other</option>
         </select>
       </div>
       <div style="margin-bottom:12px"><label style="${lbl}">Description</label><textarea id="prodDesc" maxlength="180" placeholder="One-line pitch: what do buyers get?" oninput="_charCount('prodDesc','prodDescCount',180)" style="${inp};resize:vertical;min-height:64px"></textarea><div style="font-size:.68rem;color:#9ca3af;text-align:right;margin-top:3px"><span id="prodDescCount">0</span>/180</div></div>
@@ -5260,6 +5266,8 @@ function _isUrl(s){
 
 async function addProduct(){
   if(!currentUser) return;
+  const myProductCount=(DB.get('products')||[]).filter(p=>(p.creatorId||p.creator_id)===currentUser.id).length;
+  if(myProductCount>=5){toast('You can list a maximum of 5 products. Delete one to add another.','⚠️');return;}
   const type=(document.getElementById('prodType')||{}).value||'ebook';
   const title=_val('prodTitle');
   const desc=_val('prodDesc');
@@ -5390,12 +5398,6 @@ async function addProduct(){
   _pendingCover='';_pendingCoverFile=null;_pendingCoverPublicUrl='';_prodSampleUrl='';
   closeModal();
   toast('Product added to shop! 🛒','');renderCreatorProducts();renderShop();
-}
-
-async function deleteProduct(id){
-  const products=DB.get('products')||[];
-  DB.set('products',products.filter(p=>p.id!==id));
-  toast('Product removed','🗑️');renderCreatorProducts();renderShop();
 }
 
 // DISCOVER
@@ -5888,6 +5890,7 @@ function openShippingModal(p){
       <div class="fg"><label>Quantity</label><input id="shipQty" type="number" min="1" max="${maxQty}" value="1"></div>
       <div class="fg"><label>Full name</label><input id="shipName" placeholder="Jane Doe" value="${_esc(currentUser.name||'')}"></div>
     </div>
+    <div class="fg"><label>Phone number</label><input id="shipPhone" type="tel" placeholder="+1 555 123 4567" value="${_esc(currentUser.phone||'')}"></div>
     <div class="fg"><label>Street address</label><input id="shipAddress" placeholder="123 Main St, Apt 4"></div>
     <div class="add-prod-grid">
       <div class="fg"><label>City</label><input id="shipCity" placeholder="City"></div>
@@ -5905,15 +5908,15 @@ function _confirmShipping(productId){
   const products=DB.get('products')||[],p=products.find(x=>x.id===productId);
   if(!p)return;
   const err=document.getElementById('shipErr');
-  const name=_val('shipName'),address=_val('shipAddress'),city=_val('shipCity'),state=_val('shipState'),zip=_val('shipZip'),country=_val('shipCountry');
-  if(!name||!address||!city||!zip||!country){if(err)err.textContent='Please fill in all required shipping fields.';return;}
+  const name=_val('shipName'),phone=_val('shipPhone'),address=_val('shipAddress'),city=_val('shipCity'),state=_val('shipState'),zip=_val('shipZip'),country=_val('shipCountry');
+  if(!name||!phone||!address||!city||!zip||!country){if(err)err.textContent='Please fill in all required shipping fields, including phone number.';return;}
   const qty=Math.max(1,parseInt(_val('shipQty'))||1);
   const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
   if(stockNum!==null&&qty>stockNum){if(err)err.textContent='Only '+stockNum+' left in stock.';return;}
   const variant={};
   (p.variants||[]).forEach((v,i)=>{const el=document.getElementById('shipVar'+i);if(el)variant[v.name]=el.value;});
   closeModal();
-  _openPayChoice(p,{qty,variant,shipping:{name,address,city,state,zip,country},shippingFee:Number(p.shipping_fee||0)});
+  _openPayChoice(p,{qty,variant,shipping:{name,phone,address,city,state,zip,country},shippingFee:Number(p.shipping_fee||0)});
 }
 
 function _openPayChoice(p,order){
