@@ -4431,7 +4431,7 @@ function shopCard(p){
       <span class="shop-type-badge" style="background:${typeColor};color:#0a0a0b">${typeLabel}</span>
       ${p.trending?`<span class="shop-momentum">🔥 Trending</span>`:''}
       ${p.bestseller&&!p.trending?`<span class="shop-momentum" style="background:rgba(212,168,67,.9);color:#0a0a0b">⭐ Bestseller</span>`:''}
-      <span class="shop-instant">${isPhysical?(soldOut?'🚫 Sold out':(stockNum!==null?'🚚 Ships · '+stockNum+' left':'🚚 Ships to you')):'📥 Instant download'}</span>
+      <span class="shop-instant">${isPhysical?(soldOut?'🚫 Sold out':'🚚 Ships to you'):'📥 Instant download'}</span>
     </div>
     <div class="shop-card-body">
       <div class="shop-card-title" onclick="openProductPage('${p.id}')" style="cursor:pointer">${p.title}</div>
@@ -4453,10 +4453,14 @@ function shopCard(p){
       ${p.preview?`<div style="background:var(--bg3);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5;font-style:italic">"${p.preview}"</div>`:''}
       <div class="shop-card-footer">
         <div>
-          <div class="shop-price">$${p.price}</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            ${p.original_price&&p.original_price>p.price?`<span style="font-size:.85rem;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--rose)">$${p.original_price}</span>`:''}
+            <div class="shop-price">$${p.price}</div>
+          </div>
+          ${isPhysical?`<div style="font-size:.72rem;color:var(--muted);margin-top:1px">${p.shipping_fee?'+ $'+Number(p.shipping_fee).toFixed(2)+' shipping':'Free shipping'}</div>`:''}
           <div class="shop-sales-count">${(p.sales||0).toLocaleString()} sold</div>
         </div>
-        <didisplay:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${isOwn
             ?`<button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.4);background:rgba(212,168,67,.1);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openBoostModal('product','${p.id}','${(p.title||"").replace(/'/g,"")}')">⚡ Boost</button>
              ${isPhysical?`<button style="font-size:.72rem;padding:5px 12px;border-radius:8px;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.1);color:#a78bfa;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;margin-bottom:4px" onclick="openProductOrders('${p.id}')">📦 Orders</button>`:''}
@@ -4515,8 +4519,11 @@ function openProductPage(id){
       <!-- Price & buy -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${p.price}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold${isPhysical&&p.shipping_fee?' · +$'+Number(p.shipping_fee).toFixed(2)+' shipping':''}${isPhysical&&stockNum!==null?' · '+(soldOut?'sold out':stockNum+' left'):''}</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            ${p.original_price&&p.original_price>p.price?`<span style="font-size:1.05rem;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--rose)">$${p.original_price}</span>`:''}
+            <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${p.price}</div>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold${isPhysical&&p.shipping_fee?' · +$'+Number(p.shipping_fee).toFixed(2)+' shipping':''}${isPhysical&&soldOut?' · sold out':''}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           ${isOwn
@@ -5069,6 +5076,7 @@ function openAddProductModal(){
         <div><label style="${lbl}">Price (USD)</label><input id="prodPrice" type="number" min="2" step="0.01" placeholder="29" style="${inp}" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></div>
       </div>
       <div id="prodPhysicalFields" style="display:none">
+        <div style="margin-bottom:12px"><label style="${lbl}">Original price (USD) <span style="font-weight:400;color:#9ca3af;text-transform:none">— optional, shown crossed out to highlight your sale price</span></label><input id="prodOriginalPrice" type="number" min="0" step="0.01" placeholder="e.g. 100 (leave blank for no discount)" style="${inp}"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
           <div><label style="${lbl}">Shipping fee (USD)</label><input id="prodShippingFee" type="number" min="0" step="0.01" placeholder="4.99 (0 = free shipping)" style="${inp}"></div>
           <div><label style="${lbl}">Stock qty <span style="font-weight:400;color:#9ca3af;text-transform:none">— blank = unlimited</span></label><input id="prodStock" type="number" min="0" step="1" placeholder="e.g. 25" style="${inp}"></div>
@@ -5278,6 +5286,8 @@ async function addProduct(){
     const shippingFee=parseFloat((document.getElementById('prodShippingFee')||{}).value||'0')||0;
     const stockRaw=(document.getElementById('prodStock')||{}).value;
     const stock=stockRaw===''||stockRaw==null?null:Math.max(0,parseInt(stockRaw,10)||0);
+    const origPriceRaw=(document.getElementById('prodOriginalPrice')||{}).value;
+    const originalPrice=(origPriceRaw!==''&&origPriceRaw!=null&&parseFloat(origPriceRaw)>price)?parseFloat(origPriceRaw):null;
     const variants=[];
     const v1n=_val('prodVar1Name'),v1o=_val('prodVar1Opts');
     const v2n=_val('prodVar2Name'),v2o=_val('prodVar2Opts');
@@ -5292,7 +5302,7 @@ async function addProduct(){
       id:productId,creatorId:currentUser.id,creator_id:currentUser.id,
       creatorName:currentUser.name,creator_name:currentUser.name,
       creatorAvatar:currentUser.avatar||'',creator_avatar:currentUser.avatar||'',
-      title,type:'physical',desc,description:desc,price,cover,sales:0,emoji:'📦',
+      title,type:'physical',desc,description:desc,price,original_price:originalPrice,cover,sales:0,emoji:'📦',
       deliverables:{},includes,preview:previewText,
       category:(document.getElementById('prodCategory')||{}).value||'',
       verified:currentUser.verified||false,creatorSubs:currentUser.subs_count||0,
@@ -5301,7 +5311,7 @@ async function addProduct(){
     try{
       const saved=await apiFetch('/api/products','POST',{
         id:productId,creator_id:currentUser.id,creator_name:currentUser.name,
-        creator_avatar:currentUser.avatar||'',title,type:'physical',description:desc,price,
+        creator_avatar:currentUser.avatar||'',title,type:'physical',description:desc,price,original_price:originalPrice,
         cover_url:cover,emoji:'📦',deliverables:JSON.stringify({includes}),
         preview:previewText,category:(document.getElementById('prodCategory')||{}).value||'',
         product_kind:'physical',shipping_fee:shippingFee,stock,variants

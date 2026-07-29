@@ -728,6 +728,7 @@ var worker_default = {
           includes:     p.deliverables ? (() => { try { const d=JSON.parse(p.deliverables); return d.lessons?.map(l=>l.title)||d.includes||[]; } catch(e){ return []; } })() : [],
           product_kind: p.product_kind || 'digital',
           shipping_fee: Number(p.shipping_fee || 0),
+          original_price: (p.original_price === null || p.original_price === undefined || p.original_price === '') ? null : Number(p.original_price),
           stock:        (p.stock === null || p.stock === undefined) ? null : Number(p.stock),
           variants:     (() => { try { return JSON.parse(p.variants || '[]'); } catch(e){ return []; } })(),
         }));
@@ -752,6 +753,7 @@ var worker_default = {
         const shipping_fee = product_kind === "physical" ? (Math.round(Number(body.shipping_fee || 0) * 100) / 100) : 0;
         const stock = (product_kind === "physical" && body.stock !== "" && body.stock != null) ? parseInt(body.stock, 10) : null;
         const variants = product_kind === "physical" ? (typeof body.variants === "string" ? body.variants : JSON.stringify(body.variants || [])) : "[]";
+        const original_price = (body.original_price !== "" && body.original_price != null && Number(body.original_price) > Number(price)) ? Math.round(Number(body.original_price) * 100) / 100 : null;
         if (!creator_id || !title || !price) return err("Missing fields");
         if (Number(price) < 5) return err("Minimum product price is $5.");
         const id = clientId || ("prod_" + Date.now());
@@ -764,13 +766,13 @@ var worker_default = {
         }
         const finalDesc = description || desc || "";
         // Add columns if missing
-        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT","product_kind TEXT DEFAULT 'digital'","shipping_fee REAL DEFAULT 0","stock INTEGER","variants TEXT"]) {
+        for (const col of ["cover_url TEXT","sample_url TEXT","preview TEXT","creator_name TEXT","creator_avatar TEXT","description TEXT","category TEXT","product_kind TEXT DEFAULT 'digital'","shipping_fee REAL DEFAULT 0","stock INTEGER","variants TEXT","original_price REAL"]) {
           await env.DB.prepare(`ALTER TABLE products ADD COLUMN ${col}`).run().catch(()=>{});
         }
         await env.DB.prepare(
-          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, emoji, deliverables, cover_url, sample_url, preview, category, product_kind, shipping_fee, stock, variants, sales, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
-        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'', product_kind, shipping_fee, stock, variants).run();
+          `INSERT OR REPLACE INTO products (id, creator_id, creator_name, creator_avatar, title, desc, description, type, price, original_price, emoji, deliverables, cover_url, sample_url, preview, category, product_kind, shipping_fee, stock, variants, sales, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`
+        ).bind(id, creator_id, creator_name||'', creator_avatar||'', title, finalDesc, finalDesc, type||"digital", price, original_price, emoji||"📦", typeof deliverables==='string'?deliverables:JSON.stringify(deliverables||{}), cover_url||'', sample_url||'', preview||'', category||'', product_kind, shipping_fee, stock, variants).run();
         return json({ id, success: true });
       }
       if (path.match(/^\/api\/products\/[^\/]+\/analytics$/) && method === "GET") {
@@ -813,6 +815,7 @@ var worker_default = {
           cover: prod.cover_url || prod.cover || '',
           product_kind: prod.product_kind || 'digital',
           shipping_fee: Number(prod.shipping_fee || 0),
+          original_price: (prod.original_price === null || prod.original_price === undefined || prod.original_price === '') ? null : Number(prod.original_price),
           stock: (prod.stock === null || prod.stock === undefined) ? null : Number(prod.stock),
           variants
         });
