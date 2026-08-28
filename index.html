@@ -841,6 +841,13 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
       <div><div class="p-stat-n" id="profilePostsCount">0</div><div class="p-stat-l">posts</div></div>
     </div>
     <div id="profileSubCard"></div>
+    <div id="profileShopSection" style="display:none;margin-top:24px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px">
+        <div class="ds-title" style="margin:0">🛒 Shop</div>
+        <div style="font-size:.72rem;color:var(--muted)">No subscription needed — buy anytime</div>
+      </div>
+      <div id="profileShopGrid" class="shop-grid" style="margin-top:12px"></div>
+    </div>
     <div class="divider"></div>
     <div class="ds-title">Posts</div>
     <div id="profilePostsArea" style="margin-bottom:40px"></div>
@@ -1135,6 +1142,7 @@ if(!DB.get('posts')){DB.set('posts',[
 
 // NAV
 function showPage(page,tabEl){
+  document.body.style.overflow='';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById('page-'+page);if(el)el.classList.add('active');
   currentPage=page;
@@ -1641,22 +1649,6 @@ function showProfile(id){
   const btn=document.getElementById('profileSubBtn');btn.textContent=subbed?'Subscribed':'Subscribe';btn.style.opacity=subbed?'.6':'1';
   const msgBtn=document.getElementById('profileMsgBtn');if(msgBtn)msgBtn.style.display=(currentUser&&currentUser.id===id)?'none':'';
   const price=c.price||9;
-  // Build creator's products for the profile shop section
-  const allProds=DB.get('products')||[];
-  const creatorProds=allProds.filter(p=>p.creatorId===id);
-  const prodsHtml=creatorProds.length?`
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-weight:700;font-size:.85rem;margin-bottom:10px;color:var(--muted)">PRODUCTS</div>
-      ${creatorProds.map(p=>`
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:44px;height:44px;border-radius:8px;background:${p.cover?`url('${p.cover}') center/cover`:'var(--bg3)'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem">${p.cover?'':p.emoji||'📦'}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
-            <div style="font-size:.72rem;color:var(--muted)">$${p.price}</div>
-          </div>
-          <button class="btn btn-gold btn-sm" style="font-size:.72rem;padding:5px 12px;flex-shrink:0" onclick="buyProduct('${p.id}')">Buy</button>
-        </div>`).join('')}
-    </div>`:'';
   document.getElementById('profileSubCard').innerHTML=`<div class="sub-card">
     <div style="font-weight:700;font-size:1rem;margin-bottom:4px">Subscriber Access</div>
     <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:400;color:var(--gold);letter-spacing:-.03em;margin-bottom:14px">$${price}<span style="font-size:.85rem;color:var(--muted);font-family:'DM Sans',sans-serif">/month</span></div>
@@ -1664,17 +1656,43 @@ function showProfile(id){
     <div class="sub-feat">Direct messaging</div>
     <div class="sub-feat">Early access to new content</div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px;justify-content:center" onclick="subscribeCreator('${id}','${c.name}',${price})">${subbed?'Subscribed':'Subscribe for $'+price+'/mo'}</button>
-    ${prodsHtml}
   </div>`;
-  // Also fetch fresh products from Worker and refresh if needed
+  // Build creator's products for the profile shop section — reuses the same
+  // shopCard() component as the main Shop page, so it's a proper storefront
+  // rather than a cramped list, and it's never gated behind subscribing.
+  const renderProfileShop=(prods)=>{
+    const shopSection=document.getElementById('profileShopSection');
+    const shopGrid=document.getElementById('profileShopGrid');
+    if(!shopSection||!shopGrid)return;
+    if(!prods||!prods.length){shopSection.style.display='none';return;}
+    shopSection.style.display='';
+    shopGrid.innerHTML=prods.map(p=>shopCard({
+      ...p,
+      creatorId:id, creatorName:c.name, creatorAvatar:c.avatar,
+      creatorSubs:c.subs||0, verified:!!c.verified
+    })).join('');
+  };
+  const cachedProds=(DB.get('products')||[]).filter(p=>(p.creatorId||p.creator_id)===id);
+  renderProfileShop(cachedProds);
+  // Fetch fresh products from Worker, normalising snake_case fields the
+  // same way the main Shop page does, then merge into local cache.
   fetch(WORKER_URL+'/api/products?creator_id='+encodeURIComponent(id))
     .then(r=>r.json()).then(prods=>{
       if(!prods||!prods.length) return;
+      const normalised=prods.map(p=>({
+        ...p,
+        creatorId:    p.creatorId    ?? p.creator_id ?? '',
+        creatorName:  p.creatorName  ?? p.creator_name ?? '',
+        creatorAvatar:p.creatorAvatar?? p.creator_avatar ?? '',
+        desc:         p.desc         ?? p.description ?? '',
+        cover:        p.cover        ?? p.cover_url ?? '',
+        includes:     p.includes     ?? [],
+        sales:        p.sales        ?? p.sales_count ?? 0,
+      }));
       const all=DB.get('products')||[];
-      const ids=new Set(prods.map(p=>p.id));
-      DB.set('products',[...prods,...all.filter(p=>!ids.has(p.id))]);
-      // Refresh the sub card with fresh products
-      if(_profileContext&&_profileContext.id===id) showProfile(id);
+      const ids=new Set(normalised.map(p=>p.id));
+      DB.set('products',[...normalised,...all.filter(p=>!ids.has(p.id))]);
+      if(_profileContext&&_profileContext.id===id) renderProfileShop(normalised);
     }).catch(()=>{});
   // Show cached posts immediately, then fetch fresh from Worker
   const cached=_getPosts().filter(p=>p.creator===id);
