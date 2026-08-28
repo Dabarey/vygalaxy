@@ -29,8 +29,8 @@ async function stripeReq(env, path, method = "GET", params = null) {
 }
 __name(stripeReq, "stripeReq");
 async function getPayPalToken(env) {
-  const clientId = env.PAYPAL_CLIENT_ID || "AbjOkZiNZd83Or_YmzrSZ3QR6e5rdPFjtCPr_DdUCvlu5C9YjOe4EHOfVSuBcsrArWqauV2bBNdKNFvO";
-  const secret = env.PAYPAL_SK || "EJxNRKqalrsv38yCM6QiWq2KcLGun4tjxh6EpG37dvRpHXgqt06FrH55RkW0n4pGAP8Fb5UM-q4vrECa";
+  const clientId = env.PAYPAL_CLIENT_ID;
+  const secret = env.PAYPAL_SK;
   if (!clientId || !secret) throw new Error("PayPal credentials not set");
   const creds = btoa(clientId + ":" + secret);
   const res = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
@@ -1298,9 +1298,6 @@ var worker_default = {
           `INSERT INTO messages (id, from_id, to_id, from_name, text, media_url, media_type, price, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
         ).bind(id, from_id, to_id, sender?.name||from_name||'', text||'', media_url||'', media_type||'', Number(price)||0).run();
-        await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
-          .bind('notif_msg_'+Date.now(), to_id, '💬',
-            (sender?.name||from_name||'Someone')+': '+(text||'📎 Media').slice(0,60), 'just now').run().catch(()=>{});
         return json({ id, success: true });
       }
       if (path === "/api/kyc" && method === "POST") {
