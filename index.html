@@ -3308,6 +3308,11 @@ function renderDashboard(){
     .then(r=>r.json())
     .then(data=>{
       if(data.balance!==undefined){
+        // Cache the server figure so the payout modal and its validation use the
+        // same net-of-fee number instead of a stale localStorage value.
+        window._serverBalance=Number(data.balance);
+        window._serverEarned=Number(data.total_earned||0);
+        try{const cu=DB.get('user');if(cu){cu.balance=Number(data.balance);cu.earned=Number(data.total_earned||0);DB.set('user',cu);if(currentUser)currentUser.balance=cu.balance;}}catch(e){}
         const balEl=document.getElementById('dBal');
         if(balEl)balEl.textContent='$'+Number(data.balance).toFixed(2);
         const earnEl=document.getElementById('dEarned');
@@ -4011,11 +4016,22 @@ function _timeAgo(iso){
   if(s<604800) return Math.floor(s/86400)+'d ago';
   return new Date(iso).toLocaleDateString();
 }
-function requestPayout(){
+async function requestPayout(){
   if(!currentUser){openModal('login');return;}
   const u=DB.get('user');
-  const bal=u.balance||0;
-  if(bal<100){toast('You need at least $100 to request a payout','⚠️');return;}
+  // Always confirm against the server. The cached value is not authoritative
+  // and does not reflect the 29% platform fee or prior withdrawals.
+  let bal=Number(window._serverBalance!==undefined?window._serverBalance:(u.balance||0));
+  try{
+    const r=await fetch(WORKER_URL+'/api/payout/balance?creator_id='+encodeURIComponent(currentUser.id));
+    const d=await r.json();
+    if(d&&d.balance!==undefined){
+      bal=Number(d.balance);
+      window._serverBalance=bal;
+      u.balance=bal;DB.set('user',u);
+    }
+  }catch(e){console.warn('balance fetch failed',e);}
+  if(bal<100){toast('You need at least $100 to request a payout — you have $'+bal.toFixed(2),'⚠️');return;}
   // Pre-fill from previously saved KYC payout details if any
   const kycReq=(DB.get('kycRequests')||[]).find(r=>r.userEmail===u.email);
   const savedMethod=kycReq?.payoutMethod||'paypal';
@@ -4084,7 +4100,8 @@ function submitPayout(){
   const schedule=method==='paypal'?'within 24 hours':'21–28 business days';
   if(!amt||isNaN(amt)){toast('Enter a valid amount','⚠️');return;}
   if(amt<minAmt){toast('Minimum for '+(method==='paypal'?'PayPal':'bank transfer')+' is $'+minAmt,'⚠️');return;}
-  if(amt>(u.balance||0)){toast('Insufficient balance','⚠️');return;}
+  const _avail=Number(window._serverBalance!==undefined?window._serverBalance:(u.balance||0));
+  if(amt>_avail){toast('Insufficient balance — available $'+_avail.toFixed(2),'⚠️');return;}
   if(!dest){toast('Enter your '+(method==='paypal'?'PayPal email':'IBAN / account number'),'⚠️');return;}
   if(method==='paypal'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dest)){toast('That doesn\'t look like a valid email','⚠️');return;}
   const requests=DB.get('payoutRequests')||[];
