@@ -4282,9 +4282,24 @@ function renderAdminKyc(){
       const imgThumb=(url,label)=>{
         if(!url)return '';
         const p=proxyUrl(url);
-        return '<div style="display:inline-block;margin:3px;cursor:pointer;text-align:center" onclick="_kycLightbox(\''+p+'\',\''+label+'\')" title="Click to enlarge">'
-          +'<img src="'+p+'" alt="'+label+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border2);display:block" '
-          +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'" onerror="this.closest(\'div\').style.display=\'none\'">'
+        const direct=String(url).replace(/'/g,'%27');
+        // The old handler hid the thumbnail on any error, so a 403 from the
+        // proxy or a missing object looked identical to "no document uploaded".
+        // Fall back to the direct bucket URL, then show a visible broken state
+        // with a link, so the admin can tell the difference.
+        const onerr="if(!this.dataset.fb){this.dataset.fb=1;this.src='"+direct+"';}"
+          +"else{this.style.display='none';var w=this.parentNode;"
+          +"w.querySelector('.kyc-fail').style.display='block';}";
+        return '<div style="display:inline-block;margin:3px;text-align:center;vertical-align:top">'
+          +'<img src="'+p+'" alt="'+label+'" data-direct="'+direct+'" '
+          +'style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border2);display:block;cursor:pointer" '
+          +'onclick="_kycLightbox(this.src,\''+label+'\')" title="Click to enlarge" '
+          +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'" '
+          +'onerror="'+onerr+'">'
+          +'<a class="kyc-fail" href="'+direct+'" target="_blank" rel="noopener" '
+          +'style="display:none;width:64px;height:64px;border-radius:8px;border:2px dashed var(--rose);color:var(--rose);'
+          +'font-size:.55rem;line-height:1.2;align-items:center;justify-content:center;text-align:center;padding:4px;'
+          +'box-sizing:border-box;text-decoration:none">⚠️ can\'t load<br>open ↗</a>'
           +'<div style="font-size:.6rem;color:var(--muted);margin-top:2px">'+label+'</div>'
           +'</div>';
       };

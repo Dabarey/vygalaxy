@@ -1676,10 +1676,53 @@ var worker_default = {
       }
 
       if (path === "/api/admin/users" && method === "GET") {
-        const { results } = await env.DB.prepare(
-          `SELECT id, email, name, bio, avatar, category, price, role, kyc_status, verified, balance, earned, created_at FROM users ORDER BY created_at DESC`
-        ).all();
-        return json(results || []);
+        // users.balance is a legacy column: it is decremented on payout but was
+        // never credited by any earnings path, so it always read as 0 here.
+        // Derive the live figure from the earnings ledger instead, using the
+        // same net-of-fee rule as the creator dashboard.
+        await ensureEarnings(env);
+        let rows = [];
+        try {
+          const q = await env.DB.prepare(`
+            SELECT u.id, u.email, u.name, u.bio, u.avatar, u.category, u.price,
+                   u.role, u.kyc_status, u.verified, u.created_at,
+                   COALESCE(e.net, 0) AS earned,
+                   COALESCE(e.gross, 0) AS gross,
+                   MAX(0, COALESCE(e.net,0) - COALESCE(p.paid,0) - COALESCE(pr.paid,0)) AS balance
+            FROM users u
+            LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross
+                       FROM earnings GROUP BY creator_id) e ON e.creator_id = u.id
+            LEFT JOIN (SELECT creator_id, SUM(amount) paid FROM payouts
+                       WHERE COALESCE(status,'') NOT IN ('rejected','failed','cancelled')
+                       GROUP BY creator_id) p ON p.creator_id = u.id
+            LEFT JOIN (SELECT creator_id, SUM(amount) paid FROM payout_requests
+                       WHERE COALESCE(status,'') NOT IN ('rejected','failed','cancelled')
+                       GROUP BY creator_id) pr ON pr.creator_id = u.id
+            ORDER BY u.created_at DESC
+          `).all();
+          rows = q.results || [];
+        } catch (e) {
+          // payouts / payout_requests may not exist yet on a fresh database.
+          console.warn("admin users join failed, falling back:", e.message);
+          const q = await env.DB.prepare(`
+            SELECT u.id, u.email, u.name, u.bio, u.avatar, u.category, u.price,
+                   u.role, u.kyc_status, u.verified, u.created_at,
+                   COALESCE(e.net, 0) AS earned,
+                   COALESCE(e.gross, 0) AS gross,
+                   COALESCE(e.net, 0) AS balance
+            FROM users u
+            LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross
+                       FROM earnings GROUP BY creator_id) e ON e.creator_id = u.id
+            ORDER BY u.created_at DESC
+          `).all();
+          rows = q.results || [];
+        }
+        return json(rows.map(r => ({
+          ...r,
+          balance: Math.round(Number(r.balance || 0) * 100) / 100,
+          earned: Math.round(Number(r.earned || 0) * 100) / 100,
+          gross: Math.round(Number(r.gross || 0) * 100) / 100
+        })));
       }
       if (path === "/api/users/profile" && method === "PUT") {
         const { id, name, bio, avatar, cover, category, price, payout_method, payout_details } = body;
@@ -1991,15 +2034,20 @@ var worker_default = {
       // ── KYC doc viewer — admin only, proxies private R2 file ─────────────
       if (path === "/api/kyc/doc" && method === "GET") {
         const requestorId = url.searchParams.get("uid");
-        const key = url.searchParams.get("key"); // e.g. kyc/filename.jpg
+        let key = url.searchParams.get("key"); // e.g. kyc/filename.jpg
         if (!requestorId || !key) return err("Missing params");
+        if (!env.MEDIA) return err("R2 bucket not bound", 500);
         // Verify requestor is admin
         const requestor = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(requestorId).first();
-        if (!requestor || requestor.role !== 'admin') return err("Forbidden", 403);
-        // Sanitise key — must start with kyc/ and have no traversal
-        if (!key.startsWith('kyc/') || key.includes('..')) return err("Invalid key", 400);
+        if (!requestor) return err("Unknown requestor id: " + requestorId, 403);
+        if (requestor.role !== 'admin') return err("Forbidden — role is '" + (requestor.role || "none") + "', not admin", 403);
+        // Normalise: tolerate a full URL or a leading slash being passed through.
+        key = String(key).replace(/^https?:\/\/[^/]+\//, "").replace(/^\/+/, "");
+        if (key.includes("..")) return err("Invalid key", 400);
+        // Documents live under kyc/; certificates under certs/. Both are admin-only.
+        if (!/^(kyc|certs)\//.test(key)) return err("Invalid key prefix: " + key, 400);
         const obj = await env.MEDIA.get(key);
-        if (!obj) return err("Not found", 404);
+        if (!obj) return err("Object not found in R2: " + key, 404);
         const headers = {
           ...CORS,
           "Content-Type": obj.httpMetadata?.contentType || "image/jpeg",
