@@ -108,8 +108,114 @@ async function creditReferrer(env, referredUserId, amount, type) {
   } catch(e) { console.warn("creditReferrer failed:", e.message); }
 }
 
+// Platform takes 29%; the creator keeps 71%. Every write path that credits a
+// creator must use CREATOR_RATE, and every read path that re-derives a total
+// from raw rows must account for whether the stored column is gross or net.
+const PLATFORM_RATE = 0.29;
+const CREATOR_RATE = 1 - PLATFORM_RATE; // 0.71
+const netToCreator = (gross) => Math.round(Number(gross || 0) * CREATOR_RATE * 100) / 100;
+
+// ── Unified earnings ledger ──────────────────────────────────────────────
+// One row per real payment, for every revenue type. Keyed on source+reference
+// so a retry, a duplicate webhook, or two code paths handling the same charge
+// can't credit it twice. This is the single source of truth for the dashboard.
+async function ensureEarnings(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS earnings (
+    id TEXT PRIMARY KEY,
+    creator_id TEXT,
+    payer_id TEXT,
+    source TEXT,
+    ref TEXT,
+    gross REAL DEFAULT 0,
+    net REAL DEFAULT 0,
+    created_at TEXT
+  )`).run().catch(() => {});
+  await env.DB.prepare(
+    `CREATE INDEX IF NOT EXISTS idx_earnings_creator ON earnings (creator_id)`
+  ).run().catch(() => {});
+}
+
+// source: 'subscription' | 'tip' | 'sale' | 'ppv'
+async function recordEarning(env, { creatorId, payerId, source, ref, gross }) {
+  if (!creatorId || !source || !ref) return { skipped: "missing key" };
+  const g = Number(gross || 0);
+  if (!isFinite(g) || g <= 0) return { skipped: "no amount" };
+  await ensureEarnings(env);
+  const id = source + ":" + ref;
+  const res = await env.DB.prepare(
+    `INSERT OR IGNORE INTO earnings
+       (id, creator_id, payer_id, source, ref, gross, net, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+  ).bind(id, creatorId, payerId || "", source, String(ref), g, netToCreator(g)).run();
+  return { id, inserted: !!(res.meta && res.meta.changes) };
+}
+
+// Single earnings calculation, shared by /api/balance (dashboard card) and
+// /api/payout/balance (withdrawal screen). Two endpoints computing this
+// separately is how the withdrawal figure went stale.
+async function computeEarnings(env, creatorId) {
+  await ensureEarnings(env);
+  const led = await env.DB.prepare(
+    `SELECT source, COALESCE(SUM(gross),0) as gross, COALESCE(SUM(net),0) as net, COUNT(*) as n
+     FROM earnings WHERE creator_id=? GROUP BY source`
+  ).bind(creatorId).all().catch(() => null);
+
+  const by = { subscription:{gross:0,net:0,n:0}, tip:{gross:0,net:0,n:0},
+               sale:{gross:0,net:0,n:0}, ppv:{gross:0,net:0,n:0} };
+  let ledgerRows = 0;
+  for (const r of (led?.results || [])) {
+    if (!by[r.source]) by[r.source] = {gross:0,net:0,n:0};
+    by[r.source] = { gross:Number(r.gross||0), net:Number(r.net||0), n:Number(r.n||0) };
+    ledgerRows += Number(r.n || 0);
+  }
+
+  // Fallback for creators who earned before the ledger existed.
+  if (ledgerRows === 0) {
+    const t = await env.DB.prepare(
+      `SELECT COALESCE(SUM(amount),0) as total FROM tips WHERE creator_id=?`
+    ).bind(creatorId).first().catch(()=>null);
+    const sb = await env.DB.prepare(
+      `SELECT COALESCE(SUM(price),0) as total FROM subscriptions WHERE creator_id=? AND status='active'`
+    ).bind(creatorId).first().catch(()=>null);
+    const sl = await env.DB.prepare(
+      `SELECT COALESCE(SUM(pu.price),0) as total FROM purchases pu
+       LEFT JOIN products p ON pu.product_id = p.id WHERE p.creator_id=?`
+    ).bind(creatorId).first().catch(()=>null);
+    // tips.amount and purchases.price are stored NET; subscriptions.price is GROSS.
+    by.tip.net = Number(t?.total || 0);
+    by.sale.net = Number(sl?.total || 0);
+    by.subscription.gross = Number(sb?.total || 0);
+    by.subscription.net = netToCreator(by.subscription.gross);
+  }
+
+  const totalEarned = by.subscription.net + by.tip.net + by.sale.net + by.ppv.net;
+
+  let withdrawn = 0;
+  for (const tbl of ["payouts", "payout_requests"]) {
+    const r = await env.DB.prepare(
+      `SELECT COALESCE(SUM(amount),0) as total FROM ${tbl}
+       WHERE creator_id=? AND COALESCE(status,'') NOT IN ('rejected','failed','cancelled')`
+    ).bind(creatorId).first().catch(() => null);
+    if (r) withdrawn += Number(r.total || 0);
+  }
+
+  const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
+  return {
+    ledger_rows: ledgerRows,
+    total_earned: r2(totalEarned),
+    withdrawn: r2(withdrawn),
+    available: Math.max(0, r2(totalEarned - withdrawn)),
+    breakdown: {
+      subscription: { net: r2(by.subscription.net), gross: r2(by.subscription.gross), count: by.subscription.n },
+      tip:  { net: r2(by.tip.net),  count: by.tip.n },
+      sale: { net: r2(by.sale.net), count: by.sale.n },
+      ppv:  { net: r2(by.ppv.net),  count: by.ppv.n }
+    }
+  };
+}
+
 async function creditBalance(env, creatorId, amountUsd) {
-  const creatorEarns = Math.round(amountUsd * 0.71 * 100) / 100;
+  const creatorEarns = netToCreator(amountUsd);
   if (!creatorId || creatorEarns <= 0) return;
   await env.DB.prepare(`
     INSERT INTO balances (creator_id, balance, lifetime, updated_at)
@@ -154,7 +260,7 @@ async function recordProductPurchase(env, { productId, userId, creatorAmount, pa
   // Pass the flat shipping fee through to the creator in full (no platform cut on shipping)
   let finalCreatorAmount = Number(creatorAmount);
   if (isPhysical && shippingFee > 0) {
-    finalCreatorAmount = Math.round((finalCreatorAmount + shippingFee * 0.29) * 100) / 100;
+    finalCreatorAmount = Math.round((finalCreatorAmount + shippingFee * PLATFORM_RATE) * 100) / 100;
   }
   const id = "pur_" + Date.now();
   await env.DB.prepare(
@@ -212,9 +318,20 @@ var worker_default = {
     if (path === "/api/payout/balance" && method === "GET") {
       const creatorId = url.searchParams.get("creator_id");
       if (!creatorId) return err("Missing creator_id");
-      const bal = await env.DB.prepare("SELECT balance, lifetime FROM balances WHERE creator_id=?").bind(creatorId).first();
-      const history = await env.DB.prepare("SELECT * FROM payouts WHERE creator_id=? ORDER BY requested_at DESC LIMIT 20").bind(creatorId).all();
-      return json({ balance: bal?.balance||0, lifetime: bal?.lifetime||0, history: history.results||[] });
+      // This is the number on the withdrawal screen. It must come from the same
+      // earnings ledger as /api/balance — reading the legacy `balances` table
+      // here is what kept the dashboard stale.
+      const e = await computeEarnings(env, creatorId);
+      const history = await env.DB.prepare("SELECT * FROM payouts WHERE creator_id=? ORDER BY requested_at DESC LIMIT 20").bind(creatorId).all().catch(() => null);
+      return json({
+        balance: e.available,
+        available: e.available,
+        lifetime: e.total_earned,
+        withdrawn: e.withdrawn,
+        platform_fee_rate: PLATFORM_RATE,
+        breakdown: e.breakdown,
+        history: history?.results || []
+      });
     }
     if (path === "/api/payout/settings" && method === "GET") {
       const creatorId = url.searchParams.get("creator_id");
@@ -447,19 +564,37 @@ var worker_default = {
         }
         const capture = await paypalReq(env, "/v2/checkout/orders/" + order_id + "/capture", "POST", {});
         if (capture.status !== "COMPLETED") return err("Payment not completed: " + capture.status);
-        const creatorAmount = Math.round(Number(amount) * 0.71 * 100) / 100;
+        const creatorAmount = netToCreator(Number(amount));
+        // PPV unlocks arrive as plan:'tip' with post_id set to the message id.
+        // Tag them as 'ppv' and key on the message id so the later
+        // /api/messages/unlock call resolves to the same ledger row.
+        const ppvMsgId = body._ppv_msg_id || null;
+        const payRefPP = "paypal_" + order_id;
         if (plan === "tip" && post_id) {
           await env.DB.prepare(
             `INSERT INTO tips (id, post_id, creator_id, from_user_id, from_name, amount, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
           ).bind("tip_" + Date.now(), post_id, creator_id, user_id || "", user_name || "", creatorAmount).run();
           await env.DB.prepare(`UPDATE posts SET tips_count = tips_count + 1 WHERE id = ?`).bind(post_id).run();
         }
+        if (plan === "tip") {
+          // Note: no post_id requirement — direct tips used to be dropped.
+          await recordEarning(env, {
+            creatorId: creator_id, payerId: user_id,
+            source: ppvMsgId ? "ppv" : "tip",
+            ref: ppvMsgId || payRefPP,
+            gross: Number(amount)
+          });
+        }
         if (plan === "purchase" && product_id) {
           const purResult = await recordProductPurchase(env, {
             productId: product_id, userId: user_id, creatorAmount,
-            payRef: "paypal_" + order_id, body
+            payRef: payRefPP, body
           });
           if (purResult.error) return err(purResult.error, purResult.status || 400);
+          await recordEarning(env, {
+            creatorId: creator_id, payerId: user_id,
+            source: "sale", ref: payRefPP, gross: Number(amount)
+          });
         }
         // Credit creator balance for PayPal payments
         if (creator_id) await creditBalance(env, creator_id, Number(amount));
@@ -922,7 +1057,7 @@ var worker_default = {
         if (amountUsd < 0.5) return err("Minimum payment is $0.50.");
         if ((plan === "subscription" || plan === "purchase") && Number(body.original_price || price_usd) < 2) return err("Minimum price is $2.");
         const amountCents = Math.round(Number(amountUsd) * 100);
-        const creatorAmount = Math.round(originalPrice * 0.71 * 100) / 100;
+        const creatorAmount = netToCreator(originalPrice);
         // Get real email from D1 if not provided
         let resolvedEmail = user_email;
         if (!resolvedEmail && user_id) {
@@ -972,8 +1107,23 @@ var worker_default = {
               payRef: pi.id, body
             });
             if (purResult.error) return err(purResult.error, purResult.status || 400);
+            await recordEarning(env, {
+              creatorId: creator_id, payerId: user_id,
+              source: "sale", ref: pi.id, gross: originalPrice
+            });
           }
-          // Credit creator balance
+          if (plan === "tip") {
+            // No post_id requirement — direct tips were being dropped. PPV
+            // unlocks come through here too, tagged by _ppv_msg_id.
+            const ppvMsgId = body._ppv_msg_id || null;
+            await recordEarning(env, {
+              creatorId: creator_id, payerId: user_id,
+              source: ppvMsgId ? "ppv" : "tip",
+              ref: ppvMsgId || pi.id,
+              gross: originalPrice
+            });
+          }
+          // Legacy balances table — kept in sync but no longer read by the dashboard.
           if (creator_id) await creditBalance(env, creator_id, originalPrice);
           return json({ success: true, payment_intent_id: pi.id });
         } else {
@@ -1053,11 +1203,26 @@ var worker_default = {
             await env.DB.prepare(
               `UPDATE subscriptions SET status='active'${periodEnd ? ", period_end='" + periodEnd + "'" : ", period_end=datetime('now', '+1 month')"} WHERE stripe_sub_id=?`
             ).bind(subId).run();
-            // Credit creator — use stored price (original, before fee passthrough)
+            // Credit creator — use the amount actually invoiced by Stripe, not
+            // the price stored at signup, so price changes and proration are
+            // reflected. Falls back to the stored price if absent.
             const sub = await env.DB.prepare(
-              `SELECT creator_id, price FROM subscriptions WHERE stripe_sub_id=?`
+              `SELECT creator_id, user_id, price FROM subscriptions WHERE stripe_sub_id=?`
             ).bind(subId).first();
-            if (sub?.creator_id) await creditBalance(env, sub.creator_id, Number(sub.price));
+            if (sub?.creator_id) {
+              const invoiced = (data.amount_paid != null ? data.amount_paid / 100 : null);
+              const gross = invoiced != null && invoiced > 0 ? invoiced : Number(sub.price || 0);
+              const rec = await recordEarning(env, {
+                creatorId: sub.creator_id,
+                payerId: sub.user_id,
+                source: "subscription",
+                ref: data.id || subId,
+                gross
+              });
+              // Only touch the legacy balances table when this invoice was new,
+              // so a webhook retry can't double-credit.
+              if (rec.inserted) await creditBalance(env, sub.creator_id, gross);
+            }
           }
         }
         if (event.type === "invoice.payment_failed") {
@@ -1187,6 +1352,22 @@ var worker_default = {
         // Increment subs_count
         await env.DB.prepare("UPDATE users SET subs_count=COALESCE(subs_count,0)+1 WHERE id=?")
           .bind(creator_id).run().catch(()=>{});
+        // Record this first charge in the earnings ledger. Keyed on the Stripe
+        // subscription id so the webhook's first invoice doesn't add a second row.
+        try {
+          const s0 = await env.DB.prepare(
+            `SELECT id, price, stripe_sub_id FROM subscriptions
+             WHERE user_id=? AND creator_id=? ORDER BY created_at DESC LIMIT 1`
+          ).bind(user_id, creator_id).first();
+          if (s0) {
+            await recordEarning(env, {
+              creatorId: creator_id, payerId: user_id,
+              source: "subscription",
+              ref: "initial_" + (s0.stripe_sub_id || s0.id),
+              gross: Number(s0.price || 0)
+            });
+          }
+        } catch (e) { console.warn("seed subscription earning failed:", e.message); }
         // Notify creator
         await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)")
           .bind("notif_sub_"+Date.now(), creator_id, "⭐", (user_name||"Someone")+" subscribed to you!", "just now")
@@ -1224,24 +1405,28 @@ var worker_default = {
       if (path === "/api/balance" && method === "GET") {
         const userId = url.searchParams.get("user_id");
         if (!userId) return err("Missing user_id");
-        const tips = await env.DB.prepare(
-          `SELECT COALESCE(SUM(amount),0) as total FROM tips WHERE creator_id=?`
-        ).bind(userId).first();
-        const subs = await env.DB.prepare(
-          `SELECT COALESCE(SUM(price),0) as total, COUNT(*) as count FROM subscriptions WHERE creator_id=? AND status='active'`
-        ).bind(userId).first();
-        const sales = await env.DB.prepare(
-          `SELECT COALESCE(SUM(pu.price),0) as total FROM purchases pu
-           LEFT JOIN products p ON pu.product_id = p.id
-           WHERE p.creator_id=?`
-        ).bind(userId).first();
-        const totalEarned = Number(tips.total || 0) + Number(subs.total || 0) + Number(sales.total || 0);
+        const e = await computeEarnings(env, userId);
+        const subsCount = await env.DB.prepare(
+          `SELECT COUNT(*) as count FROM subscriptions WHERE creator_id=? AND status='active'`
+        ).bind(userId).first().catch(()=>null);
         return json({
-          balance: Math.round(totalEarned * 100) / 100,
-          total_earned: Math.round(totalEarned * 100) / 100,
-          subscriber_count: Number(subs.count || 0),
-          tips_total: Math.round(Number(tips.total || 0) * 100) / 100,
-          sales_total: Math.round(Number(sales.total || 0) * 100) / 100
+          balance: e.available,
+          available: e.available,
+          total_earned: e.total_earned,
+          withdrawn: e.withdrawn,
+          platform_fee_rate: PLATFORM_RATE,
+          ledger_rows: e.ledger_rows,
+          subscriber_count: Number(subsCount?.count || 0),
+          subs_total: e.breakdown.subscription.net,
+          subs_gross: e.breakdown.subscription.gross,
+          subs_payments: e.breakdown.subscription.count,
+          tips_total: e.breakdown.tip.net,
+          tips_count: e.breakdown.tip.count,
+          sales_total: e.breakdown.sale.net,
+          sales_count: e.breakdown.sale.count,
+          ppv_total: e.breakdown.ppv.net,
+          ppv_count: e.breakdown.ppv.count,
+          breakdown: e.breakdown
         });
       }
       if (path === "/api/notifications" && method === "GET") {
@@ -1288,29 +1473,22 @@ var worker_default = {
         if (!text && !media_url) return err("Missing text or media");
         const isPPV = Number(price) > 0 && !!media_url;
 
-        // Subscription gate — evaluated per direction so PPV can be held to a
-        // stricter rule than plain text.
-        const subRow = await env.DB.prepare(
-          `SELECT user_id, creator_id FROM subscriptions
-           WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?))
-             AND status='active' LIMIT 1`
-        ).bind(from_id, to_id, to_id, from_id).first();
-        if (!subRow) return err("Subscription required", 403);
-
         if (isPPV) {
-          // Only the creator may sell pay-to-view, and only to someone who is
-          // actively subscribed TO THEM. Without this, the symmetric text gate
-          // also lets a subscriber send priced media back at the creator.
-          const sellerIsCreator = await env.DB.prepare(
-            `SELECT 1 FROM subscriptions
-             WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1`
-          ).bind(to_id, from_id).first();
-          if (!sellerIsCreator) {
-            return err("Only the creator can send pay-to-view, and only to an active subscriber", 403);
-          }
+          // PPV is open: anyone may send pay-to-view to anyone, with no
+          // subscription required in either direction. Only the values are
+          // validated.
           const p = Number(price);
           if (!isFinite(p) || p < 1 || p > 500) return err("PPV price must be between $1 and $500", 400);
           if (!String(media_url).startsWith("https://")) return err("Invalid media URL", 400);
+        } else {
+          // Plain text messages still require an active subscription in either
+          // direction.
+          const subRow = await env.DB.prepare(
+            `SELECT 1 FROM subscriptions
+             WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?))
+               AND status='active' LIMIT 1`
+          ).bind(from_id, to_id, to_id, from_id).first();
+          if (!subRow) return err("Subscription required", 403);
         }
         // Ensure PPV columns exist. These are expected to fail with
         // "duplicate column name" once they're present — anything else is a
@@ -1782,6 +1960,10 @@ var worker_default = {
         await env.DB.prepare("CREATE TABLE IF NOT EXISTS msg_unlocks (message_id TEXT, user_id TEXT, unlocked_at TEXT, PRIMARY KEY(message_id,user_id))").run().catch(()=>{});
         const already = await env.DB.prepare("SELECT 1 FROM msg_unlocks WHERE message_id=? AND user_id=?").bind(message_id, user_id).first();
         if (already) return json({ ok:true, media_url:msg.media_url, media_type:msg.media_type, already:true });
+        await recordEarning(env, {
+          creatorId: msg.from_id, payerId: user_id,
+          source: "ppv", ref: message_id, gross: Number(msg.price)
+        });
         await creditBalance(env, msg.from_id, Number(msg.price));
         await env.DB.prepare("INSERT INTO msg_unlocks (message_id,user_id,unlocked_at) VALUES (?,?,datetime('now'))").bind(message_id, user_id).run();
         await env.DB.prepare("INSERT INTO notifications (id,user_id,icon,text,time) VALUES (?,?,?,?,?)").bind('notif_ppv_'+Date.now(), msg.from_id, '💰', 'Someone unlocked your pay-to-view for $'+Number(msg.price).toFixed(2), 'just now').run().catch(()=>{});

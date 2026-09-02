@@ -3116,19 +3116,6 @@ function openThread(userId,name){
       }
     }).catch(function(){}).finally(function(){_drawThread(userId,name);});
 }
-// Can the current user sell PPV to `otherId`? Only if `otherId` is subscribed
-// to ME (i.e. I'm the creator in that relationship). This is a UI convenience
-// only — the Worker enforces the same rule and is the real gate.
-function _canSendPpv(otherId){
-  if(!currentUser||!otherId)return false;
-  var subs=DB.get('subscriptions')||[];
-  return subs.some(function(s){
-    var sub=s.userId||s.user_id;
-    var cre=s.creatorId||s.creator_id;
-    var st=(s.status||'active');
-    return cre===currentUser.id&&sub===otherId&&st!=='cancelled'&&st!=='canceled';
-  });
-}
 function _drawThread(userId,name){
   var msgs=DB.get('messages')||[];
   msgs.forEach(function(m){if(m.to===currentUser.id&&m.from===userId)m.read=true;});
@@ -3176,9 +3163,7 @@ function _drawThread(userId,name){
     +(!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':'')
     +'</div>'
     +'<div class="msg-input-row" style="gap:6px">'
-    +(_canSendPpv(userId)
-      ?'<button id="msgPpvBtn" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button>'
-      :'')
+    +'<button id="msgPpvBtn" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button>'
     +'<input class="msg-input" id="msgInputBox" placeholder="Type a message...">'
     +'<button class="msg-send-btn" id="msgSendBtn">Send</button>'
     +'</div>';
@@ -3191,10 +3176,7 @@ function _drawThread(userId,name){
   var blockBtn=document.getElementById('msgBlockBtn');
   if(inp)inp.onkeydown=function(e){if(e.key==='Enter')sendMsg(userId,otherName);};
   if(sendBtn)sendBtn.onclick=function(){sendMsg(userId,otherName);};
-  if(ppvBtn)ppvBtn.onclick=function(){
-    if(!_canSendPpv(userId)){toast('Only creators can send PPV to their subscribers','🔒');return;}
-    _msgAttach(userId,otherName);
-  };
+  if(ppvBtn)ppvBtn.onclick=function(){_msgAttach(userId,otherName);};
   if(backBtn)backBtn.onclick=function(){_msgBack();};
   if(blockBtn)blockBtn.onclick=function(){_blockReportUser(userId,otherName);};
   // Wire PPV unlock buttons
@@ -6254,7 +6236,7 @@ async function _ppvSend(toId,toName){
     if(!res.ok){
       console.error('PPV send failed:',res.status,raw);
       if(res.status===403){
-        throw new Error('Not subscribed — a subscription must be active between you and this user before PPV can be sent.');
+        throw new Error(data.error||'Blocked by the server (403).');
       }
       throw new Error(data.error||('Send failed (HTTP '+res.status+')'));
     }
