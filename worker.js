@@ -2058,6 +2058,95 @@ var worker_default = {
       // ── KYC doc viewer — admin only, proxies private R2 file ─────────────
       // Diagnostic: reports what is stored for each KYC request and whether the
       // object actually exists in R2. Admin only.
+      // Build marker — lets you confirm which worker build is actually live.
+      // Import every paid Stripe invoice into the earnings ledger. Recurring
+      // renewals were never written to D1 by any code path, so Stripe is the
+      // only record of them. Idempotent: keyed on the Stripe invoice id, so
+      // running this repeatedly is safe and will not double-credit.
+      if (path === "/api/admin/sync-stripe" && method === "POST") {
+        const { admin_id, creator_id, dry_run } = body;
+        if (!admin_id) return err("Missing admin_id");
+        const who = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(admin_id).first();
+        if (!who || who.role !== "admin") return err("Forbidden", 403);
+        if (!env.STRIPE_SK) return err("STRIPE_SK not set on this Worker", 500);
+        await ensureEarnings(env);
+
+        const subsQ = creator_id
+          ? await env.DB.prepare(
+              `SELECT id, user_id, creator_id, stripe_sub_id, price FROM subscriptions
+               WHERE creator_id=? AND stripe_sub_id IS NOT NULL AND stripe_sub_id != ''`
+            ).bind(creator_id).all()
+          : await env.DB.prepare(
+              `SELECT id, user_id, creator_id, stripe_sub_id, price FROM subscriptions
+               WHERE stripe_sub_id IS NOT NULL AND stripe_sub_id != ''`
+            ).all();
+
+        const report = [];
+        let imported = 0, skipped = 0, invoicesSeen = 0;
+
+        for (const sub of (subsQ.results || [])) {
+          let startingAfter = null, page = 0, subImported = 0, subSeen = 0;
+          try {
+            // Paginate — a long-running subscription can exceed one page.
+            while (page < 20) {
+              const qs = new URLSearchParams({
+                subscription: sub.stripe_sub_id,
+                status: "paid",
+                limit: "100"
+              });
+              if (startingAfter) qs.set("starting_after", startingAfter);
+              const inv = await stripeReq(env, "/invoices?" + qs.toString(), "GET");
+              const list = inv.data || [];
+              for (const iv of list) {
+                subSeen++; invoicesSeen++;
+                const gross = (iv.amount_paid || 0) / 100;
+                if (gross <= 0) { skipped++; continue; }
+                if (dry_run) { skipped++; continue; }
+                const rec = await recordEarning(env, {
+                  creatorId: sub.creator_id,
+                  payerId: sub.user_id,
+                  source: "subscription",
+                  ref: iv.id,
+                  gross
+                });
+                if (rec.inserted) { imported++; subImported++; } else { skipped++; }
+              }
+              if (!inv.has_more || !list.length) break;
+              startingAfter = list[list.length - 1].id;
+              page++;
+            }
+            report.push({
+              sub_id: sub.stripe_sub_id, creator_id: sub.creator_id,
+              subscriber_id: sub.user_id, invoices_found: subSeen, imported: subImported
+            });
+          } catch (e) {
+            report.push({ sub_id: sub.stripe_sub_id, creator_id: sub.creator_id, error: e.message });
+          }
+        }
+
+        return json({
+          dry_run: !!dry_run,
+          subscriptions_checked: (subsQ.results || []).length,
+          invoices_seen: invoicesSeen,
+          imported, skipped, detail: report
+        });
+      }
+
+      if (path === "/api/version" && method === "GET") {
+        return json({
+          build: "earnings-ledger-v3",
+          deployed_features: [
+            "unified earnings ledger (subscription/tip/sale/ppv)",
+            "admin balances derived from ledger with legacy fallback",
+            "computeEarnings shared by /api/balance and /api/payout/balance",
+            "PPV open to all users",
+            "kyc doc proxy with explicit errors"
+          ],
+          platform_rate: PLATFORM_RATE,
+          time: new Date().toISOString()
+        });
+      }
+
       if (path === "/api/kyc/debug" && method === "GET") {
         const uid = url.searchParams.get("uid");
         if (!uid) return err("Missing uid");
