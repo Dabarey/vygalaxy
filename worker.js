@@ -379,21 +379,24 @@ var worker_default = {
     // ── File upload — handle before body parsing to preserve multipart stream
     if (path === "/api/upload" && method === "POST") {
       try {
+        if (!env.MEDIA) return err("R2 bucket not bound — add the MEDIA binding in Worker settings", 500);
         const formData = await request.formData();
         const file = formData.get("file");
-        const folder = (formData.get("folder") || "misc");
-        if (!file) return err("No file provided");
-        const originalName = (file.name || "file").replace(/[/\\/]/g, "_");
-        const ext = (originalName.split(".").pop() || "bin").toLowerCase();
+        const folder = String(formData.get("folder") || "misc").replace(/[^a-z0-9_-]/gi, "");
+        if (!file || typeof file.arrayBuffer !== "function") return err("No file provided");
+        if (file.size === 0) return err("Empty file");
+        const originalName = (file.name || "file").replace(/[/\\]/g, "_");
+        const ext = (originalName.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
         const safeName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
         const key = folder + "/" + safeName;
         const mimeType = file.type || "application/octet-stream";
         const arrayBuffer = await file.arrayBuffer();
         await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
         const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
-        return json({ url: publicUrl, key });
+        return json({ url: publicUrl, key, size: file.size });
       } catch(e) {
-        return err("Upload error: " + e.message, 500);
+        console.error("Upload error", e && e.stack);
+        return err("Upload error: " + (e && e.message ? e.message : String(e)), 500);
       }
     }
 
@@ -1283,14 +1286,46 @@ var worker_default = {
         const { from_id, to_id, text, from_name, media_url, media_type, price } = body;
         if (!from_id || !to_id) return err("Missing fields");
         if (!text && !media_url) return err("Missing text or media");
-        // Subscription gate
-        const subCheck = await env.DB.prepare(
-          "SELECT 1 FROM subscriptions WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?)) AND status='active' LIMIT 1"
+        const isPPV = Number(price) > 0 && !!media_url;
+
+        // Subscription gate — evaluated per direction so PPV can be held to a
+        // stricter rule than plain text.
+        const subRow = await env.DB.prepare(
+          `SELECT user_id, creator_id FROM subscriptions
+           WHERE ((user_id=? AND creator_id=?) OR (user_id=? AND creator_id=?))
+             AND status='active' LIMIT 1`
         ).bind(from_id, to_id, to_id, from_id).first();
-        if (!subCheck) return err("Subscription required", 403);
-        // Ensure PPV columns exist
+        if (!subRow) return err("Subscription required", 403);
+
+        if (isPPV) {
+          // Only the creator may sell pay-to-view, and only to someone who is
+          // actively subscribed TO THEM. Without this, the symmetric text gate
+          // also lets a subscriber send priced media back at the creator.
+          const sellerIsCreator = await env.DB.prepare(
+            `SELECT 1 FROM subscriptions
+             WHERE user_id=? AND creator_id=? AND status='active' LIMIT 1`
+          ).bind(to_id, from_id).first();
+          if (!sellerIsCreator) {
+            return err("Only the creator can send pay-to-view, and only to an active subscriber", 403);
+          }
+          const p = Number(price);
+          if (!isFinite(p) || p < 1 || p > 500) return err("PPV price must be between $1 and $500", 400);
+          if (!String(media_url).startsWith("https://")) return err("Invalid media URL", 400);
+        }
+        // Ensure PPV columns exist. These are expected to fail with
+        // "duplicate column name" once they're present — anything else is a
+        // real problem and must not be swallowed, or PPV silently loses its
+        // media_url and price and renders as a blank text bubble.
         for (const col of ["media_url TEXT DEFAULT ''","media_type TEXT DEFAULT ''","price REAL DEFAULT 0"]) {
-          await env.DB.prepare("ALTER TABLE messages ADD COLUMN "+col).run().catch(()=>{});
+          try {
+            await env.DB.prepare("ALTER TABLE messages ADD COLUMN "+col).run();
+          } catch (e) {
+            const m = String(e && e.message || e);
+            if (!/duplicate column/i.test(m)) {
+              console.error("messages ALTER failed:", col, m);
+              return err("Schema error on messages." + col.split(" ")[0] + ": " + m, 500);
+            }
+          }
         }
         const id = "msg_" + Date.now();
         const sender = await env.DB.prepare("SELECT name FROM users WHERE id=?").bind(from_id).first();

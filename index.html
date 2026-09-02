@@ -1909,13 +1909,32 @@ function _resizeToDataURL(file, maxW, maxH, quality){
 
 
 // Upload a Blob/File to R2 via Worker. Returns the public URL.
+// Cloudflare Workers reject request bodies over 100 MB outright, and the
+// connection is usually cut before any JSON error comes back. Cap below that
+// so we can show a real message instead of a mystery network failure.
+const R2_MAX_BYTES = 95 * 1024 * 1024;
+
 async function _uploadToR2(blob, folder, mimeType){
-  const mime=mimeType||(blob.type)||'image/jpeg';
-  const ext=mime.split('/')[1]
+  const mime=mimeType||(blob&&blob.type)||'image/jpeg';
+  // Guard: a mime with no "/" (some Android/iOS pickers return "") used to
+  // throw "Cannot read properties of undefined" here and surface as a
+  // generic upload failure.
+  const subtype=(String(mime).split('/')[1]||'jpg');
+  const ext=subtype
     .replace('jpeg','jpg')
     .replace('quicktime','mov')
     .replace('x-matroska','mkv')
-    .split('+')[0];
+    .split('+')[0]
+    .split(';')[0]
+    .replace(/[^a-z0-9]/gi,'')||'bin';
+
+  if(blob&&typeof blob.size==='number'){
+    if(blob.size===0) throw new Error('That file is empty — pick another.');
+    if(blob.size>R2_MAX_BYTES){
+      throw new Error('File is '+(blob.size/1048576).toFixed(0)+' MB — max is 95 MB. Trim the video or send a shorter clip.');
+    }
+  }
+
   const filename=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
   const fd=new FormData();
   // Always send as a File object with a simple flat filename (no slashes)
@@ -1923,14 +1942,26 @@ async function _uploadToR2(blob, folder, mimeType){
   fd.append('file', file, filename);
   fd.append('folder', folder||'misc');
   if(typeof currentUser!=='undefined'&&currentUser?.id) fd.append('user_id', currentUser.id);
-  const res=await fetch(WORKER_URL+'/api/upload',{method:'POST',body:fd});
+
+  let res;
+  try{
+    res=await fetch(WORKER_URL+'/api/upload',{method:'POST',body:fd});
+  }catch(netErr){
+    console.error('Upload network error:',netErr);
+    throw new Error('Network error during upload — check your connection and retry.');
+  }
+
   if(!res.ok){
     const txt=await res.text().catch(()=>'');
     console.error('Upload failed:',res.status,txt);
-    throw new Error('Upload failed: '+res.status);
+    // Surface the worker's actual error text instead of a bare status code.
+    let detail=txt;
+    try{ const j=JSON.parse(txt); detail=j.error||txt; }catch(e){}
+    if(res.status===413) detail='File too large for the server.';
+    throw new Error('Upload failed ('+res.status+'): '+(detail||'no detail returned'));
   }
   const data=await res.json();
-  if(!data.url) throw new Error('No URL returned');
+  if(!data.url) throw new Error('Upload succeeded but no URL was returned — check the MEDIA (R2) binding on the Worker.');
   return data.url;
 }
 
@@ -3085,6 +3116,19 @@ function openThread(userId,name){
       }
     }).catch(function(){}).finally(function(){_drawThread(userId,name);});
 }
+// Can the current user sell PPV to `otherId`? Only if `otherId` is subscribed
+// to ME (i.e. I'm the creator in that relationship). This is a UI convenience
+// only — the Worker enforces the same rule and is the real gate.
+function _canSendPpv(otherId){
+  if(!currentUser||!otherId)return false;
+  var subs=DB.get('subscriptions')||[];
+  return subs.some(function(s){
+    var sub=s.userId||s.user_id;
+    var cre=s.creatorId||s.creator_id;
+    var st=(s.status||'active');
+    return cre===currentUser.id&&sub===otherId&&st!=='cancelled'&&st!=='canceled';
+  });
+}
 function _drawThread(userId,name){
   var msgs=DB.get('messages')||[];
   msgs.forEach(function(m){if(m.to===currentUser.id&&m.from===userId)m.read=true;});
@@ -3132,7 +3176,9 @@ function _drawThread(userId,name){
     +(!thread.length?'<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px">Start the conversation</div>':'')
     +'</div>'
     +'<div class="msg-input-row" style="gap:6px">'
-    +'<button id="msgPpvBtn" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button>'
+    +(_canSendPpv(userId)
+      ?'<button id="msgPpvBtn" style="background:none;border:1px solid rgba(212,168,67,.35);border-radius:100px;padding:7px 11px;color:var(--gold);font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0">💰 PPV</button>'
+      :'')
     +'<input class="msg-input" id="msgInputBox" placeholder="Type a message...">'
     +'<button class="msg-send-btn" id="msgSendBtn">Send</button>'
     +'</div>';
@@ -3145,7 +3191,10 @@ function _drawThread(userId,name){
   var blockBtn=document.getElementById('msgBlockBtn');
   if(inp)inp.onkeydown=function(e){if(e.key==='Enter')sendMsg(userId,otherName);};
   if(sendBtn)sendBtn.onclick=function(){sendMsg(userId,otherName);};
-  if(ppvBtn)ppvBtn.onclick=function(){_msgAttach(userId,otherName);};
+  if(ppvBtn)ppvBtn.onclick=function(){
+    if(!_canSendPpv(userId)){toast('Only creators can send PPV to their subscribers','🔒');return;}
+    _msgAttach(userId,otherName);
+  };
   if(backBtn)backBtn.onclick=function(){_msgBack();};
   if(blockBtn)blockBtn.onclick=function(){_blockReportUser(userId,otherName);};
   // Wire PPV unlock buttons
@@ -6184,25 +6233,54 @@ async function _ppvSend(toId,toName){
   if(!window._ppvPending){if(errEl)errEl.textContent='Pick a photo or video first';return;}
   var btn=document.getElementById('ppvSendBtn');
   if(btn){btn.disabled=true;btn.textContent='Uploading...';}
+  // Keep a reference — window._ppvPending gets cleared on success, and the
+  // old code read .mediaType off it AFTER nulling it in some retry paths.
+  var pending=window._ppvPending;
+  var mediaType=pending.mediaType;
   try{
-    var mediaUrl=await _uploadToR2(window._ppvPending.file,'ppv',window._ppvPending.file.type);
+    var mediaUrl=await _uploadToR2(pending.file,'ppv',pending.file.type);
+    if(btn)btn.textContent='Sending...';
+
     var res=await fetch(WORKER_URL+'/api/messages',{method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({from_id:currentUser.id,to_id:toId,text:caption,
         from_name:currentUser.name,media_url:mediaUrl,
-        media_type:window._ppvPending.mediaType,price:price})});
-    var data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Failed');
+        media_type:mediaType,price:price})});
+
+    var raw=await res.text();
+    var data={};
+    try{ data=JSON.parse(raw); }catch(e){ data={error:raw||('HTTP '+res.status)}; }
+
+    if(!res.ok){
+      console.error('PPV send failed:',res.status,raw);
+      if(res.status===403){
+        throw new Error('Not subscribed — a subscription must be active between you and this user before PPV can be sent.');
+      }
+      throw new Error(data.error||('Send failed (HTTP '+res.status+')'));
+    }
+    if(!data.id){
+      throw new Error('Server did not return a message id — the message may not have saved.');
+    }
+
     var msgs=DB.get('messages')||[];
-    msgs.push({id:data.id||('m'+Date.now()),from:currentUser.id,to:toId,
+    msgs.push({id:data.id,from:currentUser.id,to:toId,
       fromName:currentUser.name,toName:toName,text:caption,
-      media_url:mediaUrl,media_type:window._ppvPending.mediaType,
+      media_url:mediaUrl,media_type:mediaType,
       price:price,at:new Date().toISOString(),read:false});
-    DB.set('messages',msgs);window._ppvPending=null;
+    DB.set('messages',msgs);
+    window._ppvPending=null;
     closeModal();toast('PPV sent ($'+price.toFixed(2)+')','💰');
     _drawThread(toId,toName);
   }catch(e){
-    if(errEl)errEl.textContent=e.message||'Upload failed';
+    console.error('PPV error:',e);
+    // Show the real reason, and keep the picked file so a retry doesn't
+    // require re-selecting it.
+    if(errEl){
+      errEl.textContent=e.message||'Upload failed';
+      errEl.style.display='block';
+      errEl.style.whiteSpace='normal';
+      errEl.style.wordBreak='break-word';
+    }
     if(btn){btn.disabled=false;btn.textContent='Send PPV';}
   }
 }
