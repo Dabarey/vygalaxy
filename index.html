@@ -27,17 +27,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 button,a{-webkit-tap-highlight-color:transparent}
 input,textarea,select{font-size:16px!important} /* prevent iOS zoom on focus */
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(10,0,0,.94);backdrop-filter:blur(18px);border-bottom:1px solid rgba(180,0,0,.2);z-index:1000}
-.nav-logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:400;color:var(--accent);cursor:pointer}.nav-logo span{color:var(--gold)}
-.nav-tabs{display:flex;gap:2px}
-.nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 12px;border-radius:100px;cursor:pointer;transition:all .2s;position:relative}
-.nav-tab:hover{color:var(--text);background:var(--bg3)}.nav-tab.active{color:var(--text);background:var(--card2)}
+/* Sidebar rail. Nav lives on the left on desktop; the mobile rules further
+   down revert it to a top bar so the bottom-nav layout is untouched. */
+:root{--rail:236px}
+nav{position:fixed;top:0;left:0;bottom:0;width:var(--rail);height:100vh;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:4px;padding:20px 14px;background:rgba(10,0,0,.94);backdrop-filter:blur(18px);border-right:1px solid rgba(180,0,0,.2);border-bottom:none;z-index:1000;overflow-y:auto;overscroll-behavior:contain}
+nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(180,0,0,.28);border-radius:3px}
+.nav-logo{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:400;color:var(--accent);cursor:pointer;padding:4px 10px 16px;flex-shrink:0}.nav-logo span{color:var(--gold)}
+.nav-tabs{display:flex;flex-direction:column;align-items:stretch;gap:2px}
+.nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;padding:10px 14px;border-radius:10px;cursor:pointer;transition:background .18s,color .18s;position:relative;text-align:left;width:100%;display:flex;align-items:center;gap:9px;white-space:nowrap}
+.nav-tab:hover{color:var(--text);background:var(--bg3)}.nav-tab.active{color:var(--text);background:var(--card2)}.nav-tab.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--gold)}.nav-tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.nav-tab .nav-badge{margin-left:auto}
 .nav-badge{position:absolute;top:2px;right:5px;min-width:16px;height:16px;background:var(--rose);border-radius:100px;font-size:.6rem;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 3px}.nav-badge.show{display:flex}
-.nav-right{display:flex;align-items:center;gap:8px}
+.nav-right{display:flex;align-items:center;gap:8px}#navGuest,#navUser{flex-direction:column;align-items:stretch;gap:8px;padding-top:14px;margin-top:auto;border-top:1px solid rgba(180,0,0,.16);flex-shrink:0}#navGuest .nav-btn,#navUser .nav-btn{width:100%;justify-content:center}#navUser .nav-av{align-self:flex-start}
 .nav-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:7px 15px;border-radius:100px;cursor:pointer;transition:all .2s}
 .nav-btn:hover{border-color:var(--accent);color:var(--accent)}.nav-btn.primary{background:#c0392b;border-color:#c0392b;color:#fff;font-weight:600}.nav-btn.primary:hover{background:#a03020}
 .nav-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.9rem;border:2px solid var(--border2);cursor:pointer;transition:border-color .2s}.nav-av:hover{border-color:var(--gold)}
-.page{display:none;padding-top:58px;min-height:100vh}.page.active{display:block}
+.page{display:none;padding-top:0;padding-left:var(--rail);min-height:100vh}.page.active{display:block}
 #page-landing{background:#0a0000}
 .hero{text-align:center;padding:90px 24px 50px;max-width:700px;margin:0 auto}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:100px;padding:5px 14px;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}
@@ -121,7 +125,7 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
 .post-actions{display:flex;align-items:center;gap:2px;padding:9px 14px 11px;border-top:1px solid var(--border)}
 .post-action{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;padding:5px 9px;border-radius:8px;transition:all .2s}
 .post-action:hover{background:var(--bg3);color:var(--text)}
-#page-profile{padding-top:0!important}.profile-cover-wrap{height:260px;overflow:hidden;margin-top:58px}.profile-cover-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(.68)}
+#page-profile{padding-top:0!important}.profile-cover-wrap{height:260px;overflow:hidden;margin-top:0}.profile-cover-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(.68)}
 .profile-body{max-width:840px;margin:0 auto;padding:0 22px}
 .profile-head{display:flex;align-items:flex-end;gap:14px;margin-top:-46px;margin-bottom:18px;flex-wrap:wrap;position:relative;z-index:2}
 .profile-pic{width:92px;height:92px;border-radius:50%;border:4px solid var(--bg);object-fit:cover;flex-shrink:0;background:var(--card2)}
@@ -133,7 +137,7 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
 .sub-card{background:var(--card);border:1px solid var(--gold);border-radius:var(--r);padding:22px;margin-bottom:28px;max-width:420px}
 .sub-feat{font-size:.78rem;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:6px}.sub-feat::before{content:'check';font-family:monospace;color:var(--green);font-weight:700;font-size:.7rem}
 #page-messages{max-width:860px;margin:0 auto}
-.msg-layout{display:flex;height:calc(100vh - 58px)}
+.msg-layout{display:flex;height:100vh}
 .msg-sidebar{width:260px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
 .msg-sidebar-title{padding:16px 14px 10px;font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
 .msg-thread{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
@@ -305,10 +309,29 @@ nav{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:cen
 .bnav-fab:active{transform:scale(.9);box-shadow:0 2px 10px rgba(212,168,67,.4)}
 .bnav-fab-icon{font-size:1.6rem;font-weight:400;line-height:1;color:#0a0a0b;pointer-events:none}
 
+@media(min-width:701px) and (max-width:1100px){
+  /* Tighter rail on small laptops so the content column keeps its width. */
+  :root{--rail:196px}
+  .nav-tab{font-size:.83rem;padding:9px 12px}
+}
 @media(max-width:700px){
+  /* Revert the desktop left rail to the original top bar — mobile keeps the
+     bottom-nav layout, so a 236px sidebar would eat the whole screen. */
+  nav{position:fixed;top:0;left:0;right:0;bottom:auto;width:auto;height:58px;
+      flex-direction:row;align-items:center;justify-content:space-between;
+      gap:0;padding:0 14px;border-right:none;
+      border-bottom:1px solid rgba(180,0,0,.2);overflow:visible}
+  .nav-logo{padding:0}
+  .page{padding-left:0;padding-top:58px}
+  #page-profile{padding-top:0!important}
+  .profile-cover-wrap{margin-top:58px}
+  .msg-layout{height:calc(100vh - 58px)}
+  #navGuest,#navUser{flex-direction:row;align-items:center;gap:8px;
+      padding-top:0;margin-top:0;border-top:none}
+  #navGuest .nav-btn,#navUser .nav-btn{width:auto}
+
   /* Show bottom nav, hide top tabs + right btns */
   .bottom-nav{display:flex}
-  nav{padding:0 14px}
   .nav-tabs{display:none!important}
   /* Keep logo + sign-in/avatar only */
   .nav-btn.primary{padding:7px 12px;font-size:.78rem}
