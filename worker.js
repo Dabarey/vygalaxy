@@ -1676,21 +1676,36 @@ var worker_default = {
       }
 
       if (path === "/api/admin/users" && method === "GET") {
-        // users.balance is a legacy column: it is decremented on payout but was
-        // never credited by any earnings path, so it always read as 0 here.
-        // Derive the live figure from the earnings ledger instead, using the
-        // same net-of-fee rule as the creator dashboard.
+        // users.balance is a legacy column: decremented on payout but never
+        // credited by any earnings path, so it always read as 0 here. Derive
+        // the figure instead, with the SAME fallback computeEarnings() uses —
+        // without it, every user reads $0 until the ledger is backfilled.
         await ensureEarnings(env);
+        const CR = String(CREATOR_RATE);
+        const legacyNet = `(
+          COALESCE((SELECT SUM(amount) FROM tips WHERE creator_id=u.id),0)
+          + COALESCE((SELECT SUM(pu.price) FROM purchases pu
+                      JOIN products p2 ON pu.product_id=p2.id
+                      WHERE p2.creator_id=u.id),0)
+          + ROUND(COALESCE((SELECT SUM(price) FROM subscriptions
+                            WHERE creator_id=u.id AND status='active'),0) * ${CR}, 2)
+        )`;
+        // Ledger wins when the user has any rows; otherwise fall back. The two
+        // are never summed.
+        const earnedExpr = `CASE WHEN COALESCE(e.n,0) > 0 THEN COALESCE(e.net,0) ELSE ${legacyNet} END`;
+
         let rows = [];
         try {
           const q = await env.DB.prepare(`
             SELECT u.id, u.email, u.name, u.bio, u.avatar, u.category, u.price,
                    u.role, u.kyc_status, u.verified, u.created_at,
-                   COALESCE(e.net, 0) AS earned,
-                   COALESCE(e.gross, 0) AS gross,
-                   MAX(0, COALESCE(e.net,0) - COALESCE(p.paid,0) - COALESCE(pr.paid,0)) AS balance
+                   COALESCE(e.n,0) AS ledger_rows,
+                   COALESCE(e.gross,0) AS gross,
+                   ${earnedExpr} AS earned,
+                   MAX(0, ${earnedExpr}
+                          - COALESCE(p.paid,0) - COALESCE(pr.paid,0)) AS balance
             FROM users u
-            LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross
+            LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross, COUNT(*) n
                        FROM earnings GROUP BY creator_id) e ON e.creator_id = u.id
             LEFT JOIN (SELECT creator_id, SUM(amount) paid FROM payouts
                        WHERE COALESCE(status,'') NOT IN ('rejected','failed','cancelled')
@@ -1702,26 +1717,35 @@ var worker_default = {
           `).all();
           rows = q.results || [];
         } catch (e) {
-          // payouts / payout_requests may not exist yet on a fresh database.
-          console.warn("admin users join failed, falling back:", e.message);
-          const q = await env.DB.prepare(`
-            SELECT u.id, u.email, u.name, u.bio, u.avatar, u.category, u.price,
-                   u.role, u.kyc_status, u.verified, u.created_at,
-                   COALESCE(e.net, 0) AS earned,
-                   COALESCE(e.gross, 0) AS gross,
-                   COALESCE(e.net, 0) AS balance
-            FROM users u
-            LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross
-                       FROM earnings GROUP BY creator_id) e ON e.creator_id = u.id
-            ORDER BY u.created_at DESC
-          `).all();
-          rows = q.results || [];
+          console.warn("admin users full query failed:", e.message);
+          try {
+            const q = await env.DB.prepare(`
+              SELECT u.id, u.email, u.name, u.bio, u.avatar, u.category, u.price,
+                     u.role, u.kyc_status, u.verified, u.created_at,
+                     COALESCE(e.n,0) AS ledger_rows,
+                     COALESCE(e.gross,0) AS gross,
+                     ${earnedExpr} AS earned,
+                     ${earnedExpr} AS balance
+              FROM users u
+              LEFT JOIN (SELECT creator_id, SUM(net) net, SUM(gross) gross, COUNT(*) n
+                         FROM earnings GROUP BY creator_id) e ON e.creator_id = u.id
+              ORDER BY u.created_at DESC
+            `).all();
+            rows = q.results || [];
+          } catch (e2) {
+            console.error("admin users fallback failed:", e2.message);
+            const q = await env.DB.prepare(
+              `SELECT id, email, name, role, kyc_status, verified, created_at FROM users ORDER BY created_at DESC`
+            ).all();
+            rows = (q.results || []).map(r => ({ ...r, earned: 0, gross: 0, balance: 0, ledger_rows: 0 }));
+          }
         }
+        const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
         return json(rows.map(r => ({
           ...r,
-          balance: Math.round(Number(r.balance || 0) * 100) / 100,
-          earned: Math.round(Number(r.earned || 0) * 100) / 100,
-          gross: Math.round(Number(r.gross || 0) * 100) / 100
+          balance: r2(r.balance),
+          earned: r2(r.earned),
+          gross: r2(r.gross)
         })));
       }
       if (path === "/api/users/profile" && method === "PUT") {
@@ -2032,6 +2056,35 @@ var worker_default = {
 
 
       // ── KYC doc viewer — admin only, proxies private R2 file ─────────────
+      // Diagnostic: reports what is stored for each KYC request and whether the
+      // object actually exists in R2. Admin only.
+      if (path === "/api/kyc/debug" && method === "GET") {
+        const uid = url.searchParams.get("uid");
+        if (!uid) return err("Missing uid");
+        const who = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(uid).first();
+        if (!who || who.role !== "admin") return err("Forbidden", 403);
+        const { results } = await env.DB.prepare(
+          `SELECT id, user_name, id_front_url, id_back_url, selfie_url, submitted_at FROM kyc_requests ORDER BY id DESC LIMIT 20`
+        ).all();
+        const out = [];
+        for (const r of (results || [])) {
+          const checks = {};
+          for (const f of ["id_front_url", "id_back_url", "selfie_url"]) {
+            const raw = r[f];
+            if (!raw) { checks[f] = { stored: null, note: "empty in DB" }; continue; }
+            const key = String(raw).replace(/^https?:\/\/[^/]+\//, "").replace(/^\/+/, "");
+            let exists = null, size = null;
+            try {
+              const head = await env.MEDIA.head(key);
+              exists = !!head; size = head?.size ?? null;
+            } catch (e) { exists = "error: " + e.message; }
+            checks[f] = { stored: raw, derived_key: key, exists_in_r2: exists, size };
+          }
+          out.push({ id: r.id, user: r.user_name, submitted_at: r.submitted_at, files: checks });
+        }
+        return json({ bucket_bound: !!env.MEDIA, count: out.length, requests: out });
+      }
+
       if (path === "/api/kyc/doc" && method === "GET") {
         const requestorId = url.searchParams.get("uid");
         let key = url.searchParams.get("key"); // e.g. kyc/filename.jpg
