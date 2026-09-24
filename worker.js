@@ -2291,6 +2291,9 @@ var worker_default = {
       if (path === "/api/version" && method === "GET") {
         return json({
           build: "earnings-ledger-v3",
+          auth: "sessions-v1",
+          session_secret_set: !!(env.SESSION_SECRET && env.SESSION_SECRET.length >= 32),
+          kyc_bucket_bound: !!env.KYC,
           deployed_features: [
             "unified earnings ledger (subscription/tip/sale/ppv)",
             "admin balances derived from ledger with legacy fallback",
