@@ -211,117 +211,6 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
 .badge-green{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);border-radius:100px;padding:2px 8px;font-size:.7rem;font-weight:700}
 
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
-
-/* ── Profile tabs + shop grid (Instagram style) ───────────────────────── */
-.ig-tabs{display:flex;gap:2px;border-top:1px solid var(--border);margin-top:26px}
-.ig-tab{flex:1;background:none;border:none;border-top:2px solid transparent;margin-top:-1px;padding:14px 0;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:color .18s,border-color .18s}
-.ig-tab:hover{color:var(--text)}
-.ig-tab.active{color:var(--text);border-top-color:var(--gold)}
-.ig-tab-count{font-size:.7rem;color:var(--muted2);letter-spacing:0;font-weight:600}
-.ig-note{font-size:.72rem;color:var(--muted);margin:14px 0 10px;text-align:center}
-.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:44px}
-
-/* Shop as a list: thumbnail, name, detail line, price */
-.ig-list{display:flex;flex-direction:column;margin-bottom:44px}
-.ig-row{display:flex;align-items:center;gap:14px;padding:14px 2px;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;background:none;border-left:none;border-right:none;border-top:none;width:100%;font-family:'DM Sans',sans-serif}
-.ig-row:hover{background:rgba(255,255,255,.02)}
-.ig-row-thumb{position:relative;width:62px;height:62px;border-radius:10px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:1.5rem}
-.ig-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.ig-row-main{flex:1;min-width:0}
-.ig-row-name{font-size:.9rem;font-weight:600;color:var(--text);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ig-row-sub{font-size:.74rem;color:var(--muted);margin-top:3px}
-.ig-row-price{text-align:right;flex-shrink:0}
-.ig-row-now{font-size:.92rem;font-weight:700;color:var(--gold)}
-.ig-row-was{font-size:.72rem;color:var(--muted);text-decoration:line-through;margin-top:2px}
-.ig-row-out{font-size:.68rem;font-weight:700;color:var(--rose);margin-top:2px}
-
-/* ── Ivory profile theme ───────────────────────────────────────────────── */
-#page-profile.ivory{--iv-bg:#f7f3ec;--iv-bg2:#efe8dc;--iv-line:#e3d9c9;--iv-ink:#241c14;--iv-soft:#4a4038;--iv-mute:#6d6055;--iv-accent:#8a5a1a;
-  background:var(--iv-bg);color:var(--iv-ink);min-height:100vh}
-#page-profile.ivory .profile-cover-wrap{background:var(--iv-bg2)}
-#page-profile.ivory .profile-cover-wrap img{filter:none}
-#page-profile.ivory .profile-pic{border-color:var(--iv-bg);background:var(--iv-bg2)}
-#page-profile.ivory .profile-head{flex-direction:column;align-items:center;text-align:center;gap:10px}
-#page-profile.ivory .profile-info{display:flex;flex-direction:column;align-items:center;gap:4px}
-#page-profile.ivory .profile-name-row{color:var(--iv-ink);font-weight:300;justify-content:center}
-#page-profile.ivory .profile-handle{color:var(--iv-mute);text-transform:uppercase;letter-spacing:.14em;font-size:.7rem}
-#page-profile.ivory .profile-head > div:last-child{margin-left:0;justify-content:center}
-#page-profile.ivory .profile-bio{color:var(--iv-soft);text-align:center;max-width:460px;margin-left:auto;margin-right:auto}
-#page-profile.ivory .profile-stats-row{justify-content:center;gap:30px}
-#page-profile.ivory .p-stat-n{color:var(--iv-ink)!important;font-family:'Fraunces',serif;font-weight:400}
-#page-profile.ivory .p-stat-l{color:var(--iv-mute)!important}
-#page-profile.ivory .btn-gold{background:var(--iv-ink);color:var(--iv-bg);border-radius:100px}
-#page-profile.ivory .btn-gold:hover{background:#3a2e22}
-#page-profile.ivory .btn-ghost{border-color:#cdbfa9;color:var(--iv-ink);border-radius:100px}
-#page-profile.ivory .btn-ghost:hover{border-color:var(--iv-accent);color:var(--iv-accent)}
-#page-profile.ivory .ig-tabs{border-top:none;border-bottom:1px solid var(--iv-line);justify-content:center;gap:28px}
-#page-profile.ivory .ig-tab{flex:0 0 auto;border-top:none;border-bottom:2px solid transparent;margin-top:0;margin-bottom:-1px;color:var(--iv-mute)}
-#page-profile.ivory .ig-tab.active{color:var(--iv-ink);border-bottom-color:var(--iv-ink)}
-#page-profile.ivory .ig-tab-count{color:var(--iv-mute)}
-#page-profile.ivory .ig-note{color:var(--iv-mute)}
-#page-profile.ivory .ig-row{border-bottom-color:var(--iv-line)}
-#page-profile.ivory .ig-row:hover{background:rgba(36,28,20,.035)}
-#page-profile.ivory .ig-row-thumb{background:var(--iv-bg2)}
-#page-profile.ivory .ig-row-name{color:var(--iv-ink)}
-#page-profile.ivory .ig-row-sub{color:var(--iv-mute)}
-#page-profile.ivory .ig-row-now{color:var(--iv-accent)}
-#page-profile.ivory .ig-row-was{color:#8d7f6c}
-#page-profile.ivory .ig-empty,#page-profile.ivory .empty{color:var(--iv-mute)}
-#page-profile.ivory .divider{background:var(--iv-line)}
-#page-profile.ivory .ds-title{color:var(--iv-mute)}
-.ig-tile{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,var(--bg3),var(--card2))}
-.ig-tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s}
-.ig-tile:hover img{transform:scale(1.06)}
-.ig-tile-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;opacity:.8}
-.ig-tile-price{position:absolute;left:8px;bottom:8px;z-index:2;background:rgba(0,0,0,.72);color:var(--gold);font-size:.76rem;font-weight:800;padding:4px 9px;border-radius:100px}
-.ig-tile-was{color:var(--muted);text-decoration:line-through;font-weight:600;margin-left:5px;font-size:.68rem}
-.ig-tile-tag{position:absolute;right:8px;top:8px;z-index:2;font-size:.66rem;padding:3px 7px;border-radius:100px;background:rgba(0,0,0,.6)}
-.ig-tile-hover{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,.05) 55%);opacity:0;transition:opacity .22s;display:flex;align-items:flex-end;padding:30px 10px 10px}
-.ig-tile:hover .ig-tile-hover{opacity:1}
-.ig-tile-name{font-size:.76rem;font-weight:700;color:#fff;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ig-tile-out{position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.74rem;font-weight:800;letter-spacing:.08em}
-.ig-empty{grid-column:1/-1;padding:42px 0;text-align:center;color:var(--muted);font-size:.84rem}
-
-/* ── Product page ─────────────────────────────────────────────────────── */
-.pp-wrap{max-width:560px;margin:0 auto;padding:0 0 60px}
-.pp-hero{position:relative;width:100%;aspect-ratio:1/1;max-height:460px;overflow:hidden;background:linear-gradient(150deg,var(--card2),var(--bg3))}
-.pp-hero img{width:100%;height:100%;object-fit:cover;display:block}
-.pp-hero-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:4.4rem;opacity:.85}
-.pp-scrim{position:absolute;left:0;right:0;bottom:0;height:60%;background:linear-gradient(to top,var(--bg) 2%,rgba(10,0,0,.72) 45%,rgba(10,0,0,0))}
-.pp-round{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));width:44px;height:44px;border-radius:50%;background:rgba(10,0,0,.55);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);z-index:3}
-.pp-round.left{left:12px}.pp-round.right{right:12px}
-.pp-badge{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));left:16px;z-index:3;font-size:.64rem;font-weight:800;padding:4px 10px;border-radius:100px;letter-spacing:.06em;text-transform:uppercase}
-.pp-off{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));right:16px;z-index:3;background:var(--rose);color:#fff;font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:100px}
-.pp-hero-foot{position:absolute;left:16px;right:16px;bottom:14px;z-index:3}
-.pp-title{font-family:'Fraunces',serif;font-weight:400;font-size:1.6rem;line-height:1.22;margin:0 0 9px;color:#fff}
-.pp-creator{display:flex;align-items:center;gap:8px;cursor:pointer}
-.pp-creator img{width:24px;height:24px;border-radius:50%;object-fit:cover}
-.pp-creator span{font-size:.82rem;font-weight:600;color:#f0f0f2}
-.pp-body{padding:18px 16px 0;display:flex;flex-direction:column;gap:16px}
-.pp-price-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.pp-price{font-family:'Fraunces',serif;font-size:2rem;color:var(--gold);line-height:1}
-.pp-was{font-size:.95rem;color:var(--muted);text-decoration:line-through;margin-left:9px}
-.pp-save{font-size:.7rem;font-weight:800;color:var(--rose);background:rgba(232,108,108,.14);padding:5px 10px;border-radius:100px;white-space:nowrap}
-.pp-meta{font-size:.74rem;color:var(--muted);margin-top:6px}
-.pp-card{display:flex;flex-direction:column;gap:9px;padding:14px 15px;background:var(--card);border:1px solid var(--border);border-radius:14px}
-.pp-sec-title{font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
-.pp-inc{display:flex;align-items:flex-start;gap:9px;font-size:.84rem;color:var(--text)}
-.pp-body-text{font-size:.87rem;line-height:1.72;color:#d8cccc;white-space:pre-line;margin:0}
-.pp-sample{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-.pp-sample:hover{background:rgba(212,168,67,.14)}
-.pp-buy{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#d4a843,#b8902e);color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;transition:transform .15s,filter .15s}
-.pp-buy:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.05)}
-.pp-trust{font-size:.7rem;color:var(--muted);text-align:center;line-height:1.6}
-.pp-review{padding:12px 0;border-bottom:1px solid var(--border)}
-.pp-bar{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;margin-top:22px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border2);z-index:20}
-.pp-bar .pp-buy{width:auto;flex:1;padding:14px}
-.pp-bar-price{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--gold);line-height:1.1}
-.pp-bar-sub{font-size:.66rem;color:var(--muted)}
-.pp-out{position:absolute;inset:0;z-index:2;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:800;letter-spacing:.08em}
-@media(max-width:760px){
-  .pp-title{font-size:1.4rem}
-  .ig-grid{gap:3px}
-}
 .shop-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .22s,transform .22s,box-shadow .22s;display:flex;flex-direction:column}
 .shop-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.55)}
 .shop-card-img{height:160px;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden;flex-shrink:0}
@@ -975,25 +864,18 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
       <div><div class="p-stat-n" id="profilePostsCount">0</div><div class="p-stat-l">posts</div></div>
     </div>
     <div id="profileSubCard"></div>
-
-    <div class="ig-tabs" id="profileTabs">
-      <button class="ig-tab active" id="profileTabPosts" onclick="profileTab('posts')">▦ Posts</button>
-      <button class="ig-tab" id="profileTabShop" style="display:none" onclick="profileTab('shop')">🛍 Shop <span class="ig-tab-count" id="profileShopCount"></span></button>
+    <div id="profileShopSection" style="display:none;margin-top:24px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px">
+        <div class="ds-title" style="margin:0">🛒 Shop</div>
+        <div style="font-size:.72rem;color:var(--muted)">No subscription needed — buy anytime</div>
+      </div>
+      <div id="profileShopGrid" class="shop-grid" style="margin-top:12px"></div>
     </div>
-    <div id="profilePanePosts">
-      <div id="profilePostsArea" style="margin:18px 0 40px"></div>
-    </div>
-    <div id="profilePaneShop" style="display:none">
-      <div class="ig-note">No subscription needed — tap any item to buy</div>
-      <div id="profileShopGrid" class="ig-list"></div>
-    </div>
+    <div class="divider"></div>
+    <div class="ds-title">Posts</div>
+    <div id="profilePostsArea" style="margin-bottom:40px"></div>
 
   </div>
-</div>
-
-<!-- PRODUCT PAGE -->
-<div class="page" id="page-product">
-  <div class="pp-wrap" id="productPageBody"></div>
 </div>
 
 <!-- DASHBOARD -->
@@ -1087,7 +969,7 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
 <div class="page" id="page-admin">
   <div class="admin-wrap">
     <div class="admin-title">⚙️ Admin Panel</div>
-    <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">Logged in as <strong id="adminWhoami"></strong></div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">Logged in as <strong>dabarey24@gmail.com</strong></div>
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="adminTab('overview',this)">Overview</button>
       <button class="admin-tab" onclick="adminTab('kyc',this)">KYC Requests <span id="kycBadge" class="badge-gold" style="margin-left:4px"></span></button>
@@ -1156,59 +1038,12 @@ const DB={
 
 const WORKER_URL="https://galaxyvy.com";
 
-// ── Session token ─────────────────────────────────────────────────────────
-// The Worker identifies the caller only by this signed token. Every request to
-// our API gets it automatically, so individual fetch() calls don't change.
-function _isApiUrl(u){
-  return typeof u==='string'&&(u.startsWith(WORKER_URL+'/api/')||u.startsWith('/api/'));
-}
-(function(){
-  const _origFetch=window.fetch.bind(window);
-  window.fetch=function(input,init){
-    const u=typeof input==='string'?input:(input&&input.url)||'';
-    const api=_isApiUrl(u);
-    const tok=api?DB.get('token'):null;
-    if(tok){
-      init=Object.assign({},init||{});
-      const h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});
-      if(!h.has('Authorization'))h.set('Authorization','Bearer '+tok);
-      init.headers=h;
-    }
-    return _origFetch(input,init).then(res=>{
-      if(api&&res.status===401&&tok&&typeof _sessionExpired==='function')_sessionExpired();
-      return res;
-    });
-  };
-})();
-function _jsArg(v){return _esc(JSON.stringify(String(v==null?'':v)));}
-function _httpUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
-function _docKey(u){return String(u||'').replace(/^https?:\/\/[^/]+\//,'').replace(/^\/+/,'');}
-// KYC / certificate files are private: fetch with the token, show as blob URL.
-async function _fetchPrivateDoc(u){
-  const res=await fetch(WORKER_URL+'/api/kyc/doc?key='+encodeURIComponent(_docKey(u)));
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  return URL.createObjectURL(await res.blob());
-}
-function _loadPrivateThumbs(root){
-  root.querySelectorAll('img[data-doc-key]').forEach(img=>{
-    _fetchPrivateDoc(img.dataset.docKey).then(u=>{img.src=u;}).catch(()=>{
-      img.style.display='none';
-      const f=img.parentNode.querySelector('.kyc-fail');if(f)f.style.display='flex';
-    });
-  });
-}
-async function _openPrivateDoc(u){
-  const w=window.open('','_blank'); // open now so the popup blocker allows it
-  try{const url=await _fetchPrivateDoc(u);if(w)w.location=url;else window.location=url;}
-  catch(e){if(w)w.close();toast('Could not open document ('+e.message+')','⚠️');}
-}
-
 // Immediately apply session to prevent flash of guest UI
 (function(){
   try{
     const raw=localStorage.getItem('ch_user');
     const u=raw?JSON.parse(raw):null;
-    if(u&&u.id&&localStorage.getItem('ch_token')){
+    if(u&&u.id){
       const ng=document.getElementById('navGuest');
       const nu=document.getElementById('navUser');
       if(ng)ng.style.display='none';
@@ -1274,15 +1109,30 @@ const GOOGLE_CLIENT_ID="402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googl
   // We defer actual action to after the page is fully initialised (end of script)
 })();
 
+const ADMIN_EMAIL='dabarey24@gmail.com';
 let currentUser=DB.get('user'),currentPage='landing',_profileContext=null,_activeMsgThread=null,_pendingAvatarFile=null,_pendingCoverFile=null;
 
-// Sessions from before tokens existed can't call the API any more.
-if(currentUser&&!DB.get('token')){currentUser=null;DB.del('user');}
-
 function _silentRefreshUser(){
-  // A bare user id (the old gx_uid cookie) no longer proves who you are, so
-  // there is nothing to restore without a token; the user signs in again.
-  if(!currentUser?.id)return;
+  // If localStorage lost, try to restore from cookie user ID
+  if(!currentUser?.id){
+    try{
+      const m=document.cookie.match('(?:^|; )gx_uid=([^;]*)');
+      if(m){
+        const uid=decodeURIComponent(m[1]);
+        if(uid){
+          fetch(WORKER_URL+'/api/users?id='+uid)
+            .then(r=>r.ok?r.json():null)
+            .then(u=>{
+              if(u&&!u.error&&u.id){
+                currentUser=u;DB.set('user',u);_loginUser(u);
+                toast('Session restored','');
+              }
+            }).catch(()=>{});
+        }
+      }
+    }catch(e){}
+    return;
+  }
   fetch(WORKER_URL+'/api/users?id='+currentUser.id)
     .then(r=>r.ok?r.json():null)
     .then(u=>{if(u&&!u.error&&u.id){const merged={...currentUser,...u};currentUser=merged;DB.set('user',merged);}})
@@ -1529,7 +1379,6 @@ async function doSignup(){
   }
 }
 function _loginUser(u){
-  if(u&&u.token){DB.set('token',u.token);u={...u};delete u.token;}
   currentUser=u;DB.set('user',u);
   // Re-trigger any product deep link that arrived before login
   const pendingProduct=sessionStorage.getItem('pending_product');
@@ -1552,22 +1401,13 @@ function _loginUser(u){
   if(u.role==='admin'){const a=document.getElementById('tab-admin');if(a)a.style.display='';}
   _refreshBadges();
 }
-function _clearSession(){
-  currentUser=null;DB.del('user');DB.del('token');
+async function logout(){
+  if(!confirm('Sign out of GALAXY?'))return;
+  currentUser=null;DB.del('user');
   document.getElementById('navGuest').style.display='flex';document.getElementById('navUser').style.display='none';
   const tlOut=document.getElementById('tab-landing');if(tlOut)tlOut.style.display='';
   ['tab-messages','tab-notifs','tab-library','tab-dash','tab-profile','tab-admin'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  showPage('landing',document.getElementById('tab-landing'));
-}
-async function logout(){
-  if(!confirm('Sign out of GALAXY?'))return;
-  _clearSession();toast('Signed out','👋');
-}
-let _expiredShown=false;
-function _sessionExpired(){
-  if(_expiredShown||!currentUser)return;
-  _expiredShown=true;setTimeout(()=>{_expiredShown=false;},3000);
-  _clearSession();toast('Your session expired — please sign in again','🔐');
+  showPage('landing',document.getElementById('tab-landing'));toast('Signed out','👋');
 }
 
 // session restore handled at bottom of script
@@ -1769,38 +1609,6 @@ function loadCreators(){
 }
 
 // PROFILE
-function profileTab(which){
-  const posts=document.getElementById('profilePanePosts'),shop=document.getElementById('profilePaneShop');
-  const tp=document.getElementById('profileTabPosts'),ts=document.getElementById('profileTabShop');
-  if(!posts||!shop)return;
-  const isShop=which==='shop'&&ts&&ts.style.display!=='none';
-  posts.style.display=isShop?'none':'';
-  shop.style.display=isShop?'':'none';
-  if(tp)tp.classList.toggle('active',!isShop);
-  if(ts)ts.classList.toggle('active',isShop);
-}
-// One row in the profile shop list — the whole row opens the product page.
-function _shopTile(p){
-  const isPhysical=p.product_kind==='physical'||p.type==='physical';
-  const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
-  const soldOut=isPhysical&&stockNum!==null&&stockNum<=0;
-  const price=Number(p.price||0),was=Number(p.original_price||0);
-  const sub=isPhysical
-    ? (soldOut?'Ships worldwide':(stockNum!==null?`Ships worldwide · ${stockNum} left`:'Ships worldwide'))
-    : `Instant download${p.sales?` · ${Number(p.sales).toLocaleString()} sold`:''}`;
-  return `<button type="button" class="ig-row" onclick="openProductPage(${_jsArg(p.id)})">
-    <span class="ig-row-thumb">${p.cover?`<img src="${_esc(p.cover)}" alt="" loading="lazy">`:_esc(p.emoji||'📦')}</span>
-    <span class="ig-row-main">
-      <span class="ig-row-name">${_esc(p.title||'')}</span>
-      <span class="ig-row-sub">${_esc(sub)}</span>
-    </span>
-    <span class="ig-row-price">
-      <span class="ig-row-now">$${price.toFixed(2)}</span>
-      ${was>price?`<span class="ig-row-was">$${was.toFixed(2)}</span>`:''}
-      ${soldOut?'<span class="ig-row-out">Sold out</span>':''}
-    </span>
-  </button>`;
-}
 function showProfile(id){
   const creators=DB.get('creators')||[],users=DB.get('users')||{};
   // Look in _allCreators (freshly loaded from Worker) first, then localStorage, then currentUser
@@ -1876,19 +1684,15 @@ function showProfile(id){
   // shopCard() component as the main Shop page, so it's a proper storefront
   // rather than a cramped list, and it's never gated behind subscribing.
   const renderProfileShop=(prods)=>{
+    const shopSection=document.getElementById('profileShopSection');
     const shopGrid=document.getElementById('profileShopGrid');
-    const shopTab=document.getElementById('profileTabShop');
-    const shopCount=document.getElementById('profileShopCount');
-    const shopBtn=document.getElementById('profileShopBtn');
-    if(!shopGrid)return;
-    const list=prods||[];
-    if(shopCount)shopCount.textContent=list.length||'';
-    if(shopTab)shopTab.style.display=list.length?'':'none';
-    if(shopBtn)shopBtn.style.display=list.length?'':'none';
-    if(!list.length){shopGrid.innerHTML='';profileTab('posts');return;}
-    shopGrid.innerHTML=list.map(p=>_shopTile({
+    if(!shopSection||!shopGrid)return;
+    if(!prods||!prods.length){shopSection.style.display='none';return;}
+    shopSection.style.display='';
+    shopGrid.innerHTML=prods.map(p=>shopCard({
       ...p,
-      creatorId:id, creatorName:c.name, creatorAvatar:c.avatar
+      creatorId:id, creatorName:c.name, creatorAvatar:c.avatar,
+      creatorSubs:c.subs||0, verified:!!c.verified
     })).join('');
   };
   const cachedProds=(DB.get('products')||[]).filter(p=>(p.creatorId||p.creator_id)===id);
@@ -1917,9 +1721,6 @@ function showProfile(id){
   const cached=_getPosts().filter(p=>p.creator===id);
   const postsArea=document.getElementById('profilePostsArea');
   postsArea.innerHTML=cached.length?cached.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📝</div><div>Loading posts…</div></div>`;
-  profileTab('posts');
-  const profPage=document.getElementById('page-profile');
-  if(profPage)profPage.classList.add('ivory');
   showPage('profile',null);
   // Always fetch from Worker so own posts show up fresh (even just published)
   fetch(WORKER_URL+'/api/posts?creator_id='+encodeURIComponent(id))
@@ -4344,7 +4145,7 @@ function adminTab(tab,el){
   if(el)el.classList.add('active');const panel=document.getElementById('ap-'+tab);if(panel)panel.classList.add('active');
   if(tab==='kyc')renderAdminKyc();if(tab==='payouts')renderAdminPayouts();if(tab==='users')renderAdminUsers();if(tab==='overview')renderAdminOverview();if(tab==='refvideos')renderAdminRefVideos();
 }
-function renderAdmin(){if(!currentUser||currentUser.role!=='admin'){toast('Admin only','🔐');showPage('landing',null);return;}const w=document.getElementById('adminWhoami');if(w)w.textContent=currentUser.email||'';renderAdminOverview();}
+function renderAdmin(){if(!currentUser||currentUser.role!=='admin'){toast('Admin only','🔐');showPage('landing',null);return;}renderAdminOverview();}
 function renderAdminOverview(){
   const el=document.getElementById('adminStats');
   el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:10px">Loading…</div>';
@@ -4379,18 +4180,18 @@ function _renderAdmin(kycs,pays,d1Users,d1Posts){
     recentEl.innerHTML=recent.map(u=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#c0392b,#d4a843);flex-shrink:0;overflow:hidden">
-          <img src="${_esc(u.avatar||'')}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
+          <img src="${u.avatar||''}" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-size:.82rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px">
-            ${_esc(u.name||'—')}
+            ${u.name||'—'}
             ${u.verified?'<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#1D9BF0"/><path d="M6 10.5L8.5 13L14 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
           </div>
-          <div style="font-size:.7rem;color:var(--muted)">${_esc(u.email||'')}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${u.email||''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:.7rem;color:var(--muted)">${(u.created_at||'').slice(0,10)}</div>
-          <span style="font-size:.65rem;padding:2px 7px;border-radius:100px;background:${u.role==='admin'?'rgba(232,108,108,.15)':'rgba(255,255,255,.07)'};color:${u.role==='admin'?'var(--rose)':'var(--muted)'}">${_esc(u.role||'user')}</span>
+          <span style="font-size:.65rem;padding:2px 7px;border-radius:100px;background:${u.role==='admin'?'rgba(232,108,108,.15)':'rgba(255,255,255,.07)'};color:${u.role==='admin'?'var(--rose)':'var(--muted)'}">${u.role||'user'}</span>
         </div>
       </div>`).join('');
   }
@@ -4403,8 +4204,8 @@ function _renderAdmin(kycs,pays,d1Users,d1Posts){
     kycPendingEl.innerHTML=pendingKycs.map(r=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <div>
-          <div style="font-size:.82rem;font-weight:600;color:var(--text)">${_esc(r.user_name||'—')}</div>
-          <div style="font-size:.7rem;color:var(--muted)">${_esc(r.user_email||'')} · ${(r.submitted_at||r.created_at||'').slice(0,10)}</div>
+          <div style="font-size:.82rem;font-weight:600;color:var(--text)">${r.user_name||'—'}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${r.user_email||''} · ${(r.submitted_at||r.created_at||'').slice(0,10)}</div>
         </div>
         <button onclick="adminTab('kyc',null)" style="font-size:.72rem;padding:4px 10px;border-radius:8px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer">Review →</button>
       </div>`).join('');
@@ -4415,7 +4216,7 @@ function renderAdminCerts(){
   el.innerHTML='<div style="color:var(--muted);padding:10px;font-size:.82rem">Loading…</div>';
   fetch(WORKER_URL+'/api/cert').then(r=>r.json()).then(list=>{
     if(!list||!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>No certificate requests yet.</div>';return;}
-    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||_esc(s));
+    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||s);
     const catBadge={Doctor:'🩺 Doctor',Law:'⚖️ Lawyer','Real Estate':'🏠 Agent','Personal Trainer':'🏋️ PT','Therapist':'🧠 Therapist','Financial Advisor':'💰 Advisor'};
     el.innerHTML=`
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
@@ -4425,14 +4226,14 @@ function renderAdminCerts(){
     `+`<table class="admin-table">
       <thead><tr><th>Name</th><th>Category</th><th>Certificate</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>${list.map(r=>`<tr>
-        <td><div style="font-weight:600">${_esc(r.user_name||'—')}</div><div style="font-size:.72rem;color:var(--muted)">${_esc(r.user_email||'')}</div></td>
-        <td>${catBadge[r.category]||_esc(r.category||'—')}</td>
-        <td><a href="#" data-doc="${_esc(r.cert_url||'')}" onclick="_openPrivateDoc(this.dataset.doc);return false" style="color:var(--gold);font-size:.78rem">📋 View certificate</a></td>
+        <td><div style="font-weight:600">${r.user_name||'—'}</div><div style="font-size:.72rem;color:var(--muted)">${r.user_email||''}</div></td>
+        <td>${catBadge[r.category]||r.category||'—'}</td>
+        <td><a href="${r.cert_url}" target="_blank" style="color:var(--gold);font-size:.78rem">📋 View certificate</a></td>
         <td style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||'').slice(0,10)}</td>
         <td>${badge(r.status)}</td>
         <td>${r.status==='pending'
-          ?`<button class="action-btn approve" onclick="adminCertAction(${_jsArg(r.id)},${_jsArg(r.user_id)},'approved')" style="margin-right:4px">✅ Approve</button>
-             <button class="action-btn reject" onclick="adminCertAction(${_jsArg(r.id)},${_jsArg(r.user_id)},'rejected')">❌ Reject</button>`
+          ?`<button class="action-btn approve" onclick="adminCertAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve</button>
+             <button class="action-btn reject" onclick="adminCertAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
           :'—'}</td>
       </tr>`).join('')}</tbody>
     </table>`;
@@ -4454,17 +4255,17 @@ function renderAdminRefVideos(){
   el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:10px">Loading…</div>';
   fetch(WORKER_URL+'/api/ref/video').then(r=>r.json()).then(list=>{
     if(!list||!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>No video submissions yet.</div>';return;}
-    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||_esc(s));
+    const badge=s=>({pending:'<span class="badge-gold">Pending</span>',approved:'<span class="badge-green">Approved ✅</span>',rejected:'<span class="badge-rose">Rejected</span>'}[s]||s);
     el.innerHTML=`<table class="admin-table">
       <thead><tr><th>Creator</th><th>Video URL</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
       <tbody>${list.map(r=>`<tr>
-        <td><div style="font-weight:600">${_esc(r.user_name||'—')}</div></td>
-        <td><a href="${_esc(_httpUrl(r.url))}" target="_blank" rel="noopener noreferrer" style="color:var(--gold);font-size:.78rem;word-break:break-all">${_esc(r.url)}</a></td>
+        <td><div style="font-weight:600">${r.user_name||'—'}</div></td>
+        <td><a href="${r.url}" target="_blank" style="color:var(--gold);font-size:.78rem;word-break:break-all">${r.url}</a></td>
         <td style="font-size:.74rem;color:var(--muted)">${(r.submitted_at||'').slice(0,10)}</td>
         <td>${badge(r.status)}</td>
         <td>${r.status==='pending'
-          ?`<button class="action-btn approve" onclick="adminRefVideoAction(${_jsArg(r.id)},${_jsArg(r.user_id)},'approved')" style="margin-right:4px">✅ Approve 2%</button>
-             <button class="action-btn reject" onclick="adminRefVideoAction(${_jsArg(r.id)},${_jsArg(r.user_id)},'rejected')">❌ Reject</button>`
+          ?`<button class="action-btn approve" onclick="adminRefVideoAction('${r.id}','${r.user_id}','approved')" style="margin-right:4px">✅ Approve 2%</button>
+             <button class="action-btn reject" onclick="adminRefVideoAction('${r.id}','${r.user_id}','rejected')">❌ Reject</button>`
           :'—'}
         </td>
       </tr>`).join('')}</tbody>
@@ -4495,18 +4296,33 @@ function renderAdminKyc(){
         pending:'<span class="badge-gold">Pending</span>',
         approved:'<span class="badge-green">Approved</span>',
         rejected:'<span class="badge-rose">Rejected</span>'
-      }[s]||_esc(s));
-
+      }[s]||s);
+      const proxyUrl=url=>{
+        if(!url)return '';
+        const key=url.replace(/^https?:\/\/[^/]+\//,'');
+        return WORKER_URL+'/api/kyc/doc?uid='+(currentUser&&currentUser.id||'')+'&key='+encodeURIComponent(key);
+      };
       const imgThumb=(url,label)=>{
         if(!url)return '';
-        // Loaded privately by _loadPrivateThumbs() once the table is in the DOM.
+        const p=proxyUrl(url);
+        const direct=String(url).replace(/'/g,'%27');
+        // The old handler hid the thumbnail on any error, so a 403 from the
+        // proxy or a missing object looked identical to "no document uploaded".
+        // Fall back to the direct bucket URL, then show a visible broken state
+        // with a link, so the admin can tell the difference.
+        const onerr="if(!this.dataset.fb){this.dataset.fb=1;this.src='"+direct+"';}"
+          +"else{this.style.display='none';var w=this.parentNode;"
+          +"w.querySelector('.kyc-fail').style.display='block';}";
         return '<div style="display:inline-block;margin:3px;text-align:center;vertical-align:top">'
-          +'<img data-doc-key="'+_esc(_docKey(url))+'" alt="'+label+'" '
-          +'style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border2);display:block;cursor:pointer;background:var(--bg3)" '
-          +'onclick="if(this.src)_kycLightbox(this.src,\''+label+'\')" title="Click to enlarge" '
-          +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'">'
-          +'<div class="kyc-fail" style="display:none;width:64px;height:64px;border-radius:8px;border:2px dashed var(--rose);color:var(--rose);'
-          +'font-size:.55rem;line-height:1.2;align-items:center;justify-content:center;text-align:center;padding:4px;box-sizing:border-box">⚠️ can\'t load</div>'
+          +'<img src="'+p+'" alt="'+label+'" data-direct="'+direct+'" '
+          +'style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--border2);display:block;cursor:pointer" '
+          +'onclick="_kycLightbox(this.src,\''+label+'\')" title="Click to enlarge" '
+          +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'" '
+          +'onerror="'+onerr+'">'
+          +'<a class="kyc-fail" href="'+direct+'" target="_blank" rel="noopener" '
+          +'style="display:none;width:64px;height:64px;border-radius:8px;border:2px dashed var(--rose);color:var(--rose);'
+          +'font-size:.55rem;line-height:1.2;align-items:center;justify-content:center;text-align:center;padding:4px;'
+          +'box-sizing:border-box;text-decoration:none">⚠️ can\'t load<br>open ↗</a>'
           +'<div style="font-size:.6rem;color:var(--muted);margin-top:2px">'+label+'</div>'
           +'</div>';
       };
@@ -4519,12 +4335,12 @@ function renderAdminKyc(){
       el.innerHTML='<div style="overflow-x:auto"><table class="admin-table" style="min-width:800px">'
         +'<thead><tr><th>Name</th><th>Email</th><th>Details</th><th>Documents</th><th>Payout</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>'
         +'<tbody>'+requests.map(r=>'<tr>'
-          +'<td data-label="Name"><div style="font-weight:600;color:var(--gold);cursor:pointer" onclick="showProfile('+_jsArg(r.user_id)+')">'+_esc(r.user_name||'\u2014')+'</div></td>'
-          +'<td data-label="Email" style="font-size:.76rem;color:var(--muted)">'+_esc(r.user_email||'\u2014')+'</td>'
+          +'<td data-label="Name"><div style="font-weight:600;color:var(--gold);cursor:pointer" onclick="showProfile(\''+r.user_id+'\')">'+( r.user_name||'\u2014')+'</div></td>'
+          +'<td data-label="Email" style="font-size:.76rem;color:var(--muted)">'+(r.user_email||'\u2014')+'</td>'
           +'<td data-label="Details" style="font-size:.76rem;line-height:1.8">'
-            +'<span style="color:var(--muted)">Legal:</span> '+_esc(r.legal_name||'\u2014')+'<br>'
-            +'<span style="color:var(--muted)">DOB:</span> '+_esc(r.dob||'\u2014')+'<br>'
-            +'<span style="color:var(--muted)">Country:</span> '+_esc(r.country||'\u2014')
+            +'<span style="color:var(--muted)">Legal:</span> '+(r.legal_name||'\u2014')+'<br>'
+            +'<span style="color:var(--muted)">DOB:</span> '+(r.dob||'\u2014')+'<br>'
+            +'<span style="color:var(--muted)">Country:</span> '+(r.country||'\u2014')
           +'</td>'
           +'<td data-label="Documents" style="white-space:nowrap">'
             +((r.id_front_url||r.id_back_url||r.selfie_url)
@@ -4532,17 +4348,16 @@ function renderAdminKyc(){
               : '<span style="color:var(--muted);font-size:.74rem">No docs</span>')
           +'</td>'
           +'<td data-label="Payout" style="font-size:.74rem;max-width:130px;word-break:break-all">'
-            +'<span style="color:var(--muted)">'+_esc(r.payout_method||'\u2014')+'</span><br>'+_esc(r.payout_details||'')
+            +'<span style="color:var(--muted)">'+(r.payout_method||'\u2014')+'</span><br>'+(r.payout_details||'')
           +'</td>'
           +'<td data-label="Date" style="font-size:.74rem;color:var(--muted);white-space:nowrap">'+kycDate(r)+'</td>'
           +'<td data-label="Status">'+badge(r.status)+'</td>'
           +'<td data-label="Action" style="white-space:nowrap">'+(r.status==='pending'
-            ? '<button class="action-btn approve" onclick="adminKycAction('+_jsArg(r.id)+','+_jsArg(r.user_id)+',\'approved\')" style="display:block;margin-bottom:4px">\u2705 Approve</button>'
-              +'<button class="action-btn reject" onclick="adminKycAction('+_jsArg(r.id)+','+_jsArg(r.user_id)+',\'rejected\')">\u274c Reject</button>'
+            ? '<button class="action-btn approve" onclick="adminKycAction(\''+r.id+'\',\''+r.user_id+'\',\'approved\')" style="display:block;margin-bottom:4px">\u2705 Approve</button>'
+              +'<button class="action-btn reject" onclick="adminKycAction(\''+r.id+'\',\''+r.user_id+'\',\'rejected\')">\u274c Reject</button>'
             : '\u2014')+'</td>'
         +'</tr>').join('')+'</tbody>'
         +'</table></div>';
-      _loadPrivateThumbs(el);
     }).catch(()=>{
       el.innerHTML='<div class="empty"><div class="empty-icon">\u26a0\ufe0f</div>Could not load KYC requests.</div>';
     });
@@ -4580,36 +4395,36 @@ function renderAdminPayouts(){
         processing:'<span style="background:rgba(99,179,237,.15);color:#63b3ed;padding:2px 8px;border-radius:100px;font-size:.72rem;font-weight:700">Processing</span>',
         failed:'<span class="badge-rose">Failed</span>',
         rejected:'<span class="badge-rose">Rejected</span>'
-      }[s]||_esc(s));
+      }[s]||s);
 
       const detailsFor=r=>{
-        if(r.method==='paypal') return '<span style="color:var(--gold)">'+_esc(r.paypal_email||'—')+'</span>';
-        if(r.method==='stripe') return '<span style="color:#635bff">Stripe: '+_esc(r.stripe_account_id||'—')+'</span>';
+        if(r.method==='paypal') return '<span style="color:var(--gold)">'+( r.paypal_email||'—')+'</span>';
+        if(r.method==='stripe') return '<span style="color:#635bff">Stripe: '+(r.stripe_account_id||'—')+'</span>';
         // Bank transfer — show all fields
         const fields=[];
-        if(r.bank_name||r.bank_bankname) fields.push('<b>Bank:</b> '+_esc(r.bank_name||r.bank_bankname));
-        if(r.bank_country) fields.push('<b>Country:</b> '+_esc(r.bank_country));
-        if(r.bank_account) fields.push('<b>Account:</b> '+_esc(r.bank_account));
-        if(r.bank_iban) fields.push('<b>IBAN:</b> '+_esc(r.bank_iban));
-        if(r.bank_routing) fields.push('<b>Routing:</b> '+_esc(r.bank_routing));
-        if(r.bank_sortcode) fields.push('<b>Sort code:</b> '+_esc(r.bank_sortcode));
-        if(r.bank_swift) fields.push('<b>SWIFT:</b> '+_esc(r.bank_swift));
-        if(r.note) fields.push('<b>Note:</b> '+_esc(r.note));
+        if(r.bank_name||r.bank_bankname) fields.push('<b>Bank:</b> '+(r.bank_name||r.bank_bankname));
+        if(r.bank_country) fields.push('<b>Country:</b> '+r.bank_country);
+        if(r.bank_account) fields.push('<b>Account:</b> '+r.bank_account);
+        if(r.bank_iban) fields.push('<b>IBAN:</b> '+r.bank_iban);
+        if(r.bank_routing) fields.push('<b>Routing:</b> '+r.bank_routing);
+        if(r.bank_sortcode) fields.push('<b>Sort code:</b> '+r.bank_sortcode);
+        if(r.bank_swift) fields.push('<b>SWIFT:</b> '+r.bank_swift);
+        if(r.note) fields.push('<b>Note:</b> '+r.note);
         return fields.length?fields.join('<br>'):'—';
       };
 
       el.innerHTML=`<table class="admin-table">
         <thead><tr><th>Creator</th><th>Amount</th><th>Method</th><th>Details</th><th>Requested</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>${requests.map(r=>`<tr>
-          <td><div style="font-weight:600">${_esc(r.creator_name||r.creator_id)}</div><div style="font-size:.72rem;color:var(--muted)">${_esc(r.creator_email||'')}</div></td>
+          <td><div style="font-weight:600">${r.creator_name||r.creator_id}</div><div style="font-size:.72rem;color:var(--muted)">${r.creator_email||''}</div></td>
           <td style="font-weight:700;color:var(--gold)">$${Number(r.amount).toFixed(2)}</td>
           <td>${r.method==='paypal'?'💰 PayPal':'🏦 Bank'}</td>
           <td style="font-size:.74rem;max-width:220px;line-height:1.6">${detailsFor(r)}</td>
           <td style="font-size:.74rem;color:var(--muted)">${(r.requested_at||'').slice(0,10)}</td>
           <td>${statusBadge(r.status)}</td>
           <td>${r.status==='pending'||r.status==='processing'?
-            `<button class="action-btn payout" onclick="adminPayoutAction(${_jsArg(r.id)},'paid')" style="margin-right:4px">✓ Paid</button>
-             <button class="action-btn reject" onclick="adminPayoutAction(${_jsArg(r.id)},'rejected')">✕</button>`
+            `<button class="action-btn payout" onclick="adminPayoutAction('${r.id}','paid')" style="margin-right:4px">✓ Paid</button>
+             <button class="action-btn reject" onclick="adminPayoutAction('${r.id}','rejected')">✕</button>`
             :'—'}</td>
         </tr>`).join('')}</tbody>
       </table>`;
@@ -4647,14 +4462,14 @@ function renderAdminUsers(){
         rejected:'<span class="badge-rose">Rejected</span>'
       }[s]||'—');
       tbody.innerHTML=list.map(u=>`<tr>
-        <td data-label="Name"><div style="font-weight:600">${_esc(u.name||'—')}</div></td>
-        <td data-label="Email" style="font-size:.76rem;color:var(--muted)">${_esc(u.email||'—')}</td>
-        <td data-label="Role"><span class="${u.role==='admin'?'badge-rose':'badge-blue'}">${_esc(u.role||'user')}</span></td>
+        <td data-label="Name"><div style="font-weight:600">${u.name||'—'}</div></td>
+        <td data-label="Email" style="font-size:.76rem;color:var(--muted)">${u.email||'—'}</td>
+        <td data-label="Role"><span class="${u.role==='admin'?'badge-rose':'badge-blue'}">${u.role||'user'}</span></td>
         <td data-label="KYC">${kycBadge(u.kyc_status||u.kycStatus)}</td>
         <td data-label="Balance" style="color:var(--gold)">$${Number(u.balance||0).toFixed(2)}</td>
         <td data-label="Joined" style="font-size:.74rem;color:var(--muted)">${(u.created_at||'').slice(0,10)||'—'}</td>
         <td data-label="Action">
-          <button onclick="adminVerifyUser(${_jsArg(u.id)},${u.verified?0:1})" style="font-size:.72rem;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer">${u.verified?'Unverify':'Verify ✓'}</button>
+          <button onclick="adminVerifyUser('${u.id}',${u.verified?0:1})" style="font-size:.72rem;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer">${u.verified?'Unverify':'Verify ✓'}</button>
         </td>
       </tr>`).join('');
     }).catch(()=>{
@@ -4774,143 +4589,87 @@ function shopCard(p){
 }
 
 // ── Product detail page ──────────────────────────────────────────────
-let _productBackTo='shop',_productCurrentId=null;
-// Full-page product view. Opened from the profile shop grid and the shop page.
 function openProductPage(id){
-  const p=(DB.get('products')||[]).find(x=>x.id===id);
-  if(currentPage!=='product')_productBackTo=currentPage||'shop';
-  _productCurrentId=id;
-  const el=document.getElementById('productPageBody');
-  if(p)_renderProductPage(p);
-  else if(el)el.innerHTML='<div class="empty"><div class="empty-icon">⏳</div>Loading…</div>';
-  showPage('product',null);
-  // Refresh price, stock and sales from the server, then re-render.
-  apiFetch('/api/products/'+encodeURIComponent(id)).then(fresh=>{
-    if(!fresh||!fresh.id)return;
-    let includes=fresh.includes;
-    if(!includes){
-      try{const d=JSON.parse(typeof fresh.deliverables==='string'?fresh.deliverables:'{}');includes=(d.lessons||[]).map(l=>l.title)||d.includes||[];}catch(e){includes=[];}
-    }
-    const norm={...fresh,
-      creatorId:fresh.creatorId??fresh.creator_id??'',
-      creatorName:fresh.creatorName??fresh.creator_name??'',
-      creatorAvatar:fresh.creatorAvatar??fresh.creator_avatar??'',
-      desc:fresh.desc??fresh.description??'',
-      cover:fresh.cover??fresh.cover_url??'',
-      includes:includes||[],
-      sales:fresh.sales??0};
-    const all=DB.get('products')||[];
-    const i=all.findIndex(x=>x.id===id);
-    const merged=i>=0?{...all[i],...norm}:norm;
-    if(i>=0)all[i]=merged;else all.unshift(merged);
-    DB.set('products',all);
-    if(_productCurrentId===id&&currentPage==='product')_renderProductPage(merged);
-  }).catch(()=>{
-    if(!p&&el)el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>Product not found.</div>';
-  });
-}
-function _productBack(){
-  const back=_productBackTo||'shop';
-  if(back==='profile'&&_profileContext&&_profileContext.id){
-    showProfile(_profileContext.id);
-    setTimeout(()=>profileTab('shop'),90);
-  }else showPage(back,null);
-}
-function _renderProductPage(p){
-  const el=document.getElementById('productPageBody');
-  if(!el)return;
-  const cid=p.creatorId||p.creator_id||p.creator||'';
+  const prods=DB.get('products')||[];
+  const p=prods.find(x=>x.id===id);
+  if(!p)return;
+  const bought=(DB.get('purchases')||[]).some(b=>b.productId===id&&b.userId===currentUser?.id);
+  const isOwn=currentUser&&(currentUser.id===(p.creatorId||p.creator_id||p.creator)||currentUser.role==='admin');
+  const reviews=DB.get('reviews_'+id)||[];
+  const avgRating=reviews.length?(reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1):(p.rating||0);
+  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)',physical:'rgba(139,92,246,.9)'}[p.type]||'rgba(122,122,140,.9)';
+  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio',physical:'Physical'}[p.type]||p.type||'Product';
   const isPhysical=p.product_kind==='physical'||p.type==='physical';
   const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
   const soldOut=isPhysical&&stockNum!==null&&stockNum<=0;
-  const bought=(DB.get('purchases')||[]).some(b=>(b.productId===p.id||b.product_id===p.id)&&(b.userId===currentUser?.id||b.user_id===currentUser?.id));
-  const isOwn=currentUser&&(currentUser.id===cid||currentUser.role==='admin');
-  const reviews=DB.get('reviews_'+p.id)||[];
-  const avg=reviews.length?(reviews.reduce((s,r)=>s+(Number(r.rating)||0),0)/reviews.length).toFixed(1):(p.rating||0);
-  const typeColor={course:'rgba(96,165,250,.9)',ebook:'rgba(74,222,128,.9)',preset:'rgba(212,168,67,.9)',template:'rgba(167,139,250,.9)',audio:'rgba(232,108,108,.9)',physical:'rgba(139,92,246,.9)'}[p.type]||'rgba(122,122,140,.9)';
-  const typeLabel={course:'Course',ebook:'E-book',preset:'Presets',template:'Template',audio:'Audio',physical:'Physical'}[p.type]||p.type||'Product';
-  const price=Number(p.price||0),was=Number(p.original_price||0);
-  const off=was>price&&was>0?Math.round((1-price/was)*100):0;
-  const shipFee=isPhysical?Number(p.shipping_fee||0):0;
-  const buyBtn=isOwn
-    ?`<button class="pp-buy" style="background:var(--bg3);color:var(--muted);border:1px solid var(--border2)" onclick="showPage('dashboard',null)">Your product · manage</button>`
-    :bought
-      ?`<button class="pp-buy" style="background:var(--card2);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase(${_jsArg(p.id)})">${isPhysical?'Order status':'View purchase'}</button>`
-      :soldOut
-        ?`<button class="pp-buy" disabled style="opacity:.5;cursor:not-allowed">Sold out</button>`
-        :`<button class="pp-buy" onclick="buyProduct(${_jsArg(p.id)})">${isPhysical?'Buy now · ships to you':'Buy now'} →</button>`;
-  el.innerHTML=`
-    <div class="pp-hero">
-      ${p.cover?`<img src="${_esc(p.cover)}" alt="${_esc(p.title||'')}">`:`<div class="pp-hero-emoji">${_esc(p.emoji||'📦')}</div>`}
-      <div class="pp-scrim"></div>
-      <button type="button" class="pp-round left" aria-label="Back" onclick="_productBack()">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
-      </button>
-      <button type="button" class="pp-round right" aria-label="Share" onclick="sharePost(${_jsArg(p.id)},${_jsArg(p.title||'')},${_jsArg(p.creatorName||'')})">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="M8 8l4-4 4 4"></path><path d="M5 14v5h14v-5"></path></svg>
-      </button>
-      <span class="pp-badge" style="background:${typeColor};color:#0a0a0b">${_esc(typeLabel)}</span>
-      ${off?`<span class="pp-off">−${off}%</span>`:''}
-      ${soldOut?'<div class="pp-out">SOLD OUT</div>':''}
-      <div class="pp-hero-foot">
-        <h1 class="pp-title">${_esc(p.title||'')}</h1>
-        <div class="pp-creator" onclick="showProfile(${_jsArg(cid)})">
-          <img src="${_esc(p.creatorAvatar||'')}" alt="">
-          <span>${_esc(p.creatorName||'Creator')}</span>
-          ${reviews.length?`<span style="font-size:.76rem;color:rgba(255,255,255,.65)">· ${avg} ★ (${reviews.length})</span>`:''}
+
+  const html=`
+    <div style="margin:-20px -20px 0;position:relative">
+      <div style="height:220px;background:linear-gradient(135deg,var(--bg3),var(--card2));position:relative;overflow:hidden">
+        ${p.cover?`<img src="${p.cover}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.7">`:''}
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.8))"></div>
+        <button onclick="closeModal()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center">×</button>
+        <span style="position:absolute;top:12px;left:12px;background:${typeColor};color:#0a0a0b;border-radius:100px;padding:3px 10px;font-size:.72rem;font-weight:700">${typeLabel}</span>
+        <div style="position:absolute;bottom:14px;left:16px;right:16px">
+          <div style="font-size:1.2rem;font-weight:800;color:#fff;line-height:1.3;margin-bottom:4px">${p.title}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <img src="${p.creatorAvatar||''}" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover">
+            <span style="font-size:.76rem;color:rgba(255,255,255,.7)">${p.creatorName||''}</span>
+          </div>
         </div>
       </div>
     </div>
-
-    <div class="pp-body">
-      <div class="pp-price-row">
+    <div style="padding:16px 0 0">
+      <!-- Price & buy -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="display:flex;align-items:baseline">
-            <span class="pp-price">$${price.toFixed(2)}</span>
-            ${was>price?`<span class="pp-was">$${was.toFixed(2)}</span>`:''}
+          <div style="display:flex;align-items:baseline;gap:8px">
+            ${p.original_price&&p.original_price>p.price?`<span style="font-size:1.05rem;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--rose)">$${p.original_price}</span>`:''}
+            <div style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--gold)">$${p.price}</div>
           </div>
-          <div class="pp-meta">${Number(p.sales||0).toLocaleString()} sold · ${isPhysical?'ships to you':'instant download'}${shipFee?` · +$${shipFee.toFixed(2)} shipping`:''}${isPhysical&&stockNum!==null&&!soldOut?` · ${stockNum} left`:''}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${(p.sales||0).toLocaleString()} sold${isPhysical&&p.shipping_fee?' · +$'+Number(p.shipping_fee).toFixed(2)+' shipping':''}${isPhysical&&soldOut?' · sold out':''}</div>
         </div>
-        ${off?`<span class="pp-save">Save ${off}%</span>`:''}
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${isOwn
+            ?`<button style="font-size:.78rem;padding:8px 16px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--rose);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600" onclick="closeModal();deleteProduct('${p.id}',this)">🗑 Delete</button>`
+            :bought
+              ?`<button class="shop-buy-btn" style="background:var(--card);color:var(--gold);border:1px solid var(--gold)" onclick="viewPurchase('${p.id}')">${isPhysical?'Order status':'View purchase'}</button>`
+              :soldOut
+                ?`<button class="shop-buy-btn" disabled style="opacity:.5;cursor:not-allowed">Sold out</button>`
+                :`<button class="shop-buy-btn" onclick="closeModal();buyProduct('${p.id}')">${isPhysical?'Buy · ships':'Buy now'} →</button>`}
+          ${p.sample_url&&!bought?`<button onclick="openSample('${p.id}','${(p.title||'').replace(/'/g,'')}','${p.sample_url}')" style="font-size:.76rem;padding:6px 12px;border-radius:8px;border:1px solid rgba(212,168,67,.3);background:rgba(212,168,67,.08);color:var(--gold);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">👁 Free preview</button>`:''}
+        </div>
       </div>
 
-      ${(p.includes||[]).length?`<div class="pp-card">
-        <div class="pp-sec-title">What you get</div>
-        ${(p.includes||[]).map(i=>`<div class="pp-inc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:3px"><path d="M20 6L9 17l-5-5"></path></svg><span>${_esc(i)}</span></div>`).join('')}
+      <!-- Rating -->
+      ${reviews.length?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:1.3rem;font-weight:800;color:var(--text)">${avgRating}</span>
+        <div>${starsHtml(parseFloat(avgRating))}</div>
+        <span style="font-size:.78rem;color:var(--muted)">(${reviews.length} reviews)</span>
       </div>`:''}
 
-      ${p.sample_url&&!bought?`<button type="button" class="pp-sample" onclick="openSample(${_jsArg(p.id)},${_jsArg(p.title||'')},${_jsArg(p.sample_url)})">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-        Preview a free sample
-      </button>`:''}
+      <!-- Description -->
+      ${p.description?`<div style="margin-bottom:14px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">About this product</div>
+        <div style="font-size:.88rem;color:var(--text);line-height:1.7">${p.description}</div>
+      </div>`:''}
 
-      ${p.description||p.desc?`<p class="pp-body-text">${_esc(p.description||p.desc||'')}</p>`:''}
+      <!-- What's included -->
+      ${(p.includes||[]).length?`<div style="margin-bottom:14px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">What's included</div>
+        ${(p.includes||[]).map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.84rem;color:var(--text)"><span style="color:var(--gold)">✓</span>${i}</div>`).join('')}
+      </div>`:''}
 
-      ${p.preview?`<div><div class="pp-sec-title">Preview</div><p class="pp-body-text" style="font-style:italic;color:var(--muted)">“${_esc(p.preview)}”</p></div>`:''}
-
-      <div>
-        <div class="pp-sec-title">Reviews${reviews.length?` · ${avg} ★`:''}</div>
-        ${reviews.length
-          ?reviews.slice(0,10).map(r=>`<div class="pp-review">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                <span>${starsHtml(Number(r.rating)||0)}</span>
-                <span style="font-size:.78rem;font-weight:600;color:var(--text)">${_esc(r.user_name||r.userName||'Buyer')}</span>
-              </div>
-              ${r.text?`<div style="font-size:.84rem;color:var(--muted);line-height:1.6">${_esc(r.text)}</div>`:''}
-            </div>`).join('')
-          :'<div style="font-size:.84rem;color:var(--muted)">No reviews yet — be the first to buy it.</div>'}
+      <!-- Creator -->
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:12px;cursor:pointer" onclick="closeModal();showProfile('${p.creatorId||p.creator_id||p.creator}')">
+        <img src="${p.creatorAvatar||''}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border2)">
+        <div>
+          <div style="font-size:.84rem;font-weight:700;color:var(--text)">${p.creatorName||''}</div>
+          <div style="font-size:.72rem;color:var(--muted)">View profile →</div>
+        </div>
       </div>
-
-      <div class="pp-trust">🔒 Secure checkout — card or PayPal</div>
-    </div>
-
-    <div class="pp-bar">
-      <div>
-        <div class="pp-bar-price">$${price.toFixed(2)}</div>
-        <div class="pp-bar-sub">${isPhysical?(soldOut?'Sold out':'+ shipping'):'Instant download'}</div>
-      </div>
-      ${buyBtn}
     </div>`;
+  openModal('productPage', html);
 }
 
 // ── Free sample viewer ─────────────────────────────────────────────────
@@ -5370,15 +5129,13 @@ function _doRenderProfileProducts(){
 }
 
 function _openCreatorShop(creator){
-  if(!creator)return;
-  if(currentPage==='profile'&&_profileContext&&_profileContext.id===creator.id){
-    profileTab('shop');
-    const t=document.getElementById('profileTabs');
-    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
-  }else{
-    showProfile(creator.id);
-    setTimeout(()=>profileTab('shop'),90);
-  }
+  if(!creator) return;
+  showPage('shop', null);
+  // Filter shop to this creator's products
+  setTimeout(()=>{
+    const search=document.getElementById('shopSearch');
+    if(search){search.value=creator.name||'';renderShop();}
+  }, 150);
 }
 
 function renderCreatorProducts(){
