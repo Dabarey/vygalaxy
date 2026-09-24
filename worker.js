@@ -81,6 +81,56 @@ async function verifyPassword(password, stored) {
 }
 __name(verifyPassword, "verifyPassword");
 
+// ── Sessions ────────────────────────────────────────────────────────────────
+// Signed bearer tokens: base64url(JSON {uid, exp}) + "." + base64url(HMAC-SHA256).
+// Secret is a Worker secret (never in wrangler.toml):  wrangler secret put SESSION_SECRET
+// Rotating the secret signs every user out.
+var SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+var _te = new TextEncoder();
+function _b64u(bytes) {
+  let s = "";
+  for (const b of new Uint8Array(bytes)) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function _unb64u(str) {
+  const s = atob(str.replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+}
+async function _sessionKey(env) {
+  if (!env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new Error("SESSION_SECRET is not set (or shorter than 32 chars)");
+  return crypto.subtle.importKey("raw", _te.encode(env.SESSION_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+async function issueSession(env, userId) {
+  const payload = _b64u(_te.encode(JSON.stringify({ uid: userId, exp: Date.now() + SESSION_TTL_MS })));
+  const sig = await crypto.subtle.sign("HMAC", await _sessionKey(env), _te.encode(payload));
+  return payload + "." + _b64u(sig);
+}
+// Returns { id, email, role } for a valid token, otherwise null. Role is read
+// from the DB on every request, so demoting an admin takes effect immediately.
+async function getSessionUser(request, env) {
+  const h = request.headers.get("Authorization") || "";
+  if (!h.startsWith("Bearer ")) return null;
+  const [payload, sig] = h.slice(7).trim().split(".");
+  if (!payload || !sig) return null;
+  try {
+    const ok = await crypto.subtle.verify("HMAC", await _sessionKey(env), _unb64u(sig), _te.encode(payload));
+    if (!ok) return null;
+    const { uid, exp } = JSON.parse(new TextDecoder().decode(_unb64u(payload)));
+    if (!uid || !exp || exp < Date.now()) return null;
+    return await env.DB.prepare("SELECT id, email, role FROM users WHERE id=?").bind(uid).first();
+  } catch {
+    return null;
+  }
+}
+// Content types that are safe to serve inline from the main origin. Anything
+// else (text/html, image/svg+xml, ...) would run script as galaxyvy.com.
+function _safeInlineType(ct) {
+  ct = String(ct || "").toLowerCase().split(";")[0].trim();
+  if (ct === "image/svg+xml") return null;
+  if (/^(image|video|audio)\/[a-z0-9.+-]+$/.test(ct) || ct === "application/pdf") return ct;
+  return null;
+}
+
 // ── Balance helper ───────────────────────────────────────────────────────
 // Credit referrer: 1% on subs, 2% on video tips — for 12 months from signup
 async function creditReferrer(env, referredUserId, amount, type) {
@@ -314,6 +364,55 @@ var worker_default = {
     const path = url.pathname;
     const method = request.method;
 
+    // ── Auth gate ──────────────────────────────────────────────────────────
+    // Identity comes ONLY from the signed session token, never from ids the
+    // client puts in the body or query string.
+    const me = await getSessionUser(request, env);
+    const isAdmin = !!me && me.role === "admin";
+    const ADMIN_EXACT = new Set([
+      "/api/kyc/review", "/api/kyc/doc", "/api/kyc/debug",
+      "/api/payouts/review", "/api/cert/review", "/api/cert/check",
+      "/api/ref/video/review", "/api/db/migrate", "/api/paypal/test"
+    ]);
+    const adminOnly =
+      path.startsWith("/api/admin/") || ADMIN_EXACT.has(path) ||
+      (method === "GET" && (path === "/api/kyc" || path === "/api/payouts")) ||
+      (method === "GET" && (path === "/api/cert" || path === "/api/ref/video") && !url.searchParams.get("user_id"));
+    if (adminOnly) {
+      if (!me) return err("Sign in required", 401);
+      if (!isAdmin) return err("Forbidden", 403);
+    } else {
+      // Routes that act on one user's private data: the id in the request must
+      // be the caller's own (admins may act on anyone).
+      const OWNER_FIELD = {
+        "GET /api/payout/settings": ["q", "creator_id"],
+        "POST /api/payout/settings": ["b", "creator_id"],
+        "POST /api/payout/request": ["b", "creator_id"],
+        "POST /api/payouts": ["b", "user_id"],
+        "POST /api/payout/stripe": ["b", "user_id"],
+        "POST /api/stripe/connect/onboard": ["b", "user_id"],
+        "GET /api/stripe/connect/status": ["q", "user_id"],
+        "POST /api/kyc": ["b", "user_id"],
+        "POST /api/cert": ["b", "user_id"],
+        "GET /api/cert": ["q", "user_id"],
+        "POST /api/ref/video": ["b", "user_id"],
+        "GET /api/ref/video": ["q", "user_id"],
+        "PUT /api/users/profile": ["b", "id"],
+        "GET /api/notifications": ["q", "user_id"],
+        "GET /api/messages": ["q", "user_id"],
+        "POST /api/messages": ["b", "from_id"]
+      };
+      const rule = OWNER_FIELD[method + " " + path];
+      if (rule) {
+        if (!me) return err("Sign in required", 401);
+        let ownerId;
+        if (rule[0] === "q") ownerId = url.searchParams.get(rule[1]);
+        else ownerId = (await request.clone().json().catch(() => ({})))[rule[1]];
+        if (!ownerId || (String(ownerId) !== me.id && !isAdmin)) return err("Forbidden", 403);
+      }
+      if (path.startsWith("/api/upload") && !me) return err("Sign in required", 401);
+    }
+
     // ── PAYOUT ROUTES ────────────────────────────────────────────────────
     if (path === "/api/payout/balance" && method === "GET") {
       const creatorId = url.searchParams.get("creator_id");
@@ -499,7 +598,7 @@ var worker_default = {
         if (!env.MEDIA) return err("R2 bucket not bound — add the MEDIA binding in Worker settings", 500);
         const formData = await request.formData();
         const file = formData.get("file");
-        const folder = String(formData.get("folder") || "misc").replace(/[^a-z0-9_-]/gi, "");
+        const folder = String(formData.get("folder") || "misc").replace(/[^a-z0-9_-]/gi, "").toLowerCase();
         if (!file || typeof file.arrayBuffer !== "function") return err("No file provided");
         if (file.size === 0) return err("Empty file");
         const originalName = (file.name || "file").replace(/[/\\]/g, "_");
@@ -508,6 +607,14 @@ var worker_default = {
         const key = folder + "/" + safeName;
         const mimeType = file.type || "application/octet-stream";
         const arrayBuffer = await file.arrayBuffer();
+        if (folder === "kyc" || folder === "certs") {
+          // Identity documents never touch the public bucket. The returned "url"
+          // is just the key; admins view it through /api/kyc/doc.
+          if (!env.KYC) return err("KYC bucket not bound — add the KYC R2 binding in wrangler.toml", 500);
+          await env.KYC.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType }, customMetadata: { owner: me.id } });
+          return json({ url: key, key, size: file.size, private: true });
+        }
+        if (key === "index.html") return err("Invalid key", 400);
         await env.MEDIA.put(key, arrayBuffer, { httpMetadata: { contentType: mimeType } });
         const publicUrl = "https://pub-022d3c5ab8b14ee3b34dc489dd76125e.r2.dev/" + key;
         return json({ url: publicUrl, key, size: file.size });
@@ -630,8 +737,10 @@ var worker_default = {
       }
       if (path.startsWith("/api/posts/") && method === "DELETE") {
         const postId = path.split("/")[3];
+        if (!me) return err("Sign in required", 401);
         // Get media_url before deleting so we can remove from R2
-        const post = await env.DB.prepare("SELECT media_url FROM posts WHERE id=?").bind(postId).first();
+        const post = await env.DB.prepare("SELECT media_url, creator_id FROM posts WHERE id=?").bind(postId).first();
+        if (post && post.creator_id !== me.id && !isAdmin) return err("Forbidden", 403);
         await env.DB.prepare("DELETE FROM posts WHERE id=?").bind(postId).run();
         // Delete from R2 if media exists
         if (post?.media_url) {
@@ -651,6 +760,11 @@ var worker_default = {
       
       // ── Presigned upload URL for direct R2 upload ──────────────────────
       // ── Base64 upload endpoint (JSON, no multipart) ────────────────────
+      // Disabled: these accepted a client-chosen key, so anyone could overwrite
+      // index.html (the site itself) in the public bucket. The frontend only uses /api/upload.
+      if (path === "/api/upload/b64" || path === "/api/upload/presign" || path === "/api/upload/sign") {
+        return err("This upload route has been disabled", 410);
+      }
       if (path === "/api/upload/b64" && method === "POST") {
         const { key, mimeType, data } = body;
         if (!key || !mimeType || !data) return err("Missing key, mimeType or data");
@@ -717,6 +831,9 @@ var worker_default = {
         if (payload.aud !== "402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googleusercontent.com") {
           return err("Token audience mismatch");
         }
+        if (payload.email_verified !== true && payload.email_verified !== "true") {
+          return err("Google account email is not verified");
+        }
 
         const email = payload.email;
         const name = payload.name || email.split('@')[0];
@@ -741,8 +858,8 @@ var worker_default = {
             .bind(googleId, avatar, user.id).run();
         }
 
-        const { password_hash, ...safe } = user;
-        return json({ ...safe, avatar: avatar || safe.avatar });
+        const { password_hash, reset_token, reset_expires, ...safe } = user;
+        return json({ ...safe, avatar: avatar || safe.avatar, token: await issueSession(env, safe.id) });
       }
 
       // ── Forgot password ───────────────────────────────────────────────
@@ -823,11 +940,11 @@ var worker_default = {
         if (existing) return err("Email already registered", 409);
         const id = "user_" + Date.now();
         const hash = await hashPassword(password);
-        const role = email === "dabarey24@gmail.com" ? "admin" : "user";
+        const role = "user"; // admin role is never granted by self-registration
         await env.DB.prepare(
           `INSERT INTO users (id, email, password_hash, name, role, category, ref_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
         ).bind(id, email, hash, name, role, category || "Other", ref_code||null).run();
-        return json({ id, email, name, role, category: category || "Other" });
+        return json({ id, email, name, role, category: category || "Other", token: await issueSession(env, id) });
       }
       if (path === "/api/users/login" && method === "POST") {
         const { email, password } = body;
@@ -836,8 +953,8 @@ var worker_default = {
         if (!user) return err("Invalid email or password", 401);
         const valid = await verifyPassword(password, user.password_hash);
         if (!valid) return err("Invalid email or password", 401);
-        const { password_hash, ...safe } = user;
-        return json(safe);
+        const { password_hash, reset_token, reset_expires, ...safe } = user;
+        return json({ ...safe, token: await issueSession(env, safe.id) });
       }
       if (path === "/api/users" && method === "GET") {
         const id = url.searchParams.get("id");
@@ -851,6 +968,7 @@ var worker_default = {
         if (!id) return err("Missing id");
         const user = await env.DB.prepare("SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status,cert_status,ref_rate,subs_count,created_at FROM users WHERE id=?").bind(id).first();
         if (!user) return err("User not found", 404);
+        if (!me || (me.id !== user.id && !isAdmin)) delete user.email;
         return json(user);
       }
       if (path === "/api/products" && method === "GET") {
@@ -961,7 +1079,9 @@ var worker_default = {
 
       if (path.startsWith("/api/products/") && method === "DELETE") {
         const productId = path.split("/")[3];
-        const prod = await env.DB.prepare("SELECT cover_url, sample_url FROM products WHERE id=?").bind(productId).first();
+        if (!me) return err("Sign in required", 401);
+        const prod = await env.DB.prepare("SELECT cover_url, sample_url, creator_id FROM products WHERE id=?").bind(productId).first();
+        if (prod && prod.creator_id !== me.id && !isAdmin) return err("Forbidden", 403);
         await env.DB.prepare("DELETE FROM products WHERE id=?").bind(productId).run();
         // Delete cover and sample from R2
         for (const url of [prod?.cover_url, prod?.sample_url]) {
@@ -1766,14 +1886,18 @@ var worker_default = {
           `SELECT id,email,name,bio,avatar,cover,category,price,role,verified,kyc_status FROM users WHERE id=?`
         ).bind(id).first();
         if (!user) return err("User not found", 404);
+        if (!me || (me.id !== user.id && !isAdmin)) delete user.email;
         return json(user);
       }
       if (path.startsWith("/media/") && method === "GET") {
-        const key = path.slice(7);
+        const key = decodeURIComponent(path.slice(7));
+        if (/^(kyc|certs)\//i.test(key) || key.includes("..")) return err("Not found", 404);
         const obj = await env.MEDIA.get(key);
         if (!obj) return err("Not found", 404);
-        const headers = { ...CORS };
-        if (obj.httpMetadata?.contentType) headers["Content-Type"] = obj.httpMetadata.contentType;
+        const headers = { ...CORS, "X-Content-Type-Options": "nosniff" };
+        const inlineType = _safeInlineType(obj.httpMetadata?.contentType);
+        if (inlineType) headers["Content-Type"] = inlineType;
+        else { headers["Content-Type"] = "application/octet-stream"; headers["Content-Disposition"] = "attachment"; }
         headers["Cache-Control"] = "public, max-age=31536000";
         return new Response(obj.body, { headers });
       }
@@ -2063,11 +2187,40 @@ var worker_default = {
       // renewals were never written to D1 by any code path, so Stripe is the
       // only record of them. Idempotent: keyed on the Stripe invoice id, so
       // running this repeatedly is safe and will not double-credit.
+      // Moves legacy kyc/ and certs/ objects from the public MEDIA bucket into the
+      // private KYC bucket. Processes at most `limit` objects per call (Workers cap
+      // sub-requests), so call repeatedly until `done` is true. Admin-only.
+      if (path === "/api/admin/migrate-kyc" && method === "POST") {
+        if (!env.KYC) return err("KYC bucket not bound", 500);
+        const dry = !!body.dry_run;
+        const limit = Math.min(Math.max(Number(body.limit) || 100, 1), 250);
+        let moved = 0, found = 0, more = false;
+        const failed = [];
+        outer: for (const prefix of ["kyc/", "certs/"]) {
+          let cursor;
+          do {
+            const page = await env.MEDIA.list({ prefix, cursor, limit: 500 });
+            for (const o of page.objects) {
+              if (found >= limit) { more = true; break outer; }
+              found++;
+              if (dry) continue;
+              try {
+                const srcObj = await env.MEDIA.get(o.key);
+                if (!srcObj) continue;
+                await env.KYC.put(o.key, await srcObj.arrayBuffer(), { httpMetadata: srcObj.httpMetadata, customMetadata: srcObj.customMetadata });
+                await env.MEDIA.delete(o.key);
+                moved++;
+              } catch (e) { failed.push({ key: o.key, error: e.message }); }
+            }
+            cursor = page.truncated ? page.cursor : undefined;
+          } while (cursor);
+        }
+        return json({ dry_run: dry, found, moved, failed, done: !more && failed.length === 0 });
+      }
+
       if (path === "/api/admin/sync-stripe" && method === "POST") {
-        const { admin_id, creator_id, dry_run } = body;
-        if (!admin_id) return err("Missing admin_id");
-        const who = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(admin_id).first();
-        if (!who || who.role !== "admin") return err("Forbidden", 403);
+        // Admin-only — enforced by the auth gate.
+        const { creator_id, dry_run } = body;
         if (!env.STRIPE_SK) return err("STRIPE_SK not set on this Worker", 500);
         await ensureEarnings(env);
 
@@ -2148,10 +2301,7 @@ var worker_default = {
       }
 
       if (path === "/api/kyc/debug" && method === "GET") {
-        const uid = url.searchParams.get("uid");
-        if (!uid) return err("Missing uid");
-        const who = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(uid).first();
-        if (!who || who.role !== "admin") return err("Forbidden", 403);
+        // Admin-only — enforced by the auth gate.
         const { results } = await env.DB.prepare(
           `SELECT id, user_name, id_front_url, id_back_url, selfie_url, submitted_at FROM kyc_requests ORDER BY id DESC LIMIT 20`
         ).all();
@@ -2164,37 +2314,35 @@ var worker_default = {
             const key = String(raw).replace(/^https?:\/\/[^/]+\//, "").replace(/^\/+/, "");
             let exists = null, size = null;
             try {
-              const head = await env.MEDIA.head(key);
+              const head = (env.KYC && await env.KYC.head(key)) || await env.MEDIA.head(key);
               exists = !!head; size = head?.size ?? null;
             } catch (e) { exists = "error: " + e.message; }
             checks[f] = { stored: raw, derived_key: key, exists_in_r2: exists, size };
           }
           out.push({ id: r.id, user: r.user_name, submitted_at: r.submitted_at, files: checks });
         }
-        return json({ bucket_bound: !!env.MEDIA, count: out.length, requests: out });
+        return json({ bucket_bound: !!env.MEDIA, kyc_bucket_bound: !!env.KYC, count: out.length, requests: out });
       }
 
       if (path === "/api/kyc/doc" && method === "GET") {
-        const requestorId = url.searchParams.get("uid");
+        // Admin-only — enforced by the auth gate at the top of fetch().
         let key = url.searchParams.get("key"); // e.g. kyc/filename.jpg
-        if (!requestorId || !key) return err("Missing params");
-        if (!env.MEDIA) return err("R2 bucket not bound", 500);
-        // Verify requestor is admin
-        const requestor = await env.DB.prepare("SELECT role FROM users WHERE id=?").bind(requestorId).first();
-        if (!requestor) return err("Unknown requestor id: " + requestorId, 403);
-        if (requestor.role !== 'admin') return err("Forbidden — role is '" + (requestor.role || "none") + "', not admin", 403);
+        if (!key) return err("Missing key");
         // Normalise: tolerate a full URL or a leading slash being passed through.
         key = String(key).replace(/^https?:\/\/[^/]+\//, "").replace(/^\/+/, "");
-        if (key.includes("..")) return err("Invalid key", 400);
-        // Documents live under kyc/; certificates under certs/. Both are admin-only.
-        if (!/^(kyc|certs)\//.test(key)) return err("Invalid key prefix: " + key, 400);
-        const obj = await env.MEDIA.get(key);
-        if (!obj) return err("Object not found in R2: " + key, 404);
+        if (key.includes("..") || !/^(kyc|certs)\//.test(key)) return err("Invalid key", 400);
+        // New uploads live in the private KYC bucket; legacy ones stay in MEDIA
+        // until POST /api/admin/migrate-kyc has moved them.
+        let obj = env.KYC ? await env.KYC.get(key) : null;
+        if (!obj && env.MEDIA) obj = await env.MEDIA.get(key);
+        if (!obj) return err("Not found", 404);
+        const inlineType = _safeInlineType(obj.httpMetadata?.contentType);
         const headers = {
           ...CORS,
-          "Content-Type": obj.httpMetadata?.contentType || "image/jpeg",
-          "Cache-Control": "private, max-age=300",
-          "Content-Disposition": "inline"
+          "Content-Type": inlineType || "application/octet-stream",
+          "Content-Disposition": inlineType ? "inline" : "attachment",
+          "Cache-Control": "private, no-store",
+          "X-Content-Type-Options": "nosniff"
         };
         return new Response(obj.body, { headers });
       }
