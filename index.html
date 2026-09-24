@@ -220,6 +220,55 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
 .ig-tab-count{font-size:.7rem;color:var(--muted2);letter-spacing:0;font-weight:600}
 .ig-note{font-size:.72rem;color:var(--muted);margin:14px 0 10px;text-align:center}
 .ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:44px}
+
+/* Shop as a list: thumbnail, name, detail line, price */
+.ig-list{display:flex;flex-direction:column;margin-bottom:44px}
+.ig-row{display:flex;align-items:center;gap:14px;padding:14px 2px;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;background:none;border-left:none;border-right:none;border-top:none;width:100%;font-family:'DM Sans',sans-serif}
+.ig-row:hover{background:rgba(255,255,255,.02)}
+.ig-row-thumb{position:relative;width:62px;height:62px;border-radius:10px;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,var(--bg3),var(--card2));display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.ig-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ig-row-main{flex:1;min-width:0}
+.ig-row-name{font-size:.9rem;font-weight:600;color:var(--text);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig-row-sub{font-size:.74rem;color:var(--muted);margin-top:3px}
+.ig-row-price{text-align:right;flex-shrink:0}
+.ig-row-now{font-size:.92rem;font-weight:700;color:var(--gold)}
+.ig-row-was{font-size:.72rem;color:var(--muted);text-decoration:line-through;margin-top:2px}
+.ig-row-out{font-size:.68rem;font-weight:700;color:var(--rose);margin-top:2px}
+
+/* ── Ivory profile theme ───────────────────────────────────────────────── */
+#page-profile.ivory{--iv-bg:#f7f3ec;--iv-bg2:#efe8dc;--iv-line:#e3d9c9;--iv-ink:#241c14;--iv-soft:#4a4038;--iv-mute:#6d6055;--iv-accent:#8a5a1a;
+  background:var(--iv-bg);color:var(--iv-ink);min-height:100vh}
+#page-profile.ivory .profile-cover-wrap{background:var(--iv-bg2)}
+#page-profile.ivory .profile-cover-wrap img{filter:none}
+#page-profile.ivory .profile-pic{border-color:var(--iv-bg);background:var(--iv-bg2)}
+#page-profile.ivory .profile-head{flex-direction:column;align-items:center;text-align:center;gap:10px}
+#page-profile.ivory .profile-info{display:flex;flex-direction:column;align-items:center;gap:4px}
+#page-profile.ivory .profile-name-row{color:var(--iv-ink);font-weight:300;justify-content:center}
+#page-profile.ivory .profile-handle{color:var(--iv-mute);text-transform:uppercase;letter-spacing:.14em;font-size:.7rem}
+#page-profile.ivory .profile-head > div:last-child{margin-left:0;justify-content:center}
+#page-profile.ivory .profile-bio{color:var(--iv-soft);text-align:center;max-width:460px;margin-left:auto;margin-right:auto}
+#page-profile.ivory .profile-stats-row{justify-content:center;gap:30px}
+#page-profile.ivory .p-stat-n{color:var(--iv-ink)!important;font-family:'Fraunces',serif;font-weight:400}
+#page-profile.ivory .p-stat-l{color:var(--iv-mute)!important}
+#page-profile.ivory .btn-gold{background:var(--iv-ink);color:var(--iv-bg);border-radius:100px}
+#page-profile.ivory .btn-gold:hover{background:#3a2e22}
+#page-profile.ivory .btn-ghost{border-color:#cdbfa9;color:var(--iv-ink);border-radius:100px}
+#page-profile.ivory .btn-ghost:hover{border-color:var(--iv-accent);color:var(--iv-accent)}
+#page-profile.ivory .ig-tabs{border-top:none;border-bottom:1px solid var(--iv-line);justify-content:center;gap:28px}
+#page-profile.ivory .ig-tab{flex:0 0 auto;border-top:none;border-bottom:2px solid transparent;margin-top:0;margin-bottom:-1px;color:var(--iv-mute)}
+#page-profile.ivory .ig-tab.active{color:var(--iv-ink);border-bottom-color:var(--iv-ink)}
+#page-profile.ivory .ig-tab-count{color:var(--iv-mute)}
+#page-profile.ivory .ig-note{color:var(--iv-mute)}
+#page-profile.ivory .ig-row{border-bottom-color:var(--iv-line)}
+#page-profile.ivory .ig-row:hover{background:rgba(36,28,20,.035)}
+#page-profile.ivory .ig-row-thumb{background:var(--iv-bg2)}
+#page-profile.ivory .ig-row-name{color:var(--iv-ink)}
+#page-profile.ivory .ig-row-sub{color:var(--iv-mute)}
+#page-profile.ivory .ig-row-now{color:var(--iv-accent)}
+#page-profile.ivory .ig-row-was{color:#8d7f6c}
+#page-profile.ivory .ig-empty,#page-profile.ivory .empty{color:var(--iv-mute)}
+#page-profile.ivory .divider{background:var(--iv-line)}
+#page-profile.ivory .ds-title{color:var(--iv-mute)}
 .ig-tile{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,var(--bg3),var(--card2))}
 .ig-tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s}
 .ig-tile:hover img{transform:scale(1.06)}
@@ -234,49 +283,44 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
 .ig-empty{grid-column:1/-1;padding:42px 0;text-align:center;color:var(--muted);font-size:.84rem}
 
 /* ── Product page ─────────────────────────────────────────────────────── */
-.pp-wrap{max-width:1060px;margin:0 auto;padding:18px 20px 60px}
-.pp-back{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;padding:6px 0;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.pp-back:hover{color:var(--text)}
-.pp-cols{display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:start}
-.pp-gallery{position:relative;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--bg3),var(--card2));border:1px solid var(--border)}
-.pp-gallery img{width:100%;height:100%;object-fit:cover;display:block}
-.pp-gallery-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5rem;opacity:.85}
-.pp-badge{position:absolute;top:12px;left:12px;font-size:.66rem;font-weight:800;padding:4px 10px;border-radius:100px;letter-spacing:.05em;text-transform:uppercase}
-.pp-off{position:absolute;top:12px;right:12px;background:var(--rose);color:#fff;font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:100px}
-.pp-sample{width:100%;margin-top:10px;padding:11px;border-radius:12px;border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer}
+.pp-wrap{max-width:560px;margin:0 auto;padding:0 0 60px}
+.pp-hero{position:relative;width:100%;aspect-ratio:1/1;max-height:460px;overflow:hidden;background:linear-gradient(150deg,var(--card2),var(--bg3))}
+.pp-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.pp-hero-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:4.4rem;opacity:.85}
+.pp-scrim{position:absolute;left:0;right:0;bottom:0;height:60%;background:linear-gradient(to top,var(--bg) 2%,rgba(10,0,0,.72) 45%,rgba(10,0,0,0))}
+.pp-round{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));width:44px;height:44px;border-radius:50%;background:rgba(10,0,0,.55);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);z-index:3}
+.pp-round.left{left:12px}.pp-round.right{right:12px}
+.pp-badge{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));left:16px;z-index:3;font-size:.64rem;font-weight:800;padding:4px 10px;border-radius:100px;letter-spacing:.06em;text-transform:uppercase}
+.pp-off{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));right:16px;z-index:3;background:var(--rose);color:#fff;font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:100px}
+.pp-hero-foot{position:absolute;left:16px;right:16px;bottom:14px;z-index:3}
+.pp-title{font-family:'Fraunces',serif;font-weight:400;font-size:1.6rem;line-height:1.22;margin:0 0 9px;color:#fff}
+.pp-creator{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pp-creator img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.pp-creator span{font-size:.82rem;font-weight:600;color:#f0f0f2}
+.pp-body{padding:18px 16px 0;display:flex;flex-direction:column;gap:16px}
+.pp-price-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.pp-price{font-family:'Fraunces',serif;font-size:2rem;color:var(--gold);line-height:1}
+.pp-was{font-size:.95rem;color:var(--muted);text-decoration:line-through;margin-left:9px}
+.pp-save{font-size:.7rem;font-weight:800;color:var(--rose);background:rgba(232,108,108,.14);padding:5px 10px;border-radius:100px;white-space:nowrap}
+.pp-meta{font-size:.74rem;color:var(--muted);margin-top:6px}
+.pp-card{display:flex;flex-direction:column;gap:9px;padding:14px 15px;background:var(--card);border:1px solid var(--border);border-radius:14px}
+.pp-sec-title{font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.pp-inc{display:flex;align-items:flex-start;gap:9px;font-size:.84rem;color:var(--text)}
+.pp-body-text{font-size:.87rem;line-height:1.72;color:#d8cccc;white-space:pre-line;margin:0}
+.pp-sample{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(212,168,67,.35);background:rgba(212,168,67,.08);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .pp-sample:hover{background:rgba(212,168,67,.14)}
-.pp-buybox{position:sticky;top:84px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px}
-.pp-kicker{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
-.pp-title{font-family:'Fraunces',serif;font-weight:400;font-size:1.55rem;line-height:1.25;margin:0 0 12px;color:var(--text)}
-.pp-creator{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg3);border-radius:100px;cursor:pointer;margin-bottom:14px}
-.pp-creator img{width:26px;height:26px;border-radius:50%;object-fit:cover}
-.pp-creator span{font-size:.82rem;font-weight:600;color:var(--text)}
-.pp-creator .pp-view{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:500}
-.pp-rating{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:.8rem;color:var(--muted)}
-.pp-price-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.pp-price{font-family:'Fraunces',serif;font-size:2.1rem;color:var(--gold);line-height:1}
-.pp-was{font-size:1rem;color:var(--muted);text-decoration:line-through}
-.pp-save{font-size:.68rem;font-weight:800;color:var(--rose);background:rgba(232,108,108,.12);padding:3px 9px;border-radius:100px}
-.pp-meta{font-size:.74rem;color:var(--muted);margin:8px 0 16px}
 .pp-buy{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,#d4a843,#b8902e);color:#0a0a0b;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;transition:transform .15s,filter .15s}
 .pp-buy:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.05)}
-.pp-trust{font-size:.7rem;color:var(--muted);text-align:center;margin-top:11px;line-height:1.6}
-.pp-sec{margin-top:34px;padding-top:24px;border-top:1px solid var(--border)}
-.pp-sec-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-.pp-body-text{font-size:.9rem;color:var(--text);line-height:1.75;white-space:pre-line}
-.pp-inc{display:flex;align-items:flex-start;gap:9px;padding:6px 0;font-size:.86rem;color:var(--text)}
+.pp-trust{font-size:.7rem;color:var(--muted);text-align:center;line-height:1.6}
 .pp-review{padding:12px 0;border-bottom:1px solid var(--border)}
-.pp-buy-bar{display:none}
+.pp-bar{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;margin-top:22px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border2);z-index:20}
+.pp-bar .pp-buy{width:auto;flex:1;padding:14px}
+.pp-bar-price{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--gold);line-height:1.1}
+.pp-bar-sub{font-size:.66rem;color:var(--muted)}
+.pp-out{position:absolute;inset:0;z-index:2;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:800;letter-spacing:.08em}
 @media(max-width:760px){
-  .pp-wrap{padding:14px 14px 104px}
-  .pp-cols{grid-template-columns:1fr;gap:16px}
-  .pp-buybox{position:static;padding:18px 16px}
-  .pp-title{font-size:1.3rem}
+  .pp-title{font-size:1.4rem}
   .ig-grid{gap:3px}
-  .pp-buy-bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;gap:12px;align-items:center;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border2)}
-  .pp-buy-bar .pp-buy{width:auto;flex:1;padding:13px}
-  .pp-bar-price{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--gold);line-height:1.1}
-  .pp-bar-sub{font-size:.66rem;color:var(--muted)}
 }
 .shop-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .22s,transform .22s,box-shadow .22s;display:flex;flex-direction:column}
 .shop-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.55)}
@@ -941,7 +985,7 @@ nav::-webkit-scrollbar{width:6px}nav::-webkit-scrollbar-thumb{background:rgba(18
     </div>
     <div id="profilePaneShop" style="display:none">
       <div class="ig-note">No subscription needed — tap any item to buy</div>
-      <div id="profileShopGrid" class="ig-grid"></div>
+      <div id="profileShopGrid" class="ig-list"></div>
     </div>
 
   </div>
@@ -1735,19 +1779,27 @@ function profileTab(which){
   if(tp)tp.classList.toggle('active',!isShop);
   if(ts)ts.classList.toggle('active',isShop);
 }
-// One square tile in the profile shop grid — the whole tile opens the product page.
+// One row in the profile shop list — the whole row opens the product page.
 function _shopTile(p){
   const isPhysical=p.product_kind==='physical'||p.type==='physical';
   const stockNum=(p.stock===null||p.stock===undefined)?null:Number(p.stock);
   const soldOut=isPhysical&&stockNum!==null&&stockNum<=0;
   const price=Number(p.price||0),was=Number(p.original_price||0);
-  return `<div class="ig-tile" onclick="openProductPage(${_jsArg(p.id)})">
-    ${p.cover?`<img src="${_esc(p.cover)}" alt="${_esc(p.title||'')}" loading="lazy">`:`<div class="ig-tile-emoji">${_esc(p.emoji||'📦')}</div>`}
-    <div class="ig-tile-hover"><div class="ig-tile-name">${_esc(p.title||'')}</div></div>
-    <span class="ig-tile-tag">${isPhysical?'🚚':'📥'}</span>
-    <span class="ig-tile-price">$${price.toFixed(2)}${was>price?`<span class="ig-tile-was">$${was.toFixed(2)}</span>`:''}</span>
-    ${soldOut?'<div class="ig-tile-out">SOLD OUT</div>':''}
-  </div>`;
+  const sub=isPhysical
+    ? (soldOut?'Ships worldwide':(stockNum!==null?`Ships worldwide · ${stockNum} left`:'Ships worldwide'))
+    : `Instant download${p.sales?` · ${Number(p.sales).toLocaleString()} sold`:''}`;
+  return `<button type="button" class="ig-row" onclick="openProductPage(${_jsArg(p.id)})">
+    <span class="ig-row-thumb">${p.cover?`<img src="${_esc(p.cover)}" alt="" loading="lazy">`:_esc(p.emoji||'📦')}</span>
+    <span class="ig-row-main">
+      <span class="ig-row-name">${_esc(p.title||'')}</span>
+      <span class="ig-row-sub">${_esc(sub)}</span>
+    </span>
+    <span class="ig-row-price">
+      <span class="ig-row-now">$${price.toFixed(2)}</span>
+      ${was>price?`<span class="ig-row-was">$${was.toFixed(2)}</span>`:''}
+      ${soldOut?'<span class="ig-row-out">Sold out</span>':''}
+    </span>
+  </button>`;
 }
 function showProfile(id){
   const creators=DB.get('creators')||[],users=DB.get('users')||{};
@@ -1866,6 +1918,8 @@ function showProfile(id){
   const postsArea=document.getElementById('profilePostsArea');
   postsArea.innerHTML=cached.length?cached.map(postCard).join(''):`<div class="empty"><div class="empty-icon">📝</div><div>Loading posts…</div></div>`;
   profileTab('posts');
+  const profPage=document.getElementById('page-profile');
+  if(profPage)profPage.classList.add('ivory');
   showPage('profile',null);
   // Always fetch from Worker so own posts show up fresh (even just published)
   fetch(WORKER_URL+'/api/posts?creator_id='+encodeURIComponent(id))
@@ -4786,60 +4840,71 @@ function _renderProductPage(p){
         ?`<button class="pp-buy" disabled style="opacity:.5;cursor:not-allowed">Sold out</button>`
         :`<button class="pp-buy" onclick="buyProduct(${_jsArg(p.id)})">${isPhysical?'Buy now · ships to you':'Buy now'} →</button>`;
   el.innerHTML=`
-    <button class="pp-back" onclick="_productBack()">← Back</button>
-    <div class="pp-cols">
-      <div>
-        <div class="pp-gallery">
-          ${p.cover?`<img src="${_esc(p.cover)}" alt="${_esc(p.title||'')}">`:`<div class="pp-gallery-emoji">${_esc(p.emoji||'📦')}</div>`}
-          <span class="pp-badge" style="background:${typeColor};color:#0a0a0b">${_esc(typeLabel)}</span>
-          ${off?`<span class="pp-off">−${off}%</span>`:''}
-          ${soldOut?'<div class="ig-tile-out">SOLD OUT</div>':''}
-        </div>
-        ${p.sample_url&&!bought?`<button class="pp-sample" onclick="openSample(${_jsArg(p.id)},${_jsArg(p.title||'')},${_jsArg(p.sample_url)})">👁 Preview a free sample</button>`:''}
-      </div>
-      <div class="pp-buybox">
-        <div class="pp-kicker">${isPhysical?'🚚 Ships to you':'📥 Instant download'}</div>
+    <div class="pp-hero">
+      ${p.cover?`<img src="${_esc(p.cover)}" alt="${_esc(p.title||'')}">`:`<div class="pp-hero-emoji">${_esc(p.emoji||'📦')}</div>`}
+      <div class="pp-scrim"></div>
+      <button type="button" class="pp-round left" aria-label="Back" onclick="_productBack()">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <button type="button" class="pp-round right" aria-label="Share" onclick="sharePost(${_jsArg(p.id)},${_jsArg(p.title||'')},${_jsArg(p.creatorName||'')})">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"></path><path d="M8 8l4-4 4 4"></path><path d="M5 14v5h14v-5"></path></svg>
+      </button>
+      <span class="pp-badge" style="background:${typeColor};color:#0a0a0b">${_esc(typeLabel)}</span>
+      ${off?`<span class="pp-off">−${off}%</span>`:''}
+      ${soldOut?'<div class="pp-out">SOLD OUT</div>':''}
+      <div class="pp-hero-foot">
         <h1 class="pp-title">${_esc(p.title||'')}</h1>
         <div class="pp-creator" onclick="showProfile(${_jsArg(cid)})">
           <img src="${_esc(p.creatorAvatar||'')}" alt="">
           <span>${_esc(p.creatorName||'Creator')}</span>
-          <span class="pp-view">View profile →</span>
+          ${reviews.length?`<span style="font-size:.76rem;color:rgba(255,255,255,.65)">· ${avg} ★ (${reviews.length})</span>`:''}
         </div>
-        ${reviews.length?`<div class="pp-rating">${starsHtml(parseFloat(avg))} <b style="color:var(--text)">${avg}</b> <span>(${reviews.length} reviews)</span></div>`:''}
-        <div class="pp-price-row">
-          <div class="pp-price">$${price.toFixed(2)}</div>
-          ${was>price?`<span class="pp-was">$${was.toFixed(2)}</span><span class="pp-save">Save ${off}%</span>`:''}
-        </div>
-        <div class="pp-meta">${Number(p.sales||0).toLocaleString()} sold${shipFee?` · +$${shipFee.toFixed(2)} shipping`:''}${isPhysical&&stockNum!==null&&!soldOut?` · ${stockNum} left in stock`:''}</div>
-        ${buyBtn}
-        <div class="pp-trust">🔒 Secure checkout — card or PayPal${isPhysical?'<br>Shipping details are taken at checkout':'<br>Access it straight away in your Library'}</div>
       </div>
     </div>
-    ${p.description||p.desc?`<div class="pp-sec">
-      <div class="pp-sec-title">About this product</div>
-      <div class="pp-body-text">${_esc(p.description||p.desc||'')}</div>
-    </div>`:''}
-    ${(p.includes||[]).length?`<div class="pp-sec">
-      <div class="pp-sec-title">What's included</div>
-      ${(p.includes||[]).map(i=>`<div class="pp-inc"><span style="color:var(--gold)">✓</span><span>${_esc(i)}</span></div>`).join('')}
-    </div>`:''}
-    ${p.preview?`<div class="pp-sec">
-      <div class="pp-sec-title">Preview</div>
-      <div class="pp-body-text" style="font-style:italic;color:var(--muted)">“${_esc(p.preview)}”</div>
-    </div>`:''}
-    <div class="pp-sec">
-      <div class="pp-sec-title">Reviews${reviews.length?` · ${avg} ★`:''}</div>
-      ${reviews.length
-        ?reviews.slice(0,10).map(r=>`<div class="pp-review">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <span>${starsHtml(Number(r.rating)||0)}</span>
-              <span style="font-size:.78rem;font-weight:600;color:var(--text)">${_esc(r.user_name||r.userName||'Buyer')}</span>
-            </div>
-            ${r.text?`<div style="font-size:.84rem;color:var(--muted);line-height:1.6">${_esc(r.text)}</div>`:''}
-          </div>`).join('')
-        :'<div style="font-size:.84rem;color:var(--muted)">No reviews yet — be the first to buy it.</div>'}
+
+    <div class="pp-body">
+      <div class="pp-price-row">
+        <div>
+          <div style="display:flex;align-items:baseline">
+            <span class="pp-price">$${price.toFixed(2)}</span>
+            ${was>price?`<span class="pp-was">$${was.toFixed(2)}</span>`:''}
+          </div>
+          <div class="pp-meta">${Number(p.sales||0).toLocaleString()} sold · ${isPhysical?'ships to you':'instant download'}${shipFee?` · +$${shipFee.toFixed(2)} shipping`:''}${isPhysical&&stockNum!==null&&!soldOut?` · ${stockNum} left`:''}</div>
+        </div>
+        ${off?`<span class="pp-save">Save ${off}%</span>`:''}
+      </div>
+
+      ${(p.includes||[]).length?`<div class="pp-card">
+        <div class="pp-sec-title">What you get</div>
+        ${(p.includes||[]).map(i=>`<div class="pp-inc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:3px"><path d="M20 6L9 17l-5-5"></path></svg><span>${_esc(i)}</span></div>`).join('')}
+      </div>`:''}
+
+      ${p.sample_url&&!bought?`<button type="button" class="pp-sample" onclick="openSample(${_jsArg(p.id)},${_jsArg(p.title||'')},${_jsArg(p.sample_url)})">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        Preview a free sample
+      </button>`:''}
+
+      ${p.description||p.desc?`<p class="pp-body-text">${_esc(p.description||p.desc||'')}</p>`:''}
+
+      ${p.preview?`<div><div class="pp-sec-title">Preview</div><p class="pp-body-text" style="font-style:italic;color:var(--muted)">“${_esc(p.preview)}”</p></div>`:''}
+
+      <div>
+        <div class="pp-sec-title">Reviews${reviews.length?` · ${avg} ★`:''}</div>
+        ${reviews.length
+          ?reviews.slice(0,10).map(r=>`<div class="pp-review">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span>${starsHtml(Number(r.rating)||0)}</span>
+                <span style="font-size:.78rem;font-weight:600;color:var(--text)">${_esc(r.user_name||r.userName||'Buyer')}</span>
+              </div>
+              ${r.text?`<div style="font-size:.84rem;color:var(--muted);line-height:1.6">${_esc(r.text)}</div>`:''}
+            </div>`).join('')
+          :'<div style="font-size:.84rem;color:var(--muted)">No reviews yet — be the first to buy it.</div>'}
+      </div>
+
+      <div class="pp-trust">🔒 Secure checkout — card or PayPal</div>
     </div>
-    <div class="pp-buy-bar">
+
+    <div class="pp-bar">
       <div>
         <div class="pp-bar-price">$${price.toFixed(2)}</div>
         <div class="pp-bar-sub">${isPhysical?(soldOut?'Sold out':'+ shipping'):'Instant download'}</div>
