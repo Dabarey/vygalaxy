@@ -97,7 +97,7 @@ function _unb64u(str) {
   return Uint8Array.from(s, (c) => c.charCodeAt(0));
 }
 async function _sessionKey(env) {
-  if (!env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new Error("SESSION_SECRET is not set (or shorter than 32 chars)");
+  if (!env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new Error("Sign-in is not configured on the server: set the SESSION_SECRET Worker secret (32+ characters)");
   return crypto.subtle.importKey("raw", _te.encode(env.SESSION_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 async function issueSession(env, userId) {
@@ -831,7 +831,10 @@ var worker_default = {
         if (payload.aud !== "402119272532-8e7gddl466tn5nasbb07uiivjp7rlrrh.apps.googleusercontent.com") {
           return err("Token audience mismatch");
         }
-        if (payload.email_verified !== true && payload.email_verified !== "true") {
+        // Google returns this as a boolean or the string "true", and older
+        // responses call it verified_email. Only refuse an explicit "false".
+        const gv = payload.email_verified ?? payload.verified_email;
+        if (gv === false || gv === "false") {
           return err("Google account email is not verified");
         }
 
